@@ -164,13 +164,6 @@ export default function CustomersPage() {
       align: 'center' as const,
     },
     {
-      title: '联系方式',
-      width: 120,
-      dataIndex: 'contact',
-      key: 'contact',
-      align: 'center' as const,
-    },
-    {
       title: '来源',
       width: 90,
       dataIndex: 'source',
@@ -230,6 +223,13 @@ export default function CustomersPage() {
       },
     },
     {
+      title: '联系方式',
+      width: 120,
+      dataIndex: 'contact',
+      key: 'contact',
+      align: 'center' as const,
+    },
+    {
       title: '工作经验',  
       width: 100,
       dataIndex: 'work_experience',
@@ -285,11 +285,11 @@ export default function CustomersPage() {
     },
     {
       title: '创建时间',
-      width: 150,
+      width: 100,
       dataIndex: 'created_at',
       key: 'created_at',
       align: 'center' as const,
-      render: (date: string) => new Date(date).toLocaleString(),
+      render: (date: string) => new Date(date).toLocaleDateString(),
     },
     {
       title: '最后跟进时间',

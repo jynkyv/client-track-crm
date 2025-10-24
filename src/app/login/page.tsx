@@ -21,7 +21,7 @@ export default function LoginPage() {
       } else {
         message.error('用户名或密码错误！')
       }
-    } catch (error) {
+    } catch {
       message.error('登录失败，请重试！')
     } finally {
       setLoading(false)
@@ -34,13 +34,23 @@ export default function LoginPage() {
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      backgroundColor: '#f5f5f5'
     }}>
       <Card
-        title="客户跟踪CRM系统"
-        style={{ width: 400 }}
+        title="客户跟踪管理系统"
+        style={{ 
+          width: 400,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          borderRadius: '8px'
+        }}
         styles={{
-          header: { textAlign: 'center', fontSize: '24px', fontWeight: 'bold' }
+          header: { 
+            textAlign: 'center', 
+            fontSize: '20px', 
+            fontWeight: '500',
+            color: '#333',
+            borderBottom: '1px solid #f0f0f0'
+          }
         }}
       >
         <Form
