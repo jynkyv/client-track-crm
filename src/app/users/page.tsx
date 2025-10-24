@@ -130,7 +130,7 @@ export default function UsersPage() {
     {
       title: '操作',
       key: 'action',
-      render: (_, record: User) => (
+      render: (_: any, record: User) => (
         <Space>
           <Button
             type="link"
