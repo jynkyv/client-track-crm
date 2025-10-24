@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { 
   Table, 
   Button, 
-  Modal, 
   Form, 
   Input, 
   Select, 
@@ -30,7 +29,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(false)
   const [drawerVisible, setDrawerVisible] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
-  const [followUpModalVisible, setFollowUpModalVisible] = useState(false)
+  const [followUpDrawerVisible, setFollowUpDrawerVisible] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [form] = Form.useForm()
   const [followUpForm] = Form.useForm()
@@ -127,7 +126,7 @@ export default function CustomersPage() {
   const handleAddFollowUp = (record: Customer) => {
     setSelectedCustomer(record)
     followUpForm.resetFields()
-    setFollowUpModalVisible(true)
+    setFollowUpDrawerVisible(true)
   }
 
   const handleFollowUpSubmit = async (values: { content: string }) => {
@@ -149,7 +148,7 @@ export default function CustomersPage() {
 
       if (error) throw error
       message.success('跟进记录添加成功')
-      setFollowUpModalVisible(false)
+      setFollowUpDrawerVisible(false)
       fetchCustomers()
     } catch {
       message.error('添加跟进记录失败')
@@ -511,13 +510,12 @@ export default function CustomersPage() {
         </Form>
       </Drawer>
 
-      <Modal
+      <Drawer
         title={`跟进记录 - ${selectedCustomer?.nickname}`}
-        open={followUpModalVisible}
-        onCancel={() => setFollowUpModalVisible(false)}
-        footer={null}
-        width={800}
-        style={{ top: 20 }}
+        open={followUpDrawerVisible}
+        onClose={() => setFollowUpDrawerVisible(false)}
+        width={600}
+        placement="right"
       >
         <div style={{ marginBottom: 16 }}>
           <h4>历史跟进记录：</h4>
@@ -587,13 +585,13 @@ export default function CustomersPage() {
               <Button type="primary" htmlType="submit">
                 添加跟进记录
               </Button>
-              <Button onClick={() => setFollowUpModalVisible(false)}>
+              <Button onClick={() => setFollowUpDrawerVisible(false)}>
                 取消
               </Button>
             </Space>
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
     </div>
   )
 }
