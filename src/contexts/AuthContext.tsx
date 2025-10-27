@@ -20,18 +20,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    // 检查本地存储的用户信息
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch (error) {
-        console.error('解析用户信息失败:', error)
-        localStorage.removeItem('user')
+    // 使用setTimeout避免同步setState警告
+    setTimeout(() => {
+      // 检查本地存储的用户信息
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser))
+        } catch (error) {
+          console.error('解析用户信息失败:', error)
+          localStorage.removeItem('user')
+        }
       }
-    }
-    setLoading(false)
+      setMounted(true)
+      setLoading(false)
+    }, 0)
   }, [])
 
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -48,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (!users || users.length === 0) {
-        console.log('User not found')
         return false
       }
 
@@ -60,7 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('user', JSON.stringify(user))
         return true
       } else {
-        console.log('Password mismatch')
         return false
       }
     } catch (error) {

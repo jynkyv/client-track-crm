@@ -16,9 +16,11 @@ import {
   Tooltip,
   Drawer,
   Row,
-  Col
+  Col,
+  InputNumber,
+  TableProps
 } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons'
 import { supabase, Customer, FollowUp } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -35,34 +37,90 @@ export default function CustomersPage() {
   const [followUpForm] = Form.useForm()
   const { isAdmin, user } = useAuth()
 
+  // 筛选和搜索状态
+  const [searchName, setSearchName] = useState('')
+  const [minAge, setMinAge] = useState<number | null>(null)
+  const [maxAge, setMaxAge] = useState<number | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [intentionFilter, setIntentionFilter] = useState<string>('')
+
+  // 分页和排序状态
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [total, setTotal] = useState(0)
+  const [sortField, setSortField] = useState<string>('created_at')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
     try {
+      // 构建基础查询
       let query = supabase
         .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false })
+        .select('*', { count: 'exact' })
 
       // 如果是员工，只获取自己的客户
       if (!isAdmin && user?.username) {
         query = query.eq('owner', user.username)
       }
-      // 管理员可以看到所有客户
 
-      const { data, error } = await query
+      // 应用筛选条件
+      if (searchName) {
+        query = query.ilike('nickname', `%${searchName}%`)
+      }
+      
+      if (statusFilter) {
+        query = query.eq('status', statusFilter)
+      }
+      
+      if (intentionFilter) {
+        query = query.eq('intention', intentionFilter)
+      }
+
+      // 年龄范围筛选
+      if (minAge !== null && minAge > 0) {
+        query = query.gte('age', minAge)
+      }
+      if (maxAge !== null && maxAge < 100) {
+        query = query.lte('age', maxAge)
+      }
+
+      // 应用排序
+      query = query.order(sortField, { ascending: sortOrder === 'asc' })
+
+      // 应用分页 - Supabase使用range(from, to)语法
+      const from = (currentPage - 1) * pageSize
+      const to = from + pageSize - 1
+      query = query.range(from, to)
+
+      const { data, error, count } = await query
 
       if (error) throw error
       setCustomers(data || [])
+      setTotal(count || 0)
     } catch {
       message.error('获取客户列表失败')
     } finally {
       setLoading(false)
     }
-  }, [isAdmin, user])
+  }, [isAdmin, user, searchName, statusFilter, intentionFilter, minAge, maxAge, currentPage, pageSize, sortField, sortOrder])
 
   useEffect(() => {
     fetchCustomers()
   }, [fetchCustomers])
+
+  // 处理分页变化
+  const handleTableChange: TableProps<Customer>['onChange'] = (pagination, filters, sorter) => {
+    if (pagination) {
+      setCurrentPage(pagination.current || 1)
+      setPageSize(pagination.pageSize || 10)
+    }
+    
+    if (sorter && !Array.isArray(sorter) && sorter.field) {
+      setSortField(String(sorter.field))
+      setSortOrder(sorter.order === 'ascend' ? 'asc' : 'desc')
+    }
+  }
 
 
   const handleAdd = () => {
@@ -89,6 +147,22 @@ export default function CustomersPage() {
       fetchCustomers()
     } catch {
       message.error('删除失败')
+    }
+  }
+
+  // 状态快捷切换
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .update({ status: newStatus })
+        .eq('id', id)
+
+      if (error) throw error
+      message.success('状态更新成功')
+      fetchCustomers()
+    } catch {
+      message.error('状态更新失败')
     }
   }
 
@@ -176,6 +250,7 @@ export default function CustomersPage() {
       dataIndex: 'intention',
       key: 'intention',
       align: 'center' as const,
+      sorter: true,
       render: (intention: string) => (
         <Tag color={intention === '高' ? 'red' : intention === '中' ? 'orange' : 'green'}>
           {intention}
@@ -204,6 +279,7 @@ export default function CustomersPage() {
       dataIndex: 'age',
       key: 'age',
       align: 'center' as const,
+      sorter: true,
       render: (age: number) => age ? `${age}岁` : '-',
     },
     {
@@ -271,8 +347,9 @@ export default function CustomersPage() {
       title: '跟进次数',
       dataIndex: 'follow_ups',
       key: 'follow_ups',
-      width: 90,
+      width: 100,
       align: 'center' as const,
+      sorter: true,
       render: (followUps: FollowUp[], record: Customer) => (
         <Button 
           type="link" 
@@ -289,6 +366,7 @@ export default function CustomersPage() {
       dataIndex: 'created_at',
       key: 'created_at',
       align: 'center' as const,
+      sorter: true,
       render: (date: string) => new Date(date).toLocaleDateString(),
     },
     {
@@ -297,12 +375,13 @@ export default function CustomersPage() {
       dataIndex: 'follow_ups',
       key: 'last_follow_up',
       align: 'center' as const,
+      sorter: true,
       render: (followUps: FollowUp[]) => {
         if (!followUps || followUps.length === 0) {
           return <span style={{ color: '#999' }}>暂无跟进</span>
         }
         const lastFollowUp = followUps[followUps.length - 1]
-        return new Date(lastFollowUp.time).toLocaleString()
+        return new Date(lastFollowUp.time).toLocaleDateString()
       },
     },
     {
@@ -317,6 +396,28 @@ export default function CustomersPage() {
             label: '跟进',
             icon: <EyeOutlined />,
             onClick: () => handleAddFollowUp(record)
+          },
+          {
+            key: 'status',
+            label: '状态切换',
+            icon: <FilterOutlined />,
+            children: [
+              {
+                key: 'communicating',
+                label: '沟通中',
+                onClick: () => handleStatusChange(record.id, 'communicating')
+              },
+              {
+                key: 'closed',
+                label: '已成交',
+                onClick: () => handleStatusChange(record.id, 'closed')
+              },
+              {
+                key: 'rejected',
+                label: '已拒绝',
+                onClick: () => handleStatusChange(record.id, 'rejected')
+              }
+            ]
           }
         ]
         
@@ -362,13 +463,111 @@ export default function CustomersPage() {
           )}
         </div>
 
+        {/* 筛选和搜索区域 */}
+        <Card style={{ marginBottom: 16 }}>
+          <h3 style={{ marginBottom: 16 }}>筛选和搜索</h3>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={3}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>客户昵称搜索</label>
+                <Input
+                  placeholder="搜索客户昵称"
+                  prefix={<SearchOutlined />}
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  allowClear
+                />
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={3}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>状态筛选</label>
+                <Select
+                  placeholder="筛选状态"
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="communicating">沟通中</Option>
+                  <Option value="closed">已成交</Option>
+                  <Option value="rejected">已拒绝</Option>
+                </Select>
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={3}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>意向度筛选</label>
+                <Select
+                  placeholder="筛选意向度"
+                  value={intentionFilter}
+                  onChange={setIntentionFilter}
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="高">高</Option>
+                  <Option value="中">中</Option>
+                  <Option value="低">低</Option>
+                </Select>
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={3}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>年龄范围筛选</label>
+                <Space style={{ width: '100%' }}>
+                  <InputNumber
+                    placeholder="最小年龄"
+                    min={0}
+                    max={100}
+                    value={minAge}
+                    onChange={setMinAge}
+                    style={{ flex: 1 }}
+                  />
+                  <span>至</span>
+                  <InputNumber
+                    placeholder="最大年龄"
+                    min={0}
+                    max={100}
+                    value={maxAge}
+                    onChange={setMaxAge}
+                    style={{ flex: 1 }}
+                  />
+                </Space>
+              </div>
+            </Col>
+          </Row>
+          <Row style={{ marginTop: 16 }}>
+            <Col span={24}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Space>
+                  <Button onClick={() => {
+                    setSearchName('')
+                    setStatusFilter('')
+                    setIntentionFilter('')
+                    setMinAge(null)
+                    setMaxAge(null)
+                    setCurrentPage(1)
+                    setSortField('created_at')
+                    setSortOrder('desc')
+                  }}>
+                    重置筛选
+                  </Button>
+                </Space>
+              </div>
+            </Col>
+          </Row>
+        </Card>
+
         <Table
           columns={columns}
           dataSource={customers}
           loading={loading}
           rowKey="id"
+          onChange={handleTableChange}
           pagination={{
-            pageSize: 10,
+            current: currentPage,
+            pageSize: pageSize,
+            total: total,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,

@@ -77,6 +77,12 @@ export default function DashboardPage() {
       dataIndex: 'intention',
       key: 'intention',
       align: 'center' as const,
+      sorter: (a: Customer, b: Customer) => {
+        const intentionOrder = { '高': 3, '中': 2, '低': 1 }
+        const aOrder = intentionOrder[a.intention as keyof typeof intentionOrder] || 0
+        const bOrder = intentionOrder[b.intention as keyof typeof intentionOrder] || 0
+        return aOrder - bOrder
+      },
       render: (intention: string) => (
         <Tag color={getIntentionColor(intention)}>
           {intention}
@@ -106,6 +112,11 @@ export default function DashboardPage() {
       dataIndex: 'age',
       key: 'age',
       align: 'center' as const,
+      sorter: (a: Customer, b: Customer) => {
+        const aAge = a.age || 0
+        const bAge = b.age || 0
+        return aAge - bAge
+      },
       render: (age: number) => age ? `${age}岁` : '-',
     },
     {
@@ -167,6 +178,11 @@ export default function DashboardPage() {
       dataIndex: 'follow_ups',
       key: 'follow_ups',
       align: 'center' as const,
+      sorter: (a: Customer, b: Customer) => {
+        const aCount = a.follow_ups?.length || 0
+        const bCount = b.follow_ups?.length || 0
+        return aCount - bCount
+      },
       render: (followUps: unknown[]) => followUps?.length || 0,
     },
   ]
