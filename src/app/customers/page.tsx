@@ -43,6 +43,10 @@ export default function CustomersPage() {
   const [maxAge, setMaxAge] = useState<number | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [intentionFilter, setIntentionFilter] = useState<string>('')
+  const [ownerFilter, setOwnerFilter] = useState<string>('')
+
+  // 用户列表状态
+  const [users, setUsers] = useState<Array<{username: string}>>([])
 
   // 分页和排序状态
   const [currentPage, setCurrentPage] = useState(1)
@@ -50,6 +54,23 @@ export default function CustomersPage() {
   const [total, setTotal] = useState(0)
   const [sortField, setSortField] = useState<string>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
+  // 获取用户列表（仅管理员需要）
+  const fetchUsers = useCallback(async () => {
+    if (!isAdmin) return
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('username')
+        .order('username')
+
+      if (error) throw error
+      setUsers(data || [])
+    } catch (error) {
+      console.error('获取用户列表失败:', error)
+    }
+  }, [isAdmin])
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
@@ -78,11 +99,16 @@ export default function CustomersPage() {
       }
 
       // 年龄范围筛选
-      if (minAge !== null && minAge > 0) {
+      if (minAge !== null && minAge >= 0) {
         query = query.gte('age', minAge)
       }
-      if (maxAge !== null && maxAge < 100) {
+      if (maxAge !== null && maxAge <= 100) {
         query = query.lte('age', maxAge)
+      }
+
+      // 所属人筛选（仅管理员可用）
+      if (ownerFilter) {
+        query = query.eq('owner', ownerFilter)
       }
 
       // 应用排序
@@ -103,11 +129,15 @@ export default function CustomersPage() {
     } finally {
       setLoading(false)
     }
-  }, [isAdmin, user, searchName, statusFilter, intentionFilter, minAge, maxAge, currentPage, pageSize, sortField, sortOrder])
+  }, [isAdmin, user, searchName, statusFilter, intentionFilter, minAge, maxAge, ownerFilter, currentPage, pageSize, sortField, sortOrder])
 
   useEffect(() => {
     fetchCustomers()
   }, [fetchCustomers])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   // 处理分页变化
   const handleTableChange: TableProps<Customer>['onChange'] = (pagination, filters, sorter) => {
@@ -466,76 +496,113 @@ export default function CustomersPage() {
         {/* 筛选和搜索区域 */}
         <Card style={{ marginBottom: 16 }}>
           <h3 style={{ marginBottom: 16 }}>筛选和搜索</h3>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={3}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>客户昵称搜索</label>
-                <Input
-                  placeholder="搜索客户昵称"
-                  prefix={<SearchOutlined />}
-                  value={searchName}
-                  onChange={(e) => setSearchName(e.target.value)}
-                  allowClear
+        {/* 第一行筛选器 */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={6}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>客户昵称搜索</label>
+              <Input
+                placeholder="搜索客户昵称"
+                prefix={<SearchOutlined />}
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                allowClear
+              />
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>状态筛选</label>
+              <Select
+                placeholder="筛选状态"
+                value={statusFilter}
+                onChange={setStatusFilter}
+                allowClear
+                style={{ width: '100%' }}
+              >
+                <Option value="communicating">沟通中</Option>
+                <Option value="closed">已成交</Option>
+                <Option value="rejected">已拒绝</Option>
+              </Select>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>意向度筛选</label>
+              <Select
+                placeholder="筛选意向度"
+                value={intentionFilter}
+                onChange={setIntentionFilter}
+                allowClear
+                style={{ width: '100%' }}
+              >
+                <Option value="高">高</Option>
+                <Option value="中">中</Option>
+                <Option value="低">低</Option>
+              </Select>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>年龄范围筛选</label>
+              <Space.Compact style={{ width: '100%' }}>
+                <InputNumber
+                  placeholder="最小"
+                  min={0}
+                  max={100}
+                  value={minAge}
+                  onChange={setMinAge}
+                  style={{ width: '45%' }}
+                  addonAfter="岁"
                 />
-              </div>
-            </Col>
-            <Col xs={24} sm={12} md={3}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  width: '10%',
+                  color: '#666',
+                  fontSize: '14px',
+                  fontWeight: 500
+                }}>
+                  至
+                </div>
+                <InputNumber
+                  placeholder="最大"
+                  min={0}
+                  max={100}
+                  value={maxAge}
+                  onChange={setMaxAge}
+                  style={{ width: '45%' }}
+                  addonAfter="岁"
+                />
+              </Space.Compact>
+            </div>
+          </Col>
+        </Row>
+        
+        {/* 第二行筛选器（仅管理员可见） */}
+        {isAdmin && (
+          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+            <Col xs={24} sm={12} md={6}>
               <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>状态筛选</label>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>所属人筛选</label>
                 <Select
-                  placeholder="筛选状态"
-                  value={statusFilter}
-                  onChange={setStatusFilter}
+                  placeholder="筛选所属人"
+                  value={ownerFilter}
+                  onChange={setOwnerFilter}
                   allowClear
                   style={{ width: '100%' }}
                 >
-                  <Option value="communicating">沟通中</Option>
-                  <Option value="closed">已成交</Option>
-                  <Option value="rejected">已拒绝</Option>
+                  {users.map(user => (
+                    <Option key={user.username} value={user.username}>
+                      {user.username}
+                    </Option>
+                  ))}
                 </Select>
-              </div>
-            </Col>
-            <Col xs={24} sm={12} md={3}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>意向度筛选</label>
-                <Select
-                  placeholder="筛选意向度"
-                  value={intentionFilter}
-                  onChange={setIntentionFilter}
-                  allowClear
-                  style={{ width: '100%' }}
-                >
-                  <Option value="高">高</Option>
-                  <Option value="中">中</Option>
-                  <Option value="低">低</Option>
-                </Select>
-              </div>
-            </Col>
-            <Col xs={24} sm={12} md={3}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>年龄范围筛选</label>
-                <Space style={{ width: '100%' }}>
-                  <InputNumber
-                    placeholder="最小年龄"
-                    min={0}
-                    max={100}
-                    value={minAge}
-                    onChange={setMinAge}
-                    style={{ flex: 1 }}
-                  />
-                  <span>至</span>
-                  <InputNumber
-                    placeholder="最大年龄"
-                    min={0}
-                    max={100}
-                    value={maxAge}
-                    onChange={setMaxAge}
-                    style={{ flex: 1 }}
-                  />
-                </Space>
               </div>
             </Col>
           </Row>
+        )}
           <Row style={{ marginTop: 16 }}>
             <Col span={24}>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -546,6 +613,7 @@ export default function CustomersPage() {
                     setIntentionFilter('')
                     setMinAge(null)
                     setMaxAge(null)
+                    setOwnerFilter('')
                     setCurrentPage(1)
                     setSortField('created_at')
                     setSortOrder('desc')
