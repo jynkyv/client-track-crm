@@ -29,6 +29,12 @@ import dayjs from 'dayjs'
 
 const { Option } = Select
 
+// 格式化金额，添加千分号
+const formatAmount = (amount: number | null | undefined): string => {
+  if (amount === null || amount === undefined) return '0'
+  return amount.toLocaleString('zh-CN')
+}
+
 export default function ContractCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(false)
@@ -440,7 +446,7 @@ export default function ContractCustomersPage() {
             onClick={() => handleViewPaymentHistory(record)}
             style={{ padding: 0, fontWeight: 'bold', color: currentBalance > 0 ? '#52c41a' : '#999' }}
           >
-            ¥{currentBalance}/{walletLimit}
+            ¥{formatAmount(currentBalance)}/{formatAmount(walletLimit)}
           </Button>
         )
       },
@@ -735,7 +741,7 @@ export default function ContractCustomersPage() {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <h4 style={{ margin: 0 }}>当前余额：¥{selectedCustomer?.wallet_balance || 0} / ¥30000</h4>
+          <h4 style={{ margin: 0 }}>当前余额：¥{formatAmount(selectedCustomer?.wallet_balance)} / ¥{formatAmount(30000)}</h4>
         </div>
         {payments.length > 0 ? (
           <Timeline
@@ -751,7 +757,7 @@ export default function ContractCustomersPage() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <strong style={{ color: payment.amount >= 0 ? '#52c41a' : '#ff4d4f', fontSize: '16px' }}>
-                      {payment.amount >= 0 ? '+' : ''}¥{payment.amount}
+                      {payment.amount >= 0 ? '+' : ''}¥{formatAmount(payment.amount)}
                     </strong>
                     <span style={{ color: '#666', fontSize: '12px' }}>
                       {new Date(payment.payment_time).toLocaleString()}
