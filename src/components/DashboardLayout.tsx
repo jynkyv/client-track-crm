@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Layout, Menu, Button, Dropdown } from 'antd'
-import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined } from '@ant-design/icons'
+import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 
@@ -44,7 +44,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     {
       key: 'customers',
       icon: <TeamOutlined />,
-      label: <Link href="/customers">客户管理</Link>,
+      label: '客户管理',
+      children: [
+        {
+          key: 'customers/potential',
+          icon: <FileTextOutlined />,
+          label: <Link href="/customers/potential">意向客户管理</Link>,
+        },
+        {
+          key: 'customers/contract',
+          icon: <CheckCircleOutlined />,
+          label: <Link href="/customers/contract">正式客户管理</Link>,
+        },
+      ],
     },
     ...(isAdmin ? [{
       key: 'users',
@@ -65,9 +77,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // 获取当前选中的菜单项
   const getSelectedKey = () => {
     if (pathname === '/dashboard') return ['dashboard']
-    if (pathname === '/customers') return ['customers']
+    if (pathname === '/customers/potential' || pathname === '/customers') return ['customers/potential']
+    if (pathname === '/customers/contract') return ['customers/contract']
     if (pathname === '/users') return ['users']
     return ['dashboard']
+  }
+
+  // 获取默认展开的菜单
+  const getDefaultOpenKeys = () => {
+    if (pathname?.startsWith('/customers')) return ['customers']
+    return []
   }
 
   return (
@@ -88,6 +107,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           theme="dark"
           mode="inline"
           selectedKeys={getSelectedKey()}
+          defaultOpenKeys={getDefaultOpenKeys()}
           items={menuItems}
           style={{ width: '100%' }}
         />
