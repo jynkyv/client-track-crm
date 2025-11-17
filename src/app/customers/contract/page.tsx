@@ -21,7 +21,7 @@ import {
   TableProps,
   DatePicker
 } from 'antd'
-import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined } from '@ant-design/icons'
+import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons'
 import { supabase, Customer, Payment } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Dayjs } from 'dayjs'
@@ -220,6 +220,22 @@ export default function ContractCustomersPage() {
       fetchCustomers()
     } catch {
       message.error('状态更新失败')
+    }
+  }
+
+  // 处理删除
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      message.success('删除成功')
+      fetchCustomers()
+    } catch {
+      message.error('删除失败')
     }
   }
 
@@ -431,6 +447,14 @@ export default function ContractCustomersPage() {
         )
       },
     },
+    ...(isAdmin ? [{
+      title: '所属人',
+      width: 90,
+      dataIndex: 'owner',
+      key: 'owner',
+      align: 'center' as const,
+      render: (owner: string) => owner || '-',
+    }] : []),
     {
       title: '汇款金额',
       width: 150,
@@ -488,6 +512,16 @@ export default function ContractCustomersPage() {
             onClick: () => handlePayment(record)
           }
         ]
+        
+        // 在admin身份下添加删除选项
+        if (isAdmin) {
+          menuItems.push({
+            key: 'delete',
+            label: '删除',
+            icon: <DeleteOutlined />,
+            onClick: () => handleDelete(record.id)
+          })
+        }
         
         const menu = {
           items: menuItems
