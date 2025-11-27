@@ -20,6 +20,7 @@ import {
   EyeOutlined
 } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 const { Option } = Select
 
@@ -48,40 +49,41 @@ export default function TasksPage() {
   const [searchWorkOrderName, setSearchWorkOrderName] = useState('')
   const [searchStatus, setSearchStatus] = useState<string>('')
 
-  // 模拟数据
-  useEffect(() => {
-    setTasks([
-      {
-        id: '1',
-        created_at: '2024-01-15 10:30:00',
-        company_name: '示例企业A',
-        work_order_name: '工单A',
-        applicant_name: '张三',
-        error_fields: ['原始简历', '护照', '省级考试证书'],
-        remark: '需要补充完整信息',
-        status: 'processed'
-      },
-      {
-        id: '2',
-        created_at: '2024-01-14 14:20:00',
-        company_name: '示例企业B',
-        work_order_name: '工单B',
-        applicant_name: '李四',
-        error_fields: ['身份证', '2寸照片'],
-        reject_reason: '信息不完整',
-        status: 'rejected'
-      },
-      {
-        id: '3',
-        created_at: '2024-01-13 09:15:00',
-        company_name: '示例企业A',
-        work_order_name: '工单C',
-        applicant_name: '王五',
-        error_fields: ['原始简历', '护照', '省级考试证书', '国检证书'],
-        status: 'pending'
+  // 获取任务列表
+  const fetchTasks = async () => {
+    setLoading(true)
+    try {
+      let query = supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      // 应用搜索条件
+      if (searchCompanyName) {
+        query = query.ilike('company_name', `%${searchCompanyName}%`)
       }
-    ])
-  }, [])
+      if (searchWorkOrderName) {
+        query = query.ilike('work_order_name', `%${searchWorkOrderName}%`)
+      }
+      if (searchStatus) {
+        query = query.eq('status', searchStatus)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      setTasks(data || [])
+    } catch (error) {
+      console.error('获取任务列表失败:', error)
+      message.error('获取任务列表失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchTasks()
+  }, [searchCompanyName, searchWorkOrderName, searchStatus])
 
   // 重置搜索
   const handleResetSearch = () => {

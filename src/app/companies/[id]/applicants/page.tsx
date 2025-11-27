@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { 
   Card, 
   Button, 
@@ -84,39 +85,54 @@ export default function ApplicantsPage() {
   const [workOrderForm] = Form.useForm()
   const [errorForm] = Form.useForm()
 
-  // 模拟数据
+  // 获取工单列表
+  const fetchWorkOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('work_orders')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setWorkOrders(data || [])
+      if (data && data.length > 0 && !activeTab) {
+        setActiveTab(data[0].id)
+      }
+    } catch (error) {
+      console.error('获取工单列表失败:', error)
+      message.error('获取工单列表失败')
+    }
+  }
+
+  // 获取求职者列表
+  const fetchApplicants = async (workOrderId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('applicants')
+        .select('*')
+        .eq('work_order_id', workOrderId)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setApplicants(data || [])
+    } catch (error) {
+      console.error('获取求职者列表失败:', error)
+      message.error('获取求职者列表失败')
+    }
+  }
+
   useEffect(() => {
-    setWorkOrders([
-      {
-        id: '1',
-        name: '工单A',
-        position: '软件工程师',
-        recruit_count: 5,
-        salary: '30-40万日元/月',
-        work_time: '9:00-18:00',
-        rest_days: '周末双休',
-        benefits: '五险一金，带薪年假'
-      }
-    ])
-    setActiveTab('1')
-    setApplicants([
-      {
-        id: '1',
-        work_order_id: '1',
-        name: '张三',
-        gender: '男',
-        birth_date: '1990-01-01',
-        household_location: '北京市',
-        current_residence: '上海市',
-        contact: '13800138000',
-        wechat: 'zhangsan',
-        emergency_contact: '李四',
-        emergency_phone: '13900139000',
-        manager_name: '王五',
-        status: '待面试',
-      }
-    ])
-  }, [])
+    if (companyId) {
+      fetchWorkOrders()
+    }
+  }, [companyId])
+
+  useEffect(() => {
+    if (activeTab) {
+      fetchApplicants(activeTab)
+    }
+  }, [activeTab])
 
   // 创建工单
   const handleCreateWorkOrder = () => {
@@ -127,10 +143,25 @@ export default function ApplicantsPage() {
   // 提交工单
   const handleWorkOrderSubmit = async (values: any) => {
     try {
-      // TODO: 调用API创建工单
+      const { error } = await supabase
+        .from('work_orders')
+        .insert([{
+          company_id: companyId,
+          name: values.name,
+          position: values.position,
+          recruit_count: values.recruit_count,
+          salary: values.salary,
+          work_time: values.work_time,
+          rest_days: values.rest_days,
+          benefits: values.benefits,
+        }])
+
+      if (error) throw error
       message.success('创建工单成功')
       setWorkOrderDrawerVisible(false)
-    } catch {
+      fetchWorkOrders()
+    } catch (error) {
+      console.error('创建工单失败:', error)
       message.error('创建工单失败')
     }
   }
@@ -144,17 +175,42 @@ export default function ApplicantsPage() {
 
   // 提交报错
   const handleErrorSubmit = async (values: any) => {
+    if (!currentApplicant) return
+
     try {
-      // TODO: 调用API提交报错
-      // values.field 现在是数组，包含所有选中的字段
       const selectedFields = values.field || []
       if (selectedFields.length === 0) {
         message.warning('请至少选择一个字段')
         return
       }
+
+      // 获取当前工单信息
+      const currentWorkOrder = workOrders.find(wo => wo.id === currentApplicant.work_order_id)
+      const currentCompany = await supabase
+        .from('companies')
+        .select('name')
+        .eq('id', companyId)
+        .single()
+
+      // 创建任务
+      const { error } = await supabase
+        .from('tasks')
+        .insert([{
+          company_id: companyId,
+          company_name: currentCompany.data?.name || '',
+          work_order_id: currentApplicant.work_order_id,
+          work_order_name: currentWorkOrder?.name || '',
+          applicant_name: currentApplicant.name,
+          error_fields: selectedFields,
+          remark: values.reason || '',
+          status: 'pending',
+        }])
+
+      if (error) throw error
       message.success(`报错提交成功，已选择 ${selectedFields.length} 个字段`)
       setErrorDrawerVisible(false)
-    } catch {
+    } catch (error) {
+      console.error('报错提交失败:', error)
       message.error('报错提交失败')
     }
   }

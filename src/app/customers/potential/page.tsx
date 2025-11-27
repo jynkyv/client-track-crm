@@ -159,13 +159,13 @@ export default function CustomersPage() {
   // 获取企业列表
   const fetchCompanies = useCallback(async () => {
     try {
-      // TODO: 从数据库获取企业列表
-      // 目前使用模拟数据
-      const mockCompanies = [
-        { id: '1', name: '示例企业A' },
-        { id: '2', name: '示例企业B' },
-      ]
-      setCompanies(mockCompanies)
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name')
+        .order('name', { ascending: true })
+
+      if (error) throw error
+      setCompanies(data || [])
     } catch (error) {
       console.error('获取企业列表失败:', error)
     }
@@ -178,15 +178,14 @@ export default function CustomersPage() {
       return
     }
     try {
-      // TODO: 从数据库获取工单列表
-      // 目前使用模拟数据
-      const mockWorkOrders = [
-        { id: '1', name: '工单A', company_id: '1' },
-        { id: '2', name: '工单B', company_id: '1' },
-        { id: '3', name: '工单C', company_id: '2' },
-      ]
-      const filtered = mockWorkOrders.filter(wo => wo.company_id === companyId)
-      setWorkOrders(filtered)
+      const { data, error } = await supabase
+        .from('work_orders')
+        .select('id, name, company_id')
+        .eq('company_id', companyId)
+        .order('name', { ascending: true })
+
+      if (error) throw error
+      setWorkOrders(data || [])
     } catch (error) {
       console.error('获取工单列表失败:', error)
     }
@@ -345,21 +344,14 @@ export default function CustomersPage() {
   // 获取企业详情
   const fetchCompanyDetail = useCallback(async (companyId: string) => {
     try {
-      // TODO: 从数据库获取企业详情
-      // 目前使用模拟数据
-      const mockCompanyDetail = {
-        id: companyId,
-        name: '示例企业A',
-        legal_number: '1234567890123',
-        representative: '张三',
-        industry: '制造业',
-        employee_count: 100,
-        registered_capital: '1000万日元',
-        address: '东京都千代田区',
-        contact: '03-1234-5678',
-        email: 'example@company.com',
-      }
-      setSelectedCompanyDetail(mockCompanyDetail)
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single()
+
+      if (error) throw error
+      setSelectedCompanyDetail(data)
       setCompanyDetailModalVisible(true)
     } catch (error) {
       console.error('获取企业详情失败:', error)

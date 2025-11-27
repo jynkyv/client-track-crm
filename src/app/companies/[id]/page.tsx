@@ -21,6 +21,7 @@ import {
   UploadOutlined,
   FilePdfOutlined
 } from '@ant-design/icons'
+import { supabase } from '@/lib/supabase'
 
 interface CompanyDetail {
   id: string
@@ -52,20 +53,30 @@ export default function CompanyDetailPage() {
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [fileList, setFileList] = useState<UploadFile[]>([])
 
-  // 模拟数据
+  // 获取企业详情
+  const fetchCompany = async () => {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single()
+
+      if (error) throw error
+      setCompany(data)
+    } catch (error) {
+      console.error('获取企业详情失败:', error)
+      message.error('获取企业详情失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    setCompany({
-      id: companyId,
-      name: '示例企业A',
-      legal_number: '1234567890123',
-      representative: '张三',
-      industry: '制造业',
-      employee_count: 100,
-      registered_capital: '1000万日元',
-      address: '东京都千代田区',
-      contact: '03-1234-5678',
-      email: 'example@company.com',
-    })
+    if (companyId) {
+      fetchCompany()
+    }
   }, [companyId])
 
   // 查看多个PDF
@@ -111,16 +122,66 @@ export default function CompanyDetailPage() {
   }
 
   // 确认上传
-  const handleUploadConfirm = () => {
-    if (fileList.length === 0) {
+  const handleUploadConfirm = async () => {
+    if (fileList.length === 0 || !company || !currentUploadField) {
       message.warning('请至少选择一个文件')
       return
     }
-    // TODO: 调用API保存文件URL到数据库
-    message.success('上传完成')
-    setUploadModalVisible(false)
-    setFileList([])
-    // 刷新数据
+
+    try {
+      // 获取已上传文件的URL列表
+      const uploadedUrls = fileList
+        .filter(file => file.status === 'done' && file.url)
+        .map(file => file.url as string)
+
+      if (uploadedUrls.length === 0) {
+        message.warning('没有成功上传的文件')
+        return
+      }
+
+      // 获取当前字段的现有文件列表
+      const currentFiles = (company[currentUploadField as keyof CompanyDetail] as string[]) || []
+      
+      // 合并新旧文件列表
+      const updatedFiles = [...currentFiles, ...uploadedUrls]
+
+      // 更新数据库
+      const { error } = await supabase
+        .from('companies')
+        .update({ [currentUploadField]: updatedFiles })
+        .eq('id', company.id)
+
+      if (error) throw error
+      message.success('上传完成')
+      setUploadModalVisible(false)
+      setFileList([])
+      fetchCompany()
+    } catch (error) {
+      console.error('保存文件URL失败:', error)
+      message.error('保存失败')
+    }
+  }
+
+  // 删除文件
+  const handleDeleteFile = async (field: string, urlToDelete: string) => {
+    if (!company) return
+
+    try {
+      const currentFiles = (company[field as keyof CompanyDetail] as string[]) || []
+      const updatedFiles = currentFiles.filter(url => url !== urlToDelete)
+
+      const { error } = await supabase
+        .from('companies')
+        .update({ [field]: updatedFiles })
+        .eq('id', company.id)
+
+      if (error) throw error
+      message.success('删除成功')
+      fetchCompany()
+    } catch (error) {
+      console.error('删除文件失败:', error)
+      message.error('删除失败')
+    }
   }
 
   const documentFields = [

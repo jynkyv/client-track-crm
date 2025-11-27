@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 const { Option } = Select
 
@@ -59,24 +60,39 @@ export default function CompaniesPage() {
   const [searchName, setSearchName] = useState('')
   const [searchIndustry, setSearchIndustry] = useState('')
 
-  // 模拟数据
-  const mockCompanies: Company[] = [
-    {
-      id: '1',
-      name: '示例企业A',
-      industry: '制造业',
-    },
-    {
-      id: '2',
-      name: '示例企业B',
-      industry: '服务业',
-    },
-  ]
+  // 获取企业列表
+  const fetchCompanies = async () => {
+    setLoading(true)
+    try {
+      let query = supabase
+        .from('companies')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      // 应用搜索条件
+      if (searchName) {
+        query = query.ilike('name', `%${searchName}%`)
+      }
+      if (searchIndustry) {
+        query = query.ilike('industry', `%${searchIndustry}%`)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      setCompanies(data || [])
+    } catch (error) {
+      console.error('获取企业列表失败:', error)
+      message.error('获取企业列表失败')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // 初始化数据
   useEffect(() => {
-    setCompanies(mockCompanies)
-  }, [])
+    fetchCompanies()
+  }, [searchName, searchIndustry])
 
   // 重置搜索
   const handleResetSearch = () => {
@@ -94,11 +110,19 @@ export default function CompaniesPage() {
   // 提交创建企业
   const handleSubmit = async (values: any) => {
     try {
-      // TODO: 调用API创建企业
+      const { error } = await supabase
+        .from('companies')
+        .insert([{
+          name: values.name,
+          industry: values.industry,
+        }])
+
+      if (error) throw error
       message.success('创建成功')
       setDrawerVisible(false)
-      // 刷新列表
-    } catch {
+      fetchCompanies()
+    } catch (error) {
+      console.error('创建企业失败:', error)
       message.error('创建失败')
     }
   }
@@ -137,16 +161,44 @@ export default function CompaniesPage() {
   }
 
   // 确认上传
-  const handleUploadConfirm = () => {
-    if (fileList.length === 0) {
+  const handleUploadConfirm = async () => {
+    if (fileList.length === 0 || !currentCompany || !currentUploadField) {
       message.warning('请至少选择一个文件')
       return
     }
-    // TODO: 调用API保存文件URL到数据库
-    message.success('上传完成')
-    setUploadModalVisible(false)
-    setFileList([])
-    // 刷新列表
+
+    try {
+      // 获取已上传文件的URL列表
+      const uploadedUrls = fileList
+        .filter(file => file.status === 'done' && file.url)
+        .map(file => file.url as string)
+
+      if (uploadedUrls.length === 0) {
+        message.warning('没有成功上传的文件')
+        return
+      }
+
+      // 获取当前字段的现有文件列表
+      const currentFiles = (currentCompany[currentUploadField as keyof Company] as string[]) || []
+      
+      // 合并新旧文件列表
+      const updatedFiles = [...currentFiles, ...uploadedUrls]
+
+      // 更新数据库
+      const { error } = await supabase
+        .from('companies')
+        .update({ [currentUploadField]: updatedFiles })
+        .eq('id', currentCompany.id)
+
+      if (error) throw error
+      message.success('上传完成')
+      setUploadModalVisible(false)
+      setFileList([])
+      fetchCompanies()
+    } catch (error) {
+      console.error('保存文件URL失败:', error)
+      message.error('保存失败')
+    }
   }
 
   // 查看多个PDF

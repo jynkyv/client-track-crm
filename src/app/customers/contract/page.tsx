@@ -175,30 +175,43 @@ export default function ContractCustomersPage() {
   // 获取企业和工单名称映射
   const fetchCompanyAndWorkOrderNames = useCallback(async () => {
     try {
-      // TODO: 从数据库获取企业和工单列表
-      // 目前使用模拟数据
-      const mockCompanies = new Map([
-        ['1', '示例企业A'],
-        ['2', '示例企业B'],
-      ])
-      const mockWorkOrders = new Map([
-        ['1', '工单A'],
-        ['2', '工单B'],
-        ['3', '工单C'],
-      ])
-      setCompanies(mockCompanies)
-      setWorkOrders(mockWorkOrders)
-      
-      // 同时设置列表数据用于下拉选择
-      setCompanyList([
-        { id: '1', name: '示例企业A' },
-        { id: '2', name: '示例企业B' },
-      ])
-      setWorkOrderList([
-        { id: '1', name: '工单A', company_id: '1' },
-        { id: '2', name: '工单B', company_id: '1' },
-        { id: '3', name: '工单C', company_id: '2' },
-      ])
+      // 获取企业列表
+      const { data: companiesData, error: companiesError } = await supabase
+        .from('companies')
+        .select('id, name')
+        .order('name', { ascending: true })
+
+      if (companiesError) throw companiesError
+
+      const companiesMap = new Map<string, string>()
+      const companiesList: Array<{id: string, name: string}> = []
+      companiesData?.forEach(company => {
+        companiesMap.set(company.id, company.name)
+        companiesList.push({ id: company.id, name: company.name })
+      })
+      setCompanies(companiesMap)
+      setCompanyList(companiesList)
+
+      // 获取工单列表
+      const { data: workOrdersData, error: workOrdersError } = await supabase
+        .from('work_orders')
+        .select('id, name, company_id')
+        .order('name', { ascending: true })
+
+      if (workOrdersError) throw workOrdersError
+
+      const workOrdersMap = new Map<string, string>()
+      const workOrdersList: Array<{id: string, name: string, company_id: string}> = []
+      workOrdersData?.forEach(workOrder => {
+        workOrdersMap.set(workOrder.id, workOrder.name)
+        workOrdersList.push({ 
+          id: workOrder.id, 
+          name: workOrder.name, 
+          company_id: workOrder.company_id 
+        })
+      })
+      setWorkOrders(workOrdersMap)
+      setWorkOrderList(workOrdersList)
     } catch (error) {
       console.error('获取企业和工单名称失败:', error)
     }
