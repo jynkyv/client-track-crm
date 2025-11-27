@@ -14,10 +14,10 @@ ALTER TABLE users
 ADD COLUMN IF NOT EXISTS country VARCHAR(50);
 
 -- 3. 为现有员工设置默认值（如果已有数据）
--- 注意：根据实际情况调整，这里假设现有员工都是中方员工
+-- 将所有现有员工设置为中方员工
 UPDATE users 
 SET employee_type = 'chinese_employee', country = '中国'
-WHERE employee_type IS NULL AND role = 'employee';
+WHERE role = 'employee' AND (employee_type IS NULL OR employee_type != 'chinese_employee');
 
 -- 4. 为管理员设置默认值（管理员可以访问所有功能，不需要设置employee_type）
 UPDATE users 
