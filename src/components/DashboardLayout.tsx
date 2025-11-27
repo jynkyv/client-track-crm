@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Layout, Menu, Button, Dropdown } from 'antd'
-import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 
@@ -58,6 +58,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         },
       ],
     },
+    {
+      key: 'companies',
+      icon: <BankOutlined />,
+      label: <Link href="/companies">企业管理</Link>,
+    },
     ...(isAdmin ? [{
       key: 'users',
       icon: <UserAddOutlined />,
@@ -79,6 +84,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     if (pathname === '/dashboard') return ['dashboard']
     if (pathname === '/customers/potential' || pathname === '/customers') return ['customers/potential']
     if (pathname === '/customers/contract') return ['customers/contract']
+    if (pathname?.startsWith('/companies')) return ['companies']
     if (pathname === '/users') return ['users']
     return ['dashboard']
   }
