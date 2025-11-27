@@ -336,9 +336,15 @@ export default function CustomersPage() {
   }
 
   // 处理企业选择变化
-  const handleCompanyChange = (companyId: string) => {
+  const handleCompanyChange = async (companyId: string) => {
     setSelectedCompanyId(companyId)
     completeForm.setFieldsValue({ work_order_id: undefined })
+    // 立即加载工单列表
+    if (companyId) {
+      await fetchWorkOrders(companyId)
+    } else {
+      setWorkOrders([])
+    }
   }
 
   // 获取企业详情
