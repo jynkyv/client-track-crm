@@ -33,6 +33,8 @@ export interface Customer {
   target_company?: string
   hourly_rate?: number
   wallet_balance?: number
+  company_id?: string
+  work_order_id?: string
   stage2_status?: '待面试' | '已通知面试' | '面试通过' | '面试失败' | '培训中' | '已完成'
   interview_notice_time?: string
   last_payment_time?: string

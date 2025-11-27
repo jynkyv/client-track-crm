@@ -44,6 +44,8 @@ export default function ContractCustomersPage() {
   const [paymentHistoryDrawerVisible, setPaymentHistoryDrawerVisible] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
+  const [companies, setCompanies] = useState<Map<string, string>>(new Map()) // company_id -> company_name
+  const [workOrders, setWorkOrders] = useState<Map<string, string>>(new Map()) // work_order_id -> work_order_name
   const [statusForm] = Form.useForm()
   const [paymentForm] = Form.useForm()
   const { isAdmin, user } = useAuth()
@@ -164,6 +166,31 @@ export default function ContractCustomersPage() {
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
+
+  // 获取企业和工单名称映射
+  const fetchCompanyAndWorkOrderNames = useCallback(async () => {
+    try {
+      // TODO: 从数据库获取企业和工单列表
+      // 目前使用模拟数据
+      const mockCompanies = new Map([
+        ['1', '示例企业A'],
+        ['2', '示例企业B'],
+      ])
+      const mockWorkOrders = new Map([
+        ['1', '工单A'],
+        ['2', '工单B'],
+        ['3', '工单C'],
+      ])
+      setCompanies(mockCompanies)
+      setWorkOrders(mockWorkOrders)
+    } catch (error) {
+      console.error('获取企业和工单名称失败:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCompanyAndWorkOrderNames()
+  }, [fetchCompanyAndWorkOrderNames])
 
   // 处理分页变化
   const handleTableChange: TableProps<Customer>['onChange'] = (pagination, filters, sorter) => {
@@ -409,17 +436,24 @@ export default function ContractCustomersPage() {
       align: 'center' as const,
     },
     {
-      title: '意向企业/行业',
-      width: 150,
-      dataIndex: 'target_company',
-      key: 'target_company',
+      title: '企业/工单',
+      width: 200,
+      key: 'company_work_order',
       align: 'center' as const,
-      render: (target_company: string) => {
-        if (!target_company) return '-'
-        const displayText = target_company.length > 10 ? `${target_company.substring(0, 10)}...` : target_company
+      render: (_: any, record: Customer) => {
+        const companyName = record.company_id ? companies.get(record.company_id) : null
+        const workOrderName = record.work_order_id ? workOrders.get(record.work_order_id) : null
+        if (!companyName && !workOrderName) return '-'
+        const displayText = companyName && workOrderName 
+          ? `${companyName} / ${workOrderName}`
+          : companyName || workOrderName || '-'
+        const fullText = companyName && workOrderName 
+          ? `${companyName} / ${workOrderName}`
+          : companyName || workOrderName || '-'
+        const truncatedText = displayText.length > 15 ? `${displayText.substring(0, 15)}...` : displayText
         return (
-          <Tooltip title={target_company} placement="topLeft">
-            <span style={{ cursor: 'help', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayText}</span>
+          <Tooltip title={fullText} placement="topLeft">
+            <span style={{ cursor: 'help', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{truncatedText}</span>
           </Tooltip>
         )
       },
