@@ -21,9 +21,10 @@ import {
   TableProps,
   DatePicker
 } from 'antd'
-import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons'
+import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { supabase, Customer, Payment } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 
@@ -41,11 +42,14 @@ export default function ContractCustomersPage() {
   const [statusDrawerVisible, setStatusDrawerVisible] = useState(false)
   const [paymentDrawerVisible, setPaymentDrawerVisible] = useState(false)
   const [paymentHistoryDrawerVisible, setPaymentHistoryDrawerVisible] = useState(false)
+  const [editDrawerVisible, setEditDrawerVisible] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [statusForm] = Form.useForm()
   const [paymentForm] = Form.useForm()
+  const [editForm] = Form.useForm()
   const { isAdmin, user } = useAuth()
+  const router = useRouter()
 
   // 筛选和搜索状态
   const [searchName, setSearchName] = useState('')
@@ -220,6 +224,54 @@ export default function ContractCustomersPage() {
       fetchCustomers()
     } catch {
       message.error('状态更新失败')
+    }
+  }
+
+  // 处理编辑
+  const handleEdit = (record: Customer) => {
+    setSelectedCustomer(record)
+    editForm.setFieldsValue({
+      real_name: record.real_name,
+      gender: record.gender,
+      birth_date: record.birth_date ? dayjs(record.birth_date) : null,
+      household_location: record.household_location,
+      current_residence: record.current_residence,
+      contact: record.contact,
+      wechat: record.wechat,
+      emergency_contact: record.emergency_contact,
+      emergency_phone: record.emergency_phone,
+    })
+    setEditDrawerVisible(true)
+  }
+
+  // 提交编辑
+  const handleEditSubmit = async (values: any) => {
+    if (!selectedCustomer) return
+
+    try {
+      const updateData: any = {
+        real_name: values.real_name,
+        gender: values.gender,
+        birth_date: values.birth_date ? values.birth_date.format('YYYY-MM-DD') : null,
+        household_location: values.household_location,
+        current_residence: values.current_residence,
+        contact: values.contact,
+        wechat: values.wechat,
+        emergency_contact: values.emergency_contact,
+        emergency_phone: values.emergency_phone,
+      }
+
+      const { error } = await supabase
+        .from('customers')
+        .update(updateData)
+        .eq('id', selectedCustomer.id)
+
+      if (error) throw error
+      message.success('更新成功')
+      setEditDrawerVisible(false)
+      fetchCustomers()
+    } catch {
+      message.error('更新失败')
     }
   }
 
@@ -499,6 +551,18 @@ export default function ContractCustomersPage() {
       align: 'center' as const,
       render: (_: unknown, record: Customer) => {
         const menuItems = [
+          {
+            key: 'view',
+            label: '查看',
+            icon: <EyeOutlined />,
+            onClick: () => router.push(`/customers/contract/${record.id}`)
+          },
+          {
+            key: 'edit',
+            label: '编辑',
+            icon: <EditOutlined />,
+            onClick: () => handleEdit(record)
+          },
           {
             key: 'status',
             label: '状态变更',
@@ -821,6 +885,103 @@ export default function ContractCustomersPage() {
             暂无付款记录
           </div>
         )}
+      </Drawer>
+
+      {/* 编辑Drawer */}
+      <Drawer
+        title={`编辑客户 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
+        open={editDrawerVisible}
+        onClose={() => setEditDrawerVisible(false)}
+        width={600}
+        placement="right"
+      >
+        <Form
+          form={editForm}
+          layout="vertical"
+          onFinish={handleEditSubmit}
+        >
+          <Form.Item
+            name="real_name"
+            label="姓名"
+            rules={[{ required: true, message: '请输入姓名' }]}
+          >
+            <Input placeholder="请输入姓名" />
+          </Form.Item>
+
+          <Form.Item
+            name="gender"
+            label="性别"
+          >
+            <Select placeholder="请选择性别">
+              <Option value="male">男</Option>
+              <Option value="female">女</Option>
+              <Option value="other">其他</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="birth_date"
+            label="出生年月日"
+          >
+            <DatePicker
+              style={{ width: '100%' }}
+              placeholder="请选择出生年月日"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="household_location"
+            label="户籍所在地"
+          >
+            <Input placeholder="请输入户籍所在地" />
+          </Form.Item>
+
+          <Form.Item
+            name="current_residence"
+            label="现居住地"
+          >
+            <Input placeholder="请输入现居住地" />
+          </Form.Item>
+
+          <Form.Item
+            name="contact"
+            label="联系方式"
+          >
+            <Input placeholder="请输入联系方式" />
+          </Form.Item>
+
+          <Form.Item
+            name="wechat"
+            label="实名微信号"
+          >
+            <Input placeholder="请输入实名微信号" />
+          </Form.Item>
+
+          <Form.Item
+            name="emergency_contact"
+            label="紧急联系人"
+          >
+            <Input placeholder="请输入紧急联系人" />
+          </Form.Item>
+
+          <Form.Item
+            name="emergency_phone"
+            label="紧急联系人电话"
+          >
+            <Input placeholder="请输入紧急联系人电话" />
+          </Form.Item>
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                保存
+              </Button>
+              <Button onClick={() => setEditDrawerVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </Drawer>
     </div>
   )

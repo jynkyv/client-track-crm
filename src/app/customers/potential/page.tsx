@@ -18,11 +18,15 @@ import {
   Row,
   Col,
   InputNumber,
-  TableProps
+  TableProps,
+  DatePicker,
+  Upload
 } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FilePdfOutlined } from '@ant-design/icons'
 import { supabase, Customer, FollowUp } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 
 const { Option } = Select
 
@@ -273,12 +277,7 @@ export default function CustomersPage() {
   }
 
   // 处理补充信息提交
-  const handleCompleteSubmit = async (values: {
-    real_name: string
-    phone: string
-    target_company: string
-    hourly_rate: number | null
-  }) => {
+  const handleCompleteSubmit = async (values: any) => {
     if (!completingCustomer) return
 
     try {
@@ -289,6 +288,14 @@ export default function CustomersPage() {
         phone: values.phone?.trim() || null,
         target_company: values.target_company?.trim() || null,
         hourly_rate: values.hourly_rate != null ? parseFloat(String(values.hourly_rate)) : null,
+        gender: values.gender || null,
+        birth_date: values.birth_date ? values.birth_date.format('YYYY-MM-DD') : null,
+        household_location: values.household_location?.trim() || null,
+        current_residence: values.current_residence?.trim() || null,
+        contact: values.contact?.trim() || null,
+        wechat: values.wechat?.trim() || null,
+        emergency_contact: values.emergency_contact?.trim() || null,
+        emergency_phone: values.emergency_phone?.trim() || null,
         stage2_status: '待面试',
         wallet_balance: 0
       }
@@ -934,7 +941,7 @@ export default function CustomersPage() {
         title={`补充信息 - ${completingCustomer?.nickname}`}
         open={completeDrawerVisible}
         onClose={() => setCompleteDrawerVisible(false)}
-        width={600}
+        width={800}
         placement="right"
       >
         <Form
@@ -942,47 +949,140 @@ export default function CustomersPage() {
           layout="vertical"
           onFinish={handleCompleteSubmit}
         >
-          <Form.Item
-            name="real_name"
-            label="真实姓名"
-            rules={[{ required: true, message: '请输入真实姓名' }]}
-          >
-            <Input placeholder="请输入真实姓名" />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="real_name"
+                label="姓名"
+                rules={[{ required: true, message: '请输入姓名' }]}
+              >
+                <Input placeholder="请输入姓名" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="gender"
+                label="性别"
+              >
+                <Select placeholder="请选择性别">
+                  <Option value="male">男</Option>
+                  <Option value="female">女</Option>
+                  <Option value="other">其他</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="phone"
-            label="电话"
-            rules={[{ required: true, message: '请输入电话' }]}
-          >
-            <Input placeholder="请输入电话" />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="birth_date"
+                label="出生年月日"
+              >
+                <DatePicker
+                  style={{ width: '100%' }}
+                  placeholder="请选择出生年月日"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="phone"
+                label="电话"
+                rules={[{ required: true, message: '请输入电话' }]}
+              >
+                <Input placeholder="请输入电话" />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="target_company"
-            label="意向企业/行业"
-            rules={[{ required: true, message: '请输入意向企业/行业' }]}
-          >
-            <Input placeholder="请输入意向企业/行业" />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="household_location"
+                label="户籍所在地"
+              >
+                <Input placeholder="请输入户籍所在地" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="current_residence"
+                label="现居住地"
+              >
+                <Input placeholder="请输入现居住地" />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="hourly_rate"
-            label="时薪"
-            rules={[{ required: true, message: '请输入时薪' }]}
-          >
-            <InputNumber
-              placeholder="请输入时薪"
-              min={0}
-              style={{ width: '100%' }}
-              addonAfter="元/小时"
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="contact"
+                label="联系方式"
+              >
+                <Input placeholder="请输入联系方式" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="wechat"
+                label="实名微信号"
+              >
+                <Input placeholder="请输入实名微信号" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="emergency_contact"
+                label="紧急联系人"
+              >
+                <Input placeholder="请输入紧急联系人" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="emergency_phone"
+                label="紧急联系人电话"
+              >
+                <Input placeholder="请输入紧急联系人电话" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="target_company"
+                label="意向企业/行业"
+                rules={[{ required: true, message: '请输入意向企业/行业' }]}
+              >
+                <Input placeholder="请输入意向企业/行业" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="hourly_rate"
+                label="时薪"
+                rules={[{ required: true, message: '请输入时薪' }]}
+              >
+                <InputNumber
+                  placeholder="请输入时薪"
+                  min={0}
+                  style={{ width: '100%' }}
+                  addonAfter="元/小时"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
-                确认完成
+                保存
               </Button>
               <Button onClick={() => setCompleteDrawerVisible(false)}>
                 取消
