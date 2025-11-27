@@ -20,7 +20,9 @@ import {
   InputNumber,
   TableProps,
   DatePicker,
-  Upload
+  Upload,
+  Modal,
+  Descriptions
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FilePdfOutlined } from '@ant-design/icons'
 import { supabase, Customer, FollowUp } from '@/lib/supabase'
@@ -42,6 +44,8 @@ export default function CustomersPage() {
   const [companies, setCompanies] = useState<Array<{id: string, name: string}>>([])
   const [workOrders, setWorkOrders] = useState<Array<{id: string, name: string, company_id: string}>>([])
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
+  const [companyDetailModalVisible, setCompanyDetailModalVisible] = useState(false)
+  const [selectedCompanyDetail, setSelectedCompanyDetail] = useState<any>(null)
   const [form] = Form.useForm()
   const [followUpForm] = Form.useForm()
   const [completeForm] = Form.useForm()
@@ -338,10 +342,34 @@ export default function CustomersPage() {
     completeForm.setFieldsValue({ work_order_id: undefined })
   }
 
-  // 处理企业选择变化
-  const handleCompanyChange = (companyId: string) => {
-    setSelectedCompanyId(companyId)
-    completeForm.setFieldsValue({ work_order_id: undefined })
+  // 获取企业详情
+  const fetchCompanyDetail = useCallback(async (companyId: string) => {
+    try {
+      // TODO: 从数据库获取企业详情
+      // 目前使用模拟数据
+      const mockCompanyDetail = {
+        id: companyId,
+        name: '示例企业A',
+        legal_number: '1234567890123',
+        representative: '张三',
+        industry: '制造业',
+        employee_count: 100,
+        registered_capital: '1000万日元',
+        address: '东京都千代田区',
+        contact: '03-1234-5678',
+        email: 'example@company.com',
+      }
+      setSelectedCompanyDetail(mockCompanyDetail)
+      setCompanyDetailModalVisible(true)
+    } catch (error) {
+      console.error('获取企业详情失败:', error)
+      message.error('获取企业详情失败')
+    }
+  }, [])
+
+  // 查看企业详情
+  const handleViewCompanyDetail = (companyId: string) => {
+    fetchCompanyDetail(companyId)
   }
 
   // 处理补充信息提交
@@ -354,7 +382,6 @@ export default function CustomersPage() {
         status: 'closed',
         real_name: values.real_name?.trim() || null,
         phone: values.phone?.trim() || null,
-        target_company: values.target_company?.trim() || null,
         hourly_rate: values.hourly_rate != null ? parseFloat(String(values.hourly_rate)) : null,
         gender: values.gender || null,
         birth_date: values.birth_date ? values.birth_date.format('YYYY-MM-DD') : null,
@@ -1126,15 +1153,6 @@ export default function CustomersPage() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="target_company"
-                label="意向企业/行业"
-                rules={[{ required: true, message: '请输入意向企业/行业' }]}
-              >
-                <Input placeholder="请输入意向企业/行业" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
                 name="hourly_rate"
                 label="时薪"
                 rules={[{ required: true, message: '请输入时薪' }]}
@@ -1153,7 +1171,7 @@ export default function CustomersPage() {
             <Col span={12}>
               <Form.Item
                 name="company_id"
-                label="关联企业"
+                label="企业/工单"
                 rules={[{ required: true, message: '请选择关联企业' }]}
               >
                 <Select 
@@ -1172,19 +1190,30 @@ export default function CustomersPage() {
             <Col span={12}>
               <Form.Item
                 name="work_order_id"
-                label="关联工单"
+                label=" "
                 rules={[{ required: true, message: '请选择关联工单' }]}
               >
-                <Select 
-                  placeholder={selectedCompanyId ? "请选择关联工单" : "请先选择关联企业"}
-                  disabled={!selectedCompanyId || workOrders.length === 0}
-                >
-                  {workOrders.map(workOrder => (
-                    <Option key={workOrder.id} value={workOrder.id}>
-                      {workOrder.name}
-                    </Option>
-                  ))}
-                </Select>
+                <Space.Compact style={{ width: '100%' }}>
+                  <Select 
+                    placeholder={selectedCompanyId ? "请选择关联工单" : "请先选择关联企业"}
+                    disabled={!selectedCompanyId || workOrders.length === 0}
+                    style={{ flex: 1 }}
+                  >
+                    {workOrders.map(workOrder => (
+                      <Option key={workOrder.id} value={workOrder.id}>
+                        {workOrder.name}
+                      </Option>
+                    ))}
+                  </Select>
+                  {selectedCompanyId && (
+                    <Button 
+                      type="primary"
+                      onClick={() => handleViewCompanyDetail(selectedCompanyId)}
+                    >
+                      查看企业详情
+                    </Button>
+                  )}
+                </Space.Compact>
               </Form.Item>
             </Col>
           </Row>
@@ -1201,6 +1230,33 @@ export default function CustomersPage() {
           </Form.Item>
         </Form>
       </Drawer>
+
+      {/* 企业详情Modal */}
+      <Modal
+        title="企业详情"
+        open={companyDetailModalVisible}
+        onCancel={() => setCompanyDetailModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setCompanyDetailModalVisible(false)}>
+            关闭
+          </Button>
+        ]}
+        width={800}
+      >
+        {selectedCompanyDetail && (
+          <Descriptions bordered column={2}>
+            <Descriptions.Item label="会社名称">{selectedCompanyDetail.name || '-'}</Descriptions.Item>
+            <Descriptions.Item label="法人番号">{selectedCompanyDetail.legal_number || '-'}</Descriptions.Item>
+            <Descriptions.Item label="代表取缔役">{selectedCompanyDetail.representative || '-'}</Descriptions.Item>
+            <Descriptions.Item label="所属行业">{selectedCompanyDetail.industry || '-'}</Descriptions.Item>
+            <Descriptions.Item label="公司从业人数">{selectedCompanyDetail.employee_count ? `${selectedCompanyDetail.employee_count}人` : '-'}</Descriptions.Item>
+            <Descriptions.Item label="注册资本金">{selectedCompanyDetail.registered_capital || '-'}</Descriptions.Item>
+            <Descriptions.Item label="公司地址" span={2}>{selectedCompanyDetail.address || '-'}</Descriptions.Item>
+            <Descriptions.Item label="联系方式">{selectedCompanyDetail.contact || '-'}</Descriptions.Item>
+            <Descriptions.Item label="联系邮箱">{selectedCompanyDetail.email || '-'}</Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
     </div>
   )
 }
