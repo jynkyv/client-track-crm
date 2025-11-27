@@ -96,8 +96,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider width={200} theme="dark" collapsible={false}>
+    <Layout style={{ minHeight: '100vh', height: '100vh', overflow: 'hidden' }}>
+      <Sider 
+        width={200} 
+        theme="dark" 
+        collapsible={false}
+        style={{ 
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          overflow: 'hidden',
+          zIndex: 100
+        }}
+      >
         <div style={{ 
           height: '64px', 
           display: 'flex', 
@@ -105,28 +117,37 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           justifyContent: 'center',
           color: 'white',
           fontSize: '18px',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          flexShrink: 0
         }}>
           客户跟踪管理系统
         </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={getSelectedKey()}
-          defaultOpenKeys={getDefaultOpenKeys()}
-          items={menuItems}
-          style={{ width: '100%' }}
-        />
+        <div style={{ 
+          height: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }}>
+          <Menu
+            theme="dark"
+            mode="inline"
+            selectedKeys={getSelectedKey()}
+            defaultOpenKeys={getDefaultOpenKeys()}
+            items={menuItems}
+            style={{ width: '100%', borderRight: 0 }}
+          />
+        </div>
       </Sider>
       
-      <Layout>
+      <Layout style={{ marginLeft: 200, height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Header style={{ 
           background: '#fff', 
           padding: '0 24px', 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          flexShrink: 0,
+          zIndex: 99
         }}>
           <h2 style={{ margin: 0, color: '#1890ff' }}></h2>
           <Dropdown
@@ -144,7 +165,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           padding: '24px', 
           background: '#fff',
           borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden'
         }}>
           {children}
         </Content>

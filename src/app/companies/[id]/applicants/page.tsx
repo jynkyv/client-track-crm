@@ -18,7 +18,8 @@ import {
   Drawer,
   message,
   Upload,
-  DatePicker
+  DatePicker,
+  Tag
 } from 'antd'
 import { 
   ArrowLeftOutlined,
@@ -55,6 +56,7 @@ interface Applicant {
   emergency_contact: string // 紧急联系人
   emergency_phone: string // 紧急联系人电话
   manager_name?: string // 负责人姓名（中方员工姓名）
+  status?: string // 状态
   resume?: string // 原始简历
   passport?: string // 护照
   household_book?: string // 户口本
@@ -111,6 +113,7 @@ export default function ApplicantsPage() {
         emergency_contact: '李四',
         emergency_phone: '13900139000',
         manager_name: '王五',
+        status: '待面试',
       }
     ])
   }, [])
@@ -210,6 +213,21 @@ export default function ApplicantsPage() {
                 <Row gutter={[16, 16]}>
                   <Col xs={24} sm={12} md={8}>
                     <div><strong>姓名：</strong>{applicant.name}</div>
+                  </Col>
+                  <Col xs={24} sm={12} md={8}>
+                    <div><strong>状态：</strong>
+                      {applicant.status ? (
+                        <Tag color={
+                          applicant.status === '待面试' ? 'blue' :
+                          applicant.status === '面试中' ? 'orange' :
+                          applicant.status === '已通过' ? 'green' :
+                          applicant.status === '已拒绝' ? 'red' :
+                          'default'
+                        }>
+                          {applicant.status}
+                        </Tag>
+                      ) : '-'}
+                    </div>
                   </Col>
                   <Col xs={24} sm={12} md={8}>
                     <div><strong>性别：</strong>{applicant.gender}</div>
@@ -589,6 +607,7 @@ export default function ApplicantsPage() {
               <Option value="emergency_contact" label="紧急联系人">紧急联系人</Option>
               <Option value="emergency_phone" label="紧急联系人电话">紧急联系人电话</Option>
               <Option value="manager_name" label="负责人姓名（中方员工姓名）">负责人姓名（中方员工姓名）</Option>
+              <Option value="status" label="状态">状态</Option>
               <Option value="resume" label="原始简历">原始简历</Option>
               <Option value="passport" label="护照">护照</Option>
               <Option value="household_book" label="户口本">户口本</Option>
