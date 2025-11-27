@@ -12,7 +12,6 @@ import {
   Dropdown,
   Upload,
   Modal,
-  Drawer,
   message,
   List
 } from 'antd'
@@ -377,54 +376,6 @@ export default function CompaniesPage() {
           }}
         />
       </Card>
-
-      {/* 创建企业Drawer */}
-      <Drawer
-        title="创建企业"
-        open={drawerVisible}
-        onClose={() => setDrawerVisible(false)}
-        width={600}
-        placement="right"
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Form.Item
-            name="name"
-            label="企业名称"
-            rules={[{ required: true, message: '请输入企业名称' }]}
-          >
-            <Input placeholder="请输入企业名称" />
-          </Form.Item>
-
-          <Form.Item
-            name="industry"
-            label="所属行业"
-            rules={[{ required: true, message: '请选择所属行业' }]}
-          >
-            <Select placeholder="请选择所属行业">
-              <Option value="制造业">制造业</Option>
-              <Option value="服务业">服务业</Option>
-              <Option value="IT">IT</Option>
-              <Option value="金融">金融</Option>
-              <Option value="其他">其他</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                创建
-              </Button>
-              <Button onClick={() => setDrawerVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Drawer>
 
       {/* 上传PDF Modal */}
       <Modal
