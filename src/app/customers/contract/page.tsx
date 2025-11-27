@@ -224,17 +224,17 @@ export default function ContractCustomersPage() {
       return
     }
     try {
-      // TODO: 从数据库获取工单列表
-      // 目前使用模拟数据
-      const mockWorkOrders = [
-        { id: '1', name: '工单A', company_id: '1' },
-        { id: '2', name: '工单B', company_id: '1' },
-        { id: '3', name: '工单C', company_id: '2' },
-      ]
-      const filtered = mockWorkOrders.filter(wo => wo.company_id === companyId)
-      setWorkOrderList(filtered)
+      const { data, error } = await supabase
+        .from('work_orders')
+        .select('id, name, company_id')
+        .eq('company_id', companyId)
+        .order('name', { ascending: true })
+
+      if (error) throw error
+      setWorkOrderList(data || [])
     } catch (error) {
       console.error('获取工单列表失败:', error)
+      setWorkOrderList([])
     }
   }, [])
 
