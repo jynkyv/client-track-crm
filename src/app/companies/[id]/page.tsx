@@ -209,13 +209,15 @@ export default function CompanyDetailPage() {
       <Card
         title="企业详情"
         extra={
-          <Button 
-            type="primary" 
-            icon={<EditOutlined />}
-            onClick={() => setEditModalVisible(true)}
-          >
-            编辑
-          </Button>
+          !isReadOnly && (
+            <Button 
+              type="primary" 
+              icon={<EditOutlined />}
+              onClick={() => setEditModalVisible(true)}
+            >
+              编辑
+            </Button>
+          )
         }
       >
         {company && (
@@ -243,13 +245,15 @@ export default function CompanyDetailPage() {
                   <Card size="small">
                     <div style={{ marginBottom: 8, fontWeight: 500 }}>{field.label}</div>
                     <Space>
-                      <Button 
-                        size="small" 
-                        icon={<UploadOutlined />}
-                        onClick={() => handleUpload(field.key)}
-                      >
-                        上传
-                      </Button>
+                      {!isReadOnly && (
+                        <Button 
+                          size="small" 
+                          icon={<UploadOutlined />}
+                          onClick={() => handleUpload(field.key)}
+                        >
+                          上传
+                        </Button>
+                      )}
                       <Button 
                         size="small" 
                         icon={<FilePdfOutlined />}
