@@ -256,10 +256,15 @@ export default function ContractCustomersPage() {
   }
 
   // 处理企业选择变化（绑定）
-  const handleBindCompanyChange = (companyId: string) => {
+  const handleBindCompanyChange = async (companyId: string) => {
     setSelectedBindCompanyId(companyId)
     bindForm.setFieldsValue({ work_order_id: undefined })
-    fetchWorkOrdersByCompany(companyId)
+    // 立即加载工单列表
+    if (companyId) {
+      await fetchWorkOrdersByCompany(companyId)
+    } else {
+      setWorkOrderList([])
+    }
   }
 
   // 提交绑定
@@ -1021,8 +1026,9 @@ export default function ContractCustomersPage() {
             rules={[{ required: true, message: '请选择关联工单' }]}
           >
             <Select 
-              placeholder={selectedBindCompanyId ? "请选择关联工单" : "请先选择关联企业"}
-              disabled={!selectedBindCompanyId || workOrderList.length === 0}
+              placeholder={selectedBindCompanyId ? (workOrderList.length === 0 ? "该企业暂无工单" : "请选择关联工单") : "请先选择关联企业"}
+              disabled={!selectedBindCompanyId}
+              loading={selectedBindCompanyId && workOrderList.length === 0}
             >
               {workOrderList.map(workOrder => (
                 <Option key={workOrder.id} value={workOrder.id}>
