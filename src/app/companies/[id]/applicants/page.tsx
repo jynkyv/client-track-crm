@@ -54,6 +54,7 @@ interface Applicant {
   wechat: string // 实名微信号
   emergency_contact: string // 紧急联系人
   emergency_phone: string // 紧急联系人电话
+  manager_name?: string // 负责人姓名（中方员工姓名）
   resume?: string // 原始简历
   passport?: string // 护照
   household_book?: string // 户口本
@@ -109,6 +110,7 @@ export default function ApplicantsPage() {
         wechat: 'zhangsan',
         emergency_contact: '李四',
         emergency_phone: '13900139000',
+        manager_name: '王五',
       }
     ])
   }, [])
@@ -232,6 +234,9 @@ export default function ApplicantsPage() {
                   </Col>
                   <Col xs={24} sm={12} md={8}>
                     <div><strong>紧急联系人电话：</strong>{applicant.emergency_phone}</div>
+                  </Col>
+                  <Col xs={24} sm={12} md={8}>
+                    <div><strong>负责人姓名（中方员工姓名）：</strong>{applicant.manager_name || '-'}</div>
                   </Col>
                 </Row>
 
@@ -583,6 +588,7 @@ export default function ApplicantsPage() {
               <Option value="wechat" label="实名微信号">实名微信号</Option>
               <Option value="emergency_contact" label="紧急联系人">紧急联系人</Option>
               <Option value="emergency_phone" label="紧急联系人电话">紧急联系人电话</Option>
+              <Option value="manager_name" label="负责人姓名（中方员工姓名）">负责人姓名（中方员工姓名）</Option>
               <Option value="resume" label="原始简历">原始简历</Option>
               <Option value="passport" label="护照">护照</Option>
               <Option value="household_book" label="户口本">户口本</Option>
