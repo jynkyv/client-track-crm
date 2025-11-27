@@ -105,8 +105,7 @@ export default function CompaniesPage() {
 
   // 创建企业
   const handleCreate = () => {
-    form.resetFields()
-    setDrawerVisible(true)
+    router.push('/companies/create')
   }
 
   // 提交创建企业
