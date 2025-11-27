@@ -564,6 +564,23 @@ export default function ContractCustomersPage() {
           ? `${companyName} / ${workOrderName}`
           : companyName || workOrderName || '-'
         const truncatedText = displayText.length > 15 ? `${displayText.substring(0, 15)}...` : displayText
+        
+        // 如果有企业ID，显示为可点击的链接
+        if (record.company_id) {
+          return (
+            <Tooltip title={fullText} placement="topLeft">
+              <Button 
+                type="link" 
+                size="small"
+                style={{ padding: 0, height: 'auto' }}
+                onClick={() => router.push(`/companies/${record.company_id}`)}
+              >
+                {truncatedText}
+              </Button>
+            </Tooltip>
+          )
+        }
+        
         return (
           <Tooltip title={fullText} placement="topLeft">
             <span style={{ cursor: 'help', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{truncatedText}</span>

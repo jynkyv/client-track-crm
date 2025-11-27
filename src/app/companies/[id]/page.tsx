@@ -46,8 +46,9 @@ interface CompanyDetail {
 export default function CompanyDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { canAccessCompanies } = useAuth()
+  const { canAccessCompanies, isChineseEmployee, isAdmin } = useAuth()
   const companyId = params.id as string
+  const isReadOnly = isChineseEmployee && !isAdmin // 中方员工（非管理员）只能查看
   const [company, setCompany] = useState<CompanyDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [editModalVisible, setEditModalVisible] = useState(false)
