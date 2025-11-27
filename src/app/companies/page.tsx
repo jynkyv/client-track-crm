@@ -48,11 +48,9 @@ interface Company {
 export default function CompaniesPage() {
   const router = useRouter()
   const { canAccessCompanies } = useAuth()
-  const [form] = Form.useForm()
   const [searchForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [companies, setCompanies] = useState<Company[]>([])
-  const [drawerVisible, setDrawerVisible] = useState(false)
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [currentCompany, setCurrentCompany] = useState<Company | null>(null)
@@ -108,25 +106,6 @@ export default function CompaniesPage() {
     router.push('/companies/create')
   }
 
-  // 提交创建企业
-  const handleSubmit = async (values: any) => {
-    try {
-      const { error } = await supabase
-        .from('companies')
-        .insert([{
-          name: values.name,
-          industry: values.industry,
-        }])
-
-      if (error) throw error
-      message.success('创建成功')
-      setDrawerVisible(false)
-      fetchCompanies()
-    } catch (error) {
-      console.error('创建企业失败:', error)
-      message.error('创建失败')
-    }
-  }
 
   // 上传PDF
   const handleUpload = (field: string, company: Company) => {
