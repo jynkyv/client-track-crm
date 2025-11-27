@@ -42,12 +42,17 @@ export default function ContractCustomersPage() {
   const [statusDrawerVisible, setStatusDrawerVisible] = useState(false)
   const [paymentDrawerVisible, setPaymentDrawerVisible] = useState(false)
   const [paymentHistoryDrawerVisible, setPaymentHistoryDrawerVisible] = useState(false)
+  const [bindDrawerVisible, setBindDrawerVisible] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [companies, setCompanies] = useState<Map<string, string>>(new Map()) // company_id -> company_name
   const [workOrders, setWorkOrders] = useState<Map<string, string>>(new Map()) // work_order_id -> work_order_name
+  const [companyList, setCompanyList] = useState<Array<{id: string, name: string}>>([])
+  const [workOrderList, setWorkOrderList] = useState<Array<{id: string, name: string, company_id: string}>>([])
+  const [selectedBindCompanyId, setSelectedBindCompanyId] = useState<string>('')
   const [statusForm] = Form.useForm()
   const [paymentForm] = Form.useForm()
+  const [bindForm] = Form.useForm()
   const { isAdmin, user } = useAuth()
   const router = useRouter()
 
@@ -183,10 +188,90 @@ export default function ContractCustomersPage() {
       ])
       setCompanies(mockCompanies)
       setWorkOrders(mockWorkOrders)
+      
+      // 同时设置列表数据用于下拉选择
+      setCompanyList([
+        { id: '1', name: '示例企业A' },
+        { id: '2', name: '示例企业B' },
+      ])
+      setWorkOrderList([
+        { id: '1', name: '工单A', company_id: '1' },
+        { id: '2', name: '工单B', company_id: '1' },
+        { id: '3', name: '工单C', company_id: '2' },
+      ])
     } catch (error) {
       console.error('获取企业和工单名称失败:', error)
     }
   }, [])
+
+  // 获取工单列表（根据企业ID）
+  const fetchWorkOrdersByCompany = useCallback(async (companyId: string) => {
+    if (!companyId) {
+      setWorkOrderList([])
+      return
+    }
+    try {
+      // TODO: 从数据库获取工单列表
+      // 目前使用模拟数据
+      const mockWorkOrders = [
+        { id: '1', name: '工单A', company_id: '1' },
+        { id: '2', name: '工单B', company_id: '1' },
+        { id: '3', name: '工单C', company_id: '2' },
+      ]
+      const filtered = mockWorkOrders.filter(wo => wo.company_id === companyId)
+      setWorkOrderList(filtered)
+    } catch (error) {
+      console.error('获取工单列表失败:', error)
+    }
+  }, [])
+
+  // 处理绑定
+  const handleBind = (record: Customer) => {
+    setSelectedCustomer(record)
+    setSelectedBindCompanyId('')
+    setWorkOrderList([])
+    bindForm.resetFields()
+    bindForm.setFieldsValue({
+      company_id: record.company_id || undefined,
+      work_order_id: record.work_order_id || undefined,
+    })
+    if (record.company_id) {
+      setSelectedBindCompanyId(record.company_id)
+      fetchWorkOrdersByCompany(record.company_id)
+    }
+    setBindDrawerVisible(true)
+  }
+
+  // 处理企业选择变化（绑定）
+  const handleBindCompanyChange = (companyId: string) => {
+    setSelectedBindCompanyId(companyId)
+    bindForm.setFieldsValue({ work_order_id: undefined })
+    fetchWorkOrdersByCompany(companyId)
+  }
+
+  // 提交绑定
+  const handleBindSubmit = async (values: any) => {
+    if (!selectedCustomer) return
+
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .update({
+          company_id: values.company_id || null,
+          work_order_id: values.work_order_id || null,
+        })
+        .eq('id', selectedCustomer.id)
+
+      if (error) throw error
+      message.success('绑定成功')
+      setBindDrawerVisible(false)
+      fetchCustomers()
+      // 刷新企业和工单名称映射
+      fetchCompanyAndWorkOrderNames()
+    } catch {
+      message.error('绑定失败')
+    }
+  }
 
   useEffect(() => {
     fetchCompanyAndWorkOrderNames()
@@ -443,7 +528,17 @@ export default function ContractCustomersPage() {
       render: (_: any, record: Customer) => {
         const companyName = record.company_id ? companies.get(record.company_id) : null
         const workOrderName = record.work_order_id ? workOrders.get(record.work_order_id) : null
-        if (!companyName && !workOrderName) return '-'
+        if (!companyName && !workOrderName) {
+          return (
+            <Button 
+              type="link" 
+              size="small"
+              onClick={() => handleBind(record)}
+            >
+              绑定
+            </Button>
+          )
+        }
         const displayText = companyName && workOrderName 
           ? `${companyName} / ${workOrderName}`
           : companyName || workOrderName || '-'
@@ -874,6 +969,67 @@ export default function ContractCustomersPage() {
             暂无付款记录
           </div>
         )}
+      </Drawer>
+
+      {/* 绑定企业/工单Drawer */}
+      <Drawer
+        title={`绑定企业/工单 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
+        open={bindDrawerVisible}
+        onClose={() => setBindDrawerVisible(false)}
+        width={600}
+        placement="right"
+      >
+        <Form
+          form={bindForm}
+          layout="vertical"
+          onFinish={handleBindSubmit}
+        >
+          <Form.Item
+            name="company_id"
+            label="关联企业"
+            rules={[{ required: true, message: '请选择关联企业' }]}
+          >
+            <Select 
+              placeholder="请选择关联企业"
+              onChange={handleBindCompanyChange}
+              allowClear
+            >
+              {companyList.map(company => (
+                <Option key={company.id} value={company.id}>
+                  {company.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="work_order_id"
+            label="关联工单"
+            rules={[{ required: true, message: '请选择关联工单' }]}
+          >
+            <Select 
+              placeholder={selectedBindCompanyId ? "请选择关联工单" : "请先选择关联企业"}
+              disabled={!selectedBindCompanyId || workOrderList.length === 0}
+            >
+              {workOrderList.map(workOrder => (
+                <Option key={workOrder.id} value={workOrder.id}>
+                  {workOrder.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                保存
+              </Button>
+              <Button onClick={() => setBindDrawerVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </Drawer>
 
     </div>
