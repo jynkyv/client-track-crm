@@ -161,7 +161,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             placement="bottomRight"
           >
             <Button type="text" icon={<UserOutlined />}>
-              {user.username} ({user.role === 'admin' ? '管理员' : user.employee_type === 'chinese_employee' ? '中方员工' : user.employee_type === 'japanese_employee' ? '日方员工' : '员工'})
+              {user.username} ({user.role === 'admin' ? '管理员' : user.country === '中国' ? '中方员工' : user.country === '日本' ? '日方员工' : '员工'})
             </Button>
           </Dropdown>
         </Header>

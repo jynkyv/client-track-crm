@@ -10,8 +10,8 @@ interface AuthContextType {
   logout: () => void
   isAdmin: boolean
   isEmployee: boolean
-  isChineseEmployee: boolean // 是否是中方员工
-  isJapaneseEmployee: boolean // 是否是日方员工
+  isChineseEmployee: boolean // 是否是中方员工（role='employee' + country='中国'）
+  isJapaneseEmployee: boolean // 是否是日方员工（role='employee' + country='日本'）
   canAccessCustomers: boolean // 是否可以访问客户管理
   canAccessCompanies: boolean // 是否可以访问企业管理
   canAccessTasks: boolean // 是否可以访问任务中心
@@ -82,13 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = user?.role === 'admin'
   const isEmployee = user?.role === 'employee'
-  const isChineseEmployee = user?.employee_type === 'chinese_employee'
-  const isJapaneseEmployee = user?.employee_type === 'japanese_employee'
+  const isChineseEmployee = isEmployee && user?.country === '中国'
+  const isJapaneseEmployee = isEmployee && user?.country === '日本'
 
   // 权限判断
   // 管理员可以访问所有功能
-  // 中方员工：只能访问客户管理和任务中心（处理任务）
-  // 日方员工：只能访问企业管理和任务中心（报错/下发任务）
+  // 中方员工（role='employee' + country='中国'）：只能访问客户管理和任务中心（处理任务）
+  // 日方员工（role='employee' + country='日本'）：只能访问企业管理和任务中心（报错/下发任务）
   const canAccessCustomers = isAdmin || isChineseEmployee
   const canAccessCompanies = isAdmin || isJapaneseEmployee
   const canAccessTasks = isAdmin || isChineseEmployee || isJapaneseEmployee

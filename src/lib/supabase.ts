@@ -11,7 +11,6 @@ export interface User {
   username: string
   password: string
   role: 'admin' | 'employee'
-  employee_type?: 'chinese_employee' | 'japanese_employee' // 员工身份：中方员工/日方员工
   country?: string // 国家
   created_at: string
 }

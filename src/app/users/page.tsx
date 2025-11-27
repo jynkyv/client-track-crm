@@ -122,15 +122,6 @@ export default function UsersPage() {
       ),
     },
     {
-      title: '身份',
-      dataIndex: 'employee_type',
-      key: 'employee_type',
-      render: (type: string, record: User) => {
-        if (record.role === 'admin') return '-'
-        return type === 'chinese_employee' ? '中方员工' : type === 'japanese_employee' ? '日方员工' : '-'
-      },
-    },
-    {
       title: '国家',
       dataIndex: 'country',
       key: 'country',
@@ -244,40 +235,14 @@ export default function UsersPage() {
           </Form.Item>
 
           <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) => prevValues.role !== currentValues.role}
+            name="country"
+            label="国家"
+            rules={[{ required: true, message: '请选择国家' }]}
           >
-            {({ getFieldValue }) => {
-              const role = getFieldValue('role')
-              if (role === 'employee') {
-                return (
-                  <>
-                    <Form.Item
-                      name="employee_type"
-                      label="身份"
-                      rules={[{ required: true, message: '请选择身份' }]}
-                    >
-                      <Select placeholder="请选择身份">
-                        <Option value="chinese_employee">中方员工</Option>
-                        <Option value="japanese_employee">日方员工</Option>
-                      </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                      name="country"
-                      label="国家"
-                      rules={[{ required: true, message: '请选择国家' }]}
-                    >
-                      <Select placeholder="请选择国家">
-                        <Option value="中国">中国</Option>
-                        <Option value="日本">日本</Option>
-                      </Select>
-                    </Form.Item>
-                  </>
-                )
-              }
-              return null
-            }}
+            <Select placeholder="请选择国家">
+              <Option value="中国">中国</Option>
+              <Option value="日本">日本</Option>
+            </Select>
           </Form.Item>
 
           <Form.Item>
