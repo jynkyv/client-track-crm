@@ -10,7 +10,7 @@ import Link from 'next/link'
 const { Header, Sider, Content } = Layout
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, logout, isAdmin } = useAuth()
+  const { user, loading, logout, isAdmin, canAccessCustomers, canAccessCompanies, canAccessTasks } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -41,7 +41,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       icon: <HomeOutlined />,
       label: <Link href="/dashboard">仪表板</Link>,
     },
-    {
+    ...(canAccessCustomers ? [{
       key: 'customers',
       icon: <TeamOutlined />,
       label: '客户管理',
@@ -57,17 +57,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           label: <Link href="/customers/contract">正式客户管理</Link>,
         },
       ],
-    },
-    {
+    }] : []),
+    ...(canAccessCompanies ? [{
       key: 'companies',
       icon: <BankOutlined />,
       label: <Link href="/companies">企业管理</Link>,
-    },
-    {
+    }] : []),
+    ...(canAccessTasks ? [{
       key: 'tasks',
       icon: <CheckSquareOutlined />,
       label: <Link href="/tasks">任务中心</Link>,
-    },
+    }] : []),
     ...(isAdmin ? [{
       key: 'users',
       icon: <UserAddOutlined />,
@@ -161,7 +161,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             placement="bottomRight"
           >
             <Button type="text" icon={<UserOutlined />}>
-              {user.username} ({user.role === 'admin' ? '管理员' : '员工'})
+              {user.username} ({user.role === 'admin' ? '管理员' : user.employee_type === 'chinese_employee' ? '中方员工' : user.employee_type === 'japanese_employee' ? '日方员工' : '员工'})
             </Button>
           </Dropdown>
         </Header>

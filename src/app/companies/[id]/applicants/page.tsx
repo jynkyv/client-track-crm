@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 import { 
   Card, 
   Button, 
@@ -75,6 +76,7 @@ interface Applicant {
 export default function ApplicantsPage() {
   const params = useParams()
   const router = useRouter()
+  const { canAccessCompanies } = useAuth()
   const companyId = params.id as string
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [applicants, setApplicants] = useState<Applicant[]>([])

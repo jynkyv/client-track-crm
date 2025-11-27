@@ -21,6 +21,7 @@ import {
 } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 const { Option } = Select
 
@@ -38,6 +39,7 @@ interface Task {
 
 export default function TasksPage() {
   const router = useRouter()
+  const { canAccessTasks, isChineseEmployee, isJapaneseEmployee } = useAuth()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [tasks, setTasks] = useState<Task[]>([])

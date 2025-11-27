@@ -648,6 +648,17 @@ export default function CustomersPage() {
     },
   ]
 
+  if (!canAccessCustomers) {
+    return (
+      <Card>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <h2>权限不足</h2>
+          <p>您没有权限访问此页面</p>
+        </div>
+      </Card>
+    )
+  }
+
   return (
     <div>
       <Card>

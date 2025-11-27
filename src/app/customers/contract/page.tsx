@@ -53,7 +53,7 @@ export default function ContractCustomersPage() {
   const [statusForm] = Form.useForm()
   const [paymentForm] = Form.useForm()
   const [bindForm] = Form.useForm()
-  const { isAdmin, user } = useAuth()
+  const { isAdmin, user, canAccessCustomers } = useAuth()
   const router = useRouter()
 
   // 筛选和搜索状态

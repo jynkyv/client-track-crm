@@ -29,6 +29,7 @@ import {
 import type { MenuProps } from 'antd'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 const { Option } = Select
 
@@ -46,6 +47,7 @@ interface Company {
 
 export default function CompaniesPage() {
   const router = useRouter()
+  const { canAccessCompanies } = useAuth()
   const [form] = Form.useForm()
   const [searchForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
@@ -323,6 +325,17 @@ export default function CompaniesPage() {
       )
     }
   ]
+
+  if (!canAccessCompanies) {
+    return (
+      <Card>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <h2>权限不足</h2>
+          <p>您没有权限访问此页面</p>
+        </div>
+      </Card>
+    )
+  }
 
   return (
     <div>

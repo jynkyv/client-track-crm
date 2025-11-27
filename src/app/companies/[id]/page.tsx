@@ -22,6 +22,7 @@ import {
   FilePdfOutlined
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface CompanyDetail {
   id: string
@@ -45,6 +46,7 @@ interface CompanyDetail {
 export default function CompanyDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { canAccessCompanies } = useAuth()
   const companyId = params.id as string
   const [company, setCompany] = useState<CompanyDetail | null>(null)
   const [loading, setLoading] = useState(false)
