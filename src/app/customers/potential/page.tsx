@@ -39,6 +39,9 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [completeDrawerVisible, setCompleteDrawerVisible] = useState(false)
   const [completingCustomer, setCompletingCustomer] = useState<Customer | null>(null)
+  const [companies, setCompanies] = useState<Array<{id: string, name: string}>>([])
+  const [workOrders, setWorkOrders] = useState<Array<{id: string, name: string, company_id: string}>>([])
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [form] = Form.useForm()
   const [followUpForm] = Form.useForm()
   const [completeForm] = Form.useForm()
@@ -148,6 +151,57 @@ export default function CustomersPage() {
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
+
+  // 获取企业列表
+  const fetchCompanies = useCallback(async () => {
+    try {
+      // TODO: 从数据库获取企业列表
+      // 目前使用模拟数据
+      const mockCompanies = [
+        { id: '1', name: '示例企业A' },
+        { id: '2', name: '示例企业B' },
+      ]
+      setCompanies(mockCompanies)
+    } catch (error) {
+      console.error('获取企业列表失败:', error)
+    }
+  }, [])
+
+  // 获取工单列表（根据企业ID）
+  const fetchWorkOrders = useCallback(async (companyId: string) => {
+    if (!companyId) {
+      setWorkOrders([])
+      return
+    }
+    try {
+      // TODO: 从数据库获取工单列表
+      // 目前使用模拟数据
+      const mockWorkOrders = [
+        { id: '1', name: '工单A', company_id: '1' },
+        { id: '2', name: '工单B', company_id: '1' },
+        { id: '3', name: '工单C', company_id: '2' },
+      ]
+      const filtered = mockWorkOrders.filter(wo => wo.company_id === companyId)
+      setWorkOrders(filtered)
+    } catch (error) {
+      console.error('获取工单列表失败:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCompanies()
+  }, [fetchCompanies])
+
+  // 当选择企业时，加载对应的工单列表
+  useEffect(() => {
+    if (selectedCompanyId) {
+      fetchWorkOrders(selectedCompanyId)
+      // 清空已选择的工单
+      completeForm.setFieldsValue({ work_order_id: undefined })
+    } else {
+      setWorkOrders([])
+    }
+  }, [selectedCompanyId, fetchWorkOrders, completeForm])
 
   // 处理分页变化
   const handleTableChange: TableProps<Customer>['onChange'] = (pagination, filters, sorter) => {
@@ -272,8 +326,22 @@ export default function CustomersPage() {
   // 处理"已完成"按钮点击
   const handleComplete = (record: Customer) => {
     setCompletingCustomer(record)
+    setSelectedCompanyId('')
+    setWorkOrders([])
     completeForm.resetFields()
     setCompleteDrawerVisible(true)
+  }
+
+  // 处理企业选择变化
+  const handleCompanyChange = (companyId: string) => {
+    setSelectedCompanyId(companyId)
+    completeForm.setFieldsValue({ work_order_id: undefined })
+  }
+
+  // 处理企业选择变化
+  const handleCompanyChange = (companyId: string) => {
+    setSelectedCompanyId(companyId)
+    completeForm.setFieldsValue({ work_order_id: undefined })
   }
 
   // 处理补充信息提交
@@ -296,6 +364,8 @@ export default function CustomersPage() {
         wechat: values.wechat?.trim() || null,
         emergency_contact: values.emergency_contact?.trim() || null,
         emergency_phone: values.emergency_phone?.trim() || null,
+        company_id: values.company_id || null,
+        work_order_id: values.work_order_id || null,
         stage2_status: '待面试',
         wallet_balance: 0
       }
@@ -1075,6 +1145,46 @@ export default function CustomersPage() {
                   style={{ width: '100%' }}
                   addonAfter="元/小时"
                 />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="company_id"
+                label="关联企业"
+                rules={[{ required: true, message: '请选择关联企业' }]}
+              >
+                <Select 
+                  placeholder="请选择关联企业"
+                  onChange={handleCompanyChange}
+                  allowClear
+                >
+                  {companies.map(company => (
+                    <Option key={company.id} value={company.id}>
+                      {company.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="work_order_id"
+                label="关联工单"
+                rules={[{ required: true, message: '请选择关联工单' }]}
+              >
+                <Select 
+                  placeholder={selectedCompanyId ? "请选择关联工单" : "请先选择关联企业"}
+                  disabled={!selectedCompanyId || workOrders.length === 0}
+                >
+                  {workOrders.map(workOrder => (
+                    <Option key={workOrder.id} value={workOrder.id}>
+                      {workOrder.name}
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
