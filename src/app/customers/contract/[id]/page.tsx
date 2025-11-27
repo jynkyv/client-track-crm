@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { 
   Card, 
   Button, 
@@ -11,7 +11,11 @@ import {
   Upload,
   message,
   Space,
-  Modal
+  Modal,
+  Form,
+  Input,
+  Select,
+  DatePicker
 } from 'antd'
 import { 
   EditOutlined, 
@@ -21,7 +25,8 @@ import {
   DeleteOutlined
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 
 interface CustomerDetail {
   id: string
@@ -51,13 +56,25 @@ interface CustomerDetail {
 export default function CustomerDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const customerId = params.id as string
   const [customer, setCustomer] = useState<CustomerDetail | null>(null)
   const [loading, setLoading] = useState(false)
-  const [editDrawerVisible, setEditDrawerVisible] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [fileList, setFileList] = useState<any[]>([])
+  const [form] = Form.useForm()
+
+  // 检查URL参数，如果包含edit=true，自动进入编辑模式
+  useEffect(() => {
+    const editParam = searchParams.get('edit')
+    if (editParam === 'true') {
+      setIsEditing(true)
+      // 移除URL参数
+      router.replace(`/customers/contract/${customerId}`)
+    }
+  }, [searchParams, customerId, router])
 
   // 获取客户详情
   useEffect(() => {
@@ -71,7 +88,20 @@ export default function CustomerDetailPage() {
           .single()
 
         if (error) throw error
-        setCustomer(data as any)
+        const customerData = data as any
+        setCustomer(customerData)
+        // 设置表单初始值
+        form.setFieldsValue({
+          real_name: customerData.real_name,
+          gender: customerData.gender,
+          birth_date: customerData.birth_date ? dayjs(customerData.birth_date) : null,
+          household_location: customerData.household_location,
+          current_residence: customerData.current_residence,
+          contact: customerData.contact,
+          wechat: customerData.wechat,
+          emergency_contact: customerData.emergency_contact,
+          emergency_phone: customerData.emergency_phone,
+        })
       } catch (error) {
         message.error('获取客户详情失败')
       } finally {
@@ -82,7 +112,7 @@ export default function CustomerDetailPage() {
     if (customerId) {
       fetchCustomer()
     }
-  }, [customerId])
+  }, [customerId, form])
 
   // 查看多个PDF
   const handleViewPdfs = (urls?: string[]) => {
@@ -164,6 +194,82 @@ export default function CustomerDetailPage() {
     }
   }
 
+  // 处理编辑
+  const handleEdit = () => {
+    setIsEditing(true)
+  }
+
+  // 取消编辑
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    // 重置表单
+    if (customer) {
+      form.setFieldsValue({
+        real_name: customer.real_name,
+        gender: customer.gender,
+        birth_date: customer.birth_date ? dayjs(customer.birth_date) : null,
+        household_location: customer.household_location,
+        current_residence: customer.current_residence,
+        contact: customer.contact,
+        wechat: customer.wechat,
+        emergency_contact: customer.emergency_contact,
+        emergency_phone: customer.emergency_phone,
+      })
+    }
+  }
+
+  // 提交编辑
+  const handleSaveEdit = async (values: any) => {
+    if (!customer) return
+
+    try {
+      const updateData: any = {
+        real_name: values.real_name,
+        gender: values.gender,
+        birth_date: values.birth_date ? values.birth_date.format('YYYY-MM-DD') : null,
+        household_location: values.household_location,
+        current_residence: values.current_residence,
+        contact: values.contact,
+        wechat: values.wechat,
+        emergency_contact: values.emergency_contact,
+        emergency_phone: values.emergency_phone,
+      }
+
+      const { error } = await supabase
+        .from('customers')
+        .update(updateData)
+        .eq('id', customer.id)
+
+      if (error) throw error
+      message.success('更新成功')
+      setIsEditing(false)
+      // 刷新数据
+      const { data, error: fetchError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', customerId)
+        .single()
+
+      if (fetchError) throw fetchError
+      const customerData = data as any
+      setCustomer(customerData)
+      // 更新表单值
+      form.setFieldsValue({
+        real_name: customerData.real_name,
+        gender: customerData.gender,
+        birth_date: customerData.birth_date ? dayjs(customerData.birth_date) : null,
+        household_location: customerData.household_location,
+        current_residence: customerData.current_residence,
+        contact: customerData.contact,
+        wechat: customerData.wechat,
+        emergency_contact: customerData.emergency_contact,
+        emergency_phone: customerData.emergency_phone,
+      })
+    } catch {
+      message.error('更新失败')
+    }
+  }
+
   const documentFields = [
     { key: 'resume', label: '原始简历' },
     { key: 'passport', label: '护照' },
@@ -200,28 +306,145 @@ export default function CustomerDetailPage() {
       <Card
         title="客户详情"
         extra={
-          <Button 
-            type="primary" 
-            icon={<EditOutlined />}
-            onClick={() => setEditDrawerVisible(true)}
-          >
-            编辑
-          </Button>
+          !isEditing ? (
+            <Button 
+              type="primary" 
+              icon={<EditOutlined />}
+              onClick={handleEdit}
+            >
+              编辑
+            </Button>
+          ) : (
+            <Space>
+              <Button onClick={handleCancelEdit}>
+                取消
+              </Button>
+              <Button 
+                type="primary"
+                onClick={() => form.submit()}
+              >
+                保存
+              </Button>
+            </Space>
+          )
         }
       >
-        <Descriptions bordered column={2}>
-          <Descriptions.Item label="姓名">{customer.real_name || '-'}</Descriptions.Item>
-          <Descriptions.Item label="性别">
-            {customer.gender === 'male' ? '男' : customer.gender === 'female' ? '女' : customer.gender || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="出生年月日">{customer.birth_date || '-'}</Descriptions.Item>
-          <Descriptions.Item label="户籍所在地">{customer.household_location || '-'}</Descriptions.Item>
-          <Descriptions.Item label="现居住地">{customer.current_residence || '-'}</Descriptions.Item>
-          <Descriptions.Item label="联系方式">{customer.contact || '-'}</Descriptions.Item>
-          <Descriptions.Item label="实名微信号">{customer.wechat || '-'}</Descriptions.Item>
-          <Descriptions.Item label="紧急联系人">{customer.emergency_contact || '-'}</Descriptions.Item>
-          <Descriptions.Item label="紧急联系人电话" span={2}>{customer.emergency_phone || '-'}</Descriptions.Item>
-        </Descriptions>
+        {!isEditing ? (
+          <Descriptions bordered column={2}>
+            <Descriptions.Item label="姓名">{customer.real_name || '-'}</Descriptions.Item>
+            <Descriptions.Item label="性别">
+              {customer.gender === 'male' ? '男' : customer.gender === 'female' ? '女' : customer.gender || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="出生年月日">{customer.birth_date || '-'}</Descriptions.Item>
+            <Descriptions.Item label="户籍所在地">{customer.household_location || '-'}</Descriptions.Item>
+            <Descriptions.Item label="现居住地">{customer.current_residence || '-'}</Descriptions.Item>
+            <Descriptions.Item label="联系方式">{customer.contact || '-'}</Descriptions.Item>
+            <Descriptions.Item label="实名微信号">{customer.wechat || '-'}</Descriptions.Item>
+            <Descriptions.Item label="紧急联系人">{customer.emergency_contact || '-'}</Descriptions.Item>
+            <Descriptions.Item label="紧急联系人电话" span={2}>{customer.emergency_phone || '-'}</Descriptions.Item>
+          </Descriptions>
+        ) : (
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSaveEdit}
+          >
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="real_name"
+                  label="姓名"
+                  rules={[{ required: true, message: '请输入姓名' }]}
+                >
+                  <Input placeholder="请输入姓名" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="gender"
+                  label="性别"
+                >
+                  <Select placeholder="请选择性别">
+                    <Select.Option value="male">男</Select.Option>
+                    <Select.Option value="female">女</Select.Option>
+                    <Select.Option value="other">其他</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="birth_date"
+                  label="出生年月日"
+                >
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    placeholder="请选择出生年月日"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="household_location"
+                  label="户籍所在地"
+                >
+                  <Input placeholder="请输入户籍所在地" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="current_residence"
+                  label="现居住地"
+                >
+                  <Input placeholder="请输入现居住地" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="contact"
+                  label="联系方式"
+                >
+                  <Input placeholder="请输入联系方式" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="wechat"
+                  label="实名微信号"
+                >
+                  <Input placeholder="请输入实名微信号" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="emergency_contact"
+                  label="紧急联系人"
+                >
+                  <Input placeholder="请输入紧急联系人" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="emergency_phone"
+                  label="紧急联系人电话"
+                >
+                  <Input placeholder="请输入紧急联系人电话" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        )}
 
         <div style={{ marginTop: 24 }}>
           <h3 style={{ marginBottom: 16 }}>文档资料</h3>
@@ -278,8 +501,6 @@ export default function CustomerDetailPage() {
           </Row>
         </div>
       </Card>
-
-      {/* 编辑功能在列表页面的Drawer中实现 */}
 
       {/* 上传PDF Modal */}
       <Modal
