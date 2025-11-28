@@ -39,6 +39,26 @@ export interface Customer {
   stage2_status?: '待面试' | '已通知面试' | '面试通过' | '面试失败' | '培训中' | '已完成'
   interview_notice_time?: string
   last_payment_time?: string
+  // 个人信息字段
+  birth_date?: string
+  household_location?: string
+  current_residence?: string
+  wechat?: string
+  emergency_contact?: string
+  emergency_phone?: string
+  // 文档字段（多文件，TEXT[]）
+  resume?: string[]
+  passport?: string[]
+  household_book?: string[]
+  id_card?: string[]
+  photo_2inch?: string[]
+  credit_report?: string[]
+  no_crime_cert?: string[]
+  national_cert?: string[]
+  provincial_cert?: string[]
+  employment_contract?: string[]
+  japan_agency_contract?: string[]
+  immigration_materials?: string[]
   created_at: string
   updated_at: string
 }
