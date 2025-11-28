@@ -255,18 +255,46 @@ export default function CompanyDetailPage() {
           </Descriptions>
         )}
 
-        <div style={{ marginTop: 24 }}>
-          <h3 style={{ marginBottom: 16 }}>企业文档</h3>
-          <Row gutter={[16, 16]}>
-            {documentFields.map((field) => {
-              const urls = company?.[field.key as keyof CompanyDetail] as string[] | undefined
-              const fileCount = urls?.length || 0
-              return (
-                <Col xs={24} sm={12} md={8} key={field.key}>
-                  <Card size="small">
-                    <div style={{ marginBottom: 8, fontWeight: 500 }}>{field.label}</div>
-                    <Space>
-                      {!isReadOnly && (
+        {isReadOnly ? (
+          // 中方员工：显示工单信息
+          <div style={{ marginTop: 24 }}>
+            <h3 style={{ marginBottom: 16 }}>工单信息</h3>
+            {workOrders.length > 0 ? (
+              <Row gutter={[16, 16]}>
+                {workOrders.map((workOrder) => (
+                  <Col xs={24} sm={12} md={8} key={workOrder.id}>
+                    <Card size="small" title={workOrder.name}>
+                      <Descriptions column={1} size="small">
+                        <Descriptions.Item label="岗位名称">{workOrder.position || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="招聘人数">{workOrder.recruit_count ? `${workOrder.recruit_count}人` : '-'}</Descriptions.Item>
+                        <Descriptions.Item label="薪资">{workOrder.salary || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="工作时间">{workOrder.work_time || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="休息天数">{workOrder.rest_days || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="工作待遇">{workOrder.benefits || '-'}</Descriptions.Item>
+                      </Descriptions>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+                暂无工单信息
+              </div>
+            )}
+          </div>
+        ) : (
+          // 日方员工/管理员：显示企业文档
+          <div style={{ marginTop: 24 }}>
+            <h3 style={{ marginBottom: 16 }}>企业文档</h3>
+            <Row gutter={[16, 16]}>
+              {documentFields.map((field) => {
+                const urls = company?.[field.key as keyof CompanyDetail] as string[] | undefined
+                const fileCount = urls?.length || 0
+                return (
+                  <Col xs={24} sm={12} md={8} key={field.key}>
+                    <Card size="small">
+                      <div style={{ marginBottom: 8, fontWeight: 500 }}>{field.label}</div>
+                      <Space>
                         <Button 
                           size="small" 
                           icon={<UploadOutlined />}
@@ -274,22 +302,22 @@ export default function CompanyDetailPage() {
                         >
                           上传
                         </Button>
-                      )}
-                      <Button 
-                        size="small" 
-                        icon={<FilePdfOutlined />}
-                        onClick={() => handleViewPdfs(urls)}
-                        disabled={fileCount === 0}
-                      >
-                        查看{fileCount > 0 ? `(${fileCount})` : ''}
-                      </Button>
-                    </Space>
-                  </Card>
-                </Col>
-              )
-            })}
-          </Row>
-        </div>
+                        <Button 
+                          size="small" 
+                          icon={<FilePdfOutlined />}
+                          onClick={() => handleViewPdfs(urls)}
+                          disabled={fileCount === 0}
+                        >
+                          查看{fileCount > 0 ? `(${fileCount})` : ''}
+                        </Button>
+                      </Space>
+                    </Card>
+                  </Col>
+                )
+              })}
+            </Row>
+          </div>
+        )}
       </Card>
 
       {/* 编辑Modal */}
