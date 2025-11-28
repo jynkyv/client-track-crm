@@ -107,17 +107,60 @@ export default function ApplicantsPage() {
     }
   }
 
-  // 获取求职者列表
+  // 获取求职者列表（包括applicants表和customers表中已绑定工单的客户）
   const fetchApplicants = async (workOrderId: string) => {
     try {
-      const { data, error } = await supabase
+      // 从applicants表获取
+      const { data: applicantsData, error: applicantsError } = await supabase
         .from('applicants')
         .select('*')
         .eq('work_order_id', workOrderId)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      setApplicants(data || [])
+      if (applicantsError) throw applicantsError
+
+      // 从customers表获取已绑定该工单的正式客户
+      const { data: customersData, error: customersError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('work_order_id', workOrderId)
+        .not('real_name', 'is', null) // 只获取正式客户（有real_name的）
+        .order('created_at', { ascending: false })
+
+      if (customersError) throw customersError
+
+      // 将customers数据转换为applicants格式
+      const customersAsApplicants: Applicant[] = (customersData || []).map(customer => ({
+        id: customer.id,
+        work_order_id: customer.work_order_id || '',
+        name: customer.real_name || customer.nickname || '',
+        gender: customer.gender === 'male' ? '男' : customer.gender === 'female' ? '女' : customer.gender || '',
+        birth_date: customer.birth_date || '',
+        household_location: customer.household_location || '',
+        current_residence: customer.current_residence || '',
+        contact: customer.contact || customer.phone || '',
+        wechat: customer.wechat || '',
+        emergency_contact: customer.emergency_contact || '',
+        emergency_phone: customer.emergency_phone || '',
+        manager_name: '', // customers表中没有这个字段
+        status: customer.stage2_status || '',
+        resume: Array.isArray(customer.resume) ? customer.resume[0] : customer.resume || '',
+        passport: Array.isArray(customer.passport) ? customer.passport[0] : customer.passport || '',
+        household_book: Array.isArray(customer.household_book) ? customer.household_book[0] : customer.household_book || '',
+        id_card: Array.isArray(customer.id_card) ? customer.id_card[0] : customer.id_card || '',
+        photo_2inch: Array.isArray(customer.photo_2inch) ? customer.photo_2inch[0] : customer.photo_2inch || '',
+        credit_report: Array.isArray(customer.credit_report) ? customer.credit_report[0] : customer.credit_report || '',
+        no_crime_cert: Array.isArray(customer.no_crime_cert) ? customer.no_crime_cert[0] : customer.no_crime_cert || '',
+        national_cert: Array.isArray(customer.national_cert) ? customer.national_cert[0] : customer.national_cert || '',
+        provincial_cert: Array.isArray(customer.provincial_cert) ? customer.provincial_cert[0] : customer.provincial_cert || '',
+        employment_contract: Array.isArray(customer.employment_contract) ? customer.employment_contract[0] : customer.employment_contract || '',
+        japan_agency_contract: Array.isArray(customer.japan_agency_contract) ? customer.japan_agency_contract[0] : customer.japan_agency_contract || '',
+        immigration_materials: Array.isArray(customer.immigration_materials) ? customer.immigration_materials[0] : customer.immigration_materials || '',
+      }))
+
+      // 合并两个列表
+      const allApplicants = [...(applicantsData || []), ...customersAsApplicants]
+      setApplicants(allApplicants)
     } catch (error) {
       console.error('获取求职者列表失败:', error)
       message.error('获取求职者列表失败')
