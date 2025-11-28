@@ -50,6 +50,7 @@ export default function CompanyDetailPage() {
   const companyId = params.id as string
   const isReadOnly = isChineseEmployee && !isAdmin // 中方员工（非管理员）只能查看
   const [company, setCompany] = useState<CompanyDetail | null>(null)
+  const [workOrders, setWorkOrders] = useState<Array<{id: string, name: string, position: string, recruit_count: number, salary: string, work_time: string, rest_days: string, benefits: string}>>([])
   const [loading, setLoading] = useState(false)
   const [editModalVisible, setEditModalVisible] = useState(false)
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
@@ -76,11 +77,31 @@ export default function CompanyDetailPage() {
     }
   }
 
+  // 获取工单列表
+  const fetchWorkOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('work_orders')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setWorkOrders(data || [])
+    } catch (error) {
+      console.error('获取工单列表失败:', error)
+    }
+  }
+
   useEffect(() => {
     if (companyId) {
       fetchCompany()
+      if (isReadOnly) {
+        // 中方员工需要加载工单信息
+        fetchWorkOrders()
+      }
     }
-  }, [companyId])
+  }, [companyId, isReadOnly])
 
   // 查看多个PDF
   const handleViewPdfs = (urls?: string[]) => {
