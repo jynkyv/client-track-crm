@@ -1,25 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Table, 
-  Button, 
-  Form, 
-  Input, 
-  Select, 
-  Space, 
+import {
+  Table,
+  Button,
+  Form,
+  Input,
+  Select,
+  Space,
   Card,
-  Dropdown,
   Upload,
   Modal,
   message,
   List
 } from 'antd'
 import type { UploadFile } from 'antd'
-import { 
-  PlusOutlined, 
-  SearchOutlined, 
-  MoreOutlined, 
+import {
+  PlusOutlined,
+  SearchOutlined,
   EyeOutlined,
   UploadOutlined,
   FilePdfOutlined,
@@ -29,6 +27,7 @@ import type { MenuProps } from 'antd'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { getFileUrl } from '@/lib/utils'
 
 const { Option } = Select
 
@@ -115,28 +114,47 @@ export default function CompaniesPage() {
   }
 
   // 处理文件上传
-  const handleUploadChange = (info: any) => {
-    let newFileList = [...info.fileList]
-    
-    // 限制文件数量，只显示最近上传的文件
-    newFileList = newFileList.slice(-10)
-    
-    // 读取响应并显示文件链接
-    newFileList = newFileList.map((file) => {
-      if (file.response) {
-        // 组件会将 file.url 或 file.thumbUrl 作为链接
-        file.url = file.response.url
+  const handleUploadRequest = async (options: any) => {
+    const { file, onSuccess, onError } = options
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('上传失败')
       }
-      return file
-    })
-    
-    setFileList(newFileList)
-    
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} 上传成功`)
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 上传失败`)
+
+      const { url } = await response.json()
+
+      // 更新文件列表
+      setFileList(prev => {
+        const newFile = {
+          uid: file.uid,
+          name: file.name,
+          status: 'done',
+          url: getFileUrl(url),
+          response: { url }
+        } as UploadFile
+        return [...prev, newFile]
+      })
+
+      onSuccess({ url })
+      message.success(`${file.name} 上传成功`)
+    } catch (error) {
+      console.error('上传失败:', error)
+      onError(error)
+      message.error(`${file.name} 上传失败`)
     }
+  }
+
+  // 处理文件移除
+  const handleRemove = (file: UploadFile) => {
+    setFileList(prev => prev.filter(f => f.uid !== file.uid))
   }
 
   // 确认上传
@@ -159,7 +177,7 @@ export default function CompaniesPage() {
 
       // 获取当前字段的现有文件列表
       const currentFiles = (currentCompany[currentUploadField as keyof Company] as string[]) || []
-      
+
       // 合并新旧文件列表
       const updatedFiles = [...currentFiles, ...uploadedUrls]
 
@@ -187,26 +205,9 @@ export default function CompaniesPage() {
       return
     }
     urls.forEach(url => {
-      window.open(url, '_blank')
+      window.open(getFileUrl(url), '_blank')
     })
   }
-
-  // 操作菜单
-  const getActionMenu = (record: Company): MenuProps => ({
-    items: [
-      {
-        key: 'view',
-        label: '查看',
-        icon: <EyeOutlined />,
-        onClick: () => router.push(`/companies/${record.id}`)
-      },
-      {
-        key: 'applicants',
-        label: '求职者信息',
-        onClick: () => router.push(`/companies/${record.id}/applicants`)
-      }
-    ]
-  })
 
   // PDF操作列渲染
   const renderPdfColumn = (field: string, record: Company) => {
@@ -214,15 +215,15 @@ export default function CompaniesPage() {
     const fileCount = urls?.length || 0
     return (
       <Space>
-        <Button 
-          size="small" 
+        <Button
+          size="small"
           icon={<UploadOutlined />}
           onClick={() => handleUpload(field, record)}
         >
           上传
         </Button>
-        <Button 
-          size="small" 
+        <Button
+          size="small"
           icon={<FilePdfOutlined />}
           onClick={() => handleViewPdfs(urls)}
           disabled={fileCount === 0}
@@ -296,9 +297,13 @@ export default function CompaniesPage() {
       width: 100,
       align: 'center' as const,
       render: (_: any, record: Company) => (
-        <Dropdown menu={getActionMenu(record)} trigger={['hover']}>
-          <Button type="text" icon={<MoreOutlined />} />
-        </Dropdown>
+        <Button
+          type="link"
+          icon={<EyeOutlined />}
+          onClick={() => router.push(`/companies/${record.id}`)}
+        >
+          查看详情
+        </Button>
       )
     }
   ]
@@ -379,12 +384,12 @@ export default function CompaniesPage() {
 
       {/* 上传PDF Modal */}
       <Modal
-        title={`上传${currentUploadField === 'teihon' ? '藤本' : 
-                currentUploadField === 'financial_report' ? '决算报告书' :
-                currentUploadField === 'industry_license' ? '行业许可证' :
-                currentUploadField === 'gmo_contract' ? 'GMO合同' :
+        title={`上传${currentUploadField === 'teihon' ? '藤本' :
+          currentUploadField === 'financial_report' ? '决算报告书' :
+            currentUploadField === 'industry_license' ? '行业许可证' :
+              currentUploadField === 'gmo_contract' ? 'GMO合同' :
                 currentUploadField === 'otit_materials' ? 'OTIT资料' :
-                currentUploadField === 'central_materials' ? '中央会资料' : '文件'}`}
+                  currentUploadField === 'central_materials' ? '中央会资料' : '文件'}`}
         open={uploadModalVisible}
         onCancel={() => {
           setUploadModalVisible(false)
@@ -396,20 +401,13 @@ export default function CompaniesPage() {
         width={600}
       >
         <Upload
-          accept=".pdf"
+          accept=".pdf,.jpg,.jpeg,.png"
           multiple
           fileList={fileList}
-          onChange={handleUploadChange}
-          beforeUpload={(file) => {
-            // TODO: 实际上传文件到服务器
-            // 这里先模拟上传成功
-            setTimeout(() => {
-              message.success(`${file.name} 上传成功`)
-            }, 1000)
-            return false // 阻止自动上传，手动处理
-          }}
+          customRequest={handleUploadRequest}
+          onRemove={handleRemove}
         >
-          <Button icon={<UploadOutlined />}>选择PDF文件（可多选）</Button>
+          <Button icon={<UploadOutlined />}>选择文件（可多选）</Button>
         </Upload>
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
           支持一次选择多个PDF文件上传

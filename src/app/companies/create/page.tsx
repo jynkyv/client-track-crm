@@ -2,26 +2,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Card, 
-  Button, 
-  Form, 
-  Input, 
+import {
+  Card,
+  Button,
+  Form,
+  Input,
   InputNumber,
-  Row, 
-  Col, 
+  Row,
+  Col,
   Upload,
   message,
   Space
 } from 'antd'
 import type { UploadFile } from 'antd'
-import { 
+import {
   ArrowLeftOutlined,
   UploadOutlined,
   FilePdfOutlined
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { getFileUrl } from '@/lib/utils'
 
 const { TextArea } = Input
 
@@ -57,31 +58,58 @@ export default function CreateCompanyPage() {
     )
   }
 
-  // 处理文件上传变化
-  const handleUploadChange = (field: string, info: any) => {
-    let newFileList = [...info.fileList]
-    
-    // 限制文件数量，只显示最近上传的文件
-    newFileList = newFileList.slice(-10)
-    
-    // 读取响应并显示文件链接
-    newFileList = newFileList.map((file) => {
-      if (file.response) {
-        file.url = file.response.url
+  // 处理文件上传
+  const handleUpload = async (options: any, field: string) => {
+    const { file, onSuccess, onError } = options
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('上传失败')
       }
-      return file
-    })
-    
-    setFileLists(prev => ({
-      ...prev,
-      [field]: newFileList
-    }))
-    
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} 上传成功`)
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 上传失败`)
+
+      const { url } = await response.json()
+
+      // 更新文件列表
+      setFileLists(prev => {
+        const currentList = prev[field] || []
+        const newFile = {
+          uid: file.uid,
+          name: file.name,
+          status: 'done',
+          url: getFileUrl(url), // Use getFileUrl to construct the public URL
+          response: { url } // Store the raw path/key in response
+        } as UploadFile
+        return {
+          ...prev,
+          [field]: [...currentList, newFile]
+        }
+      })
+
+      onSuccess({ url })
+      message.success(`${file.name} 上传成功`)
+    } catch (error) {
+      console.error('上传失败:', error)
+      onError(error)
+      message.error(`${file.name} 上传失败`)
     }
+  }
+
+  // 处理文件移除
+  const handleRemove = (file: UploadFile, field: string) => {
+    setFileLists(prev => {
+      const currentList = prev[field] || []
+      return {
+        ...prev,
+        [field]: currentList.filter(f => f.uid !== file.uid)
+      }
+    })
   }
 
   // 提交表单
@@ -121,7 +149,7 @@ export default function CreateCompanyPage() {
         .single()
 
       if (error) throw error
-      
+
       message.success('创建企业成功')
       router.push(`/companies/${data.id}`)
     } catch (error) {
@@ -134,8 +162,8 @@ export default function CreateCompanyPage() {
 
   return (
     <div>
-      <Button 
-        icon={<ArrowLeftOutlined />} 
+      <Button
+        icon={<ArrowLeftOutlined />}
         onClick={() => router.back()}
         style={{ marginBottom: 16 }}
       >
@@ -220,8 +248,8 @@ export default function CreateCompanyPage() {
                 name="address"
                 label="公司地址"
               >
-                <TextArea 
-                  placeholder="请输入公司地址" 
+                <TextArea
+                  placeholder="请输入公司地址"
                   rows={2}
                 />
               </Form.Item>
@@ -260,10 +288,10 @@ export default function CreateCompanyPage() {
                 >
                   <Upload
                     fileList={fileLists[field.key] || []}
-                    onChange={(info) => handleUploadChange(field.key, info)}
+                    customRequest={(options) => handleUpload(options, field.key)}
+                    onRemove={(file) => handleRemove(file, field.key)}
                     multiple
-                    beforeUpload={() => false}
-                    accept=".pdf"
+                    accept=".pdf,.jpg,.jpeg,.png"
                   >
                     <Button icon={<UploadOutlined />}>
                       上传文件

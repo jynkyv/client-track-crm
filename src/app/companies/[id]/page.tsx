@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { 
-  Card, 
-  Button, 
-  Row, 
-  Col, 
-  Descriptions, 
+import {
+  Card,
+  Button,
+  Row,
+  Col,
+  Descriptions,
   Upload,
   message,
   Space,
@@ -15,14 +15,15 @@ import {
   List
 } from 'antd'
 import type { UploadFile } from 'antd'
-import { 
-  EditOutlined, 
+import {
+  EditOutlined,
   ArrowLeftOutlined,
   UploadOutlined,
   FilePdfOutlined
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { getFileUrl } from '@/lib/utils'
 
 interface CompanyDetail {
   id: string
@@ -50,7 +51,7 @@ export default function CompanyDetailPage() {
   const companyId = params.id as string
   const isReadOnly = isChineseEmployee && !isAdmin // 中方员工（非管理员）只能查看
   const [company, setCompany] = useState<CompanyDetail | null>(null)
-  const [workOrders, setWorkOrders] = useState<Array<{id: string, name: string, position: string, recruit_count: number, salary: string, work_time: string, rest_days: string, benefits: string}>>([])
+  const [workOrders, setWorkOrders] = useState<Array<{ id: string, name: string, position: string, recruit_count: number, salary: string, work_time: string, rest_days: string, benefits: string }>>([])
   const [loading, setLoading] = useState(false)
   const [editModalVisible, setEditModalVisible] = useState(false)
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
@@ -96,12 +97,9 @@ export default function CompanyDetailPage() {
   useEffect(() => {
     if (companyId) {
       fetchCompany()
-      if (isReadOnly) {
-        // 中方员工需要加载工单信息
-        fetchWorkOrders()
-      }
+      fetchWorkOrders() // 所有用户都加载工单信息
     }
-  }, [companyId, isReadOnly])
+  }, [companyId])
 
   // 查看多个PDF
   const handleViewPdfs = (urls?: string[]) => {
@@ -110,7 +108,7 @@ export default function CompanyDetailPage() {
       return
     }
     urls.forEach(url => {
-      window.open(url, '_blank')
+      window.open(getFileUrl(url), '_blank')
     })
   }
 
@@ -122,27 +120,47 @@ export default function CompanyDetailPage() {
   }
 
   // 处理文件上传
-  const handleUploadChange = (info: any) => {
-    let newFileList = [...info.fileList]
-    
-    // 限制文件数量，只显示最近上传的文件
-    newFileList = newFileList.slice(-10)
-    
-    // 读取响应并显示文件链接
-    newFileList = newFileList.map((file) => {
-      if (file.response) {
-        file.url = file.response.url
+  const handleUploadRequest = async (options: any) => {
+    const { file, onSuccess, onError } = options
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('上传失败')
       }
-      return file
-    })
-    
-    setFileList(newFileList)
-    
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} 上传成功`)
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 上传失败`)
+
+      const { url } = await response.json()
+
+      // 更新文件列表
+      setFileList(prev => {
+        const newFile = {
+          uid: file.uid,
+          name: file.name,
+          status: 'done',
+          url: getFileUrl(url),
+          response: { url }
+        } as UploadFile
+        return [...prev, newFile]
+      })
+
+      onSuccess({ url })
+      message.success(`${file.name} 上传成功`)
+    } catch (error) {
+      console.error('上传失败:', error)
+      onError(error)
+      message.error(`${file.name} 上传失败`)
     }
+  }
+
+  // 处理文件移除
+  const handleRemove = (file: UploadFile) => {
+    setFileList(prev => prev.filter(f => f.uid !== file.uid))
   }
 
   // 确认上传
@@ -165,7 +183,7 @@ export default function CompanyDetailPage() {
 
       // 获取当前字段的现有文件列表
       const currentFiles = (company[currentUploadField as keyof CompanyDetail] as string[]) || []
-      
+
       // 合并新旧文件列表
       const updatedFiles = [...currentFiles, ...uploadedUrls]
 
@@ -219,8 +237,8 @@ export default function CompanyDetailPage() {
 
   return (
     <div>
-      <Button 
-        icon={<ArrowLeftOutlined />} 
+      <Button
+        icon={<ArrowLeftOutlined />}
         onClick={() => router.back()}
         style={{ marginBottom: 16 }}
       >
@@ -231,8 +249,8 @@ export default function CompanyDetailPage() {
         title="企业详情"
         extra={
           !isReadOnly && (
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<EditOutlined />}
               onClick={() => setEditModalVisible(true)}
             >
@@ -255,35 +273,41 @@ export default function CompanyDetailPage() {
           </Descriptions>
         )}
 
-        {isReadOnly ? (
-          // 中方员工：显示工单信息
-          <div style={{ marginTop: 24 }}>
-            <h3 style={{ marginBottom: 16 }}>工单信息</h3>
-            {workOrders.length > 0 ? (
-              <Row gutter={[16, 16]}>
-                {workOrders.map((workOrder) => (
-                  <Col xs={24} sm={12} md={8} key={workOrder.id}>
-                    <Card size="small" title={workOrder.name}>
-                      <Descriptions column={1} size="small">
-                        <Descriptions.Item label="岗位名称">{workOrder.position || '-'}</Descriptions.Item>
-                        <Descriptions.Item label="招聘人数">{workOrder.recruit_count ? `${workOrder.recruit_count}人` : '-'}</Descriptions.Item>
-                        <Descriptions.Item label="薪资">{workOrder.salary || '-'}</Descriptions.Item>
-                        <Descriptions.Item label="工作时间">{workOrder.work_time || '-'}</Descriptions.Item>
-                        <Descriptions.Item label="休息天数">{workOrder.rest_days || '-'}</Descriptions.Item>
-                        <Descriptions.Item label="工作待遇">{workOrder.benefits || '-'}</Descriptions.Item>
-                      </Descriptions>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-                暂无工单信息
-              </div>
-            )}
-          </div>
-        ) : (
-          // 日方员工/管理员：显示企业文档
+        {/* 工单信息 - 所有用户可见 */}
+        <div style={{ marginTop: 24 }}>
+          <h3 style={{ marginBottom: 16 }}>工单信息</h3>
+          {workOrders.length > 0 ? (
+            <Row gutter={[16, 16]}>
+              {workOrders.map((workOrder) => (
+                <Col xs={24} sm={12} md={8} key={workOrder.id}>
+                  <Card
+                    size="small"
+                    title={workOrder.name}
+                    hoverable
+                    onClick={() => router.push(`/work-orders/${workOrder.id}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <Descriptions column={1} size="small">
+                      <Descriptions.Item label="岗位名称">{workOrder.position || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="招聘人数">{workOrder.recruit_count ? `${workOrder.recruit_count}人` : '-'}</Descriptions.Item>
+                      <Descriptions.Item label="薪资">{workOrder.salary || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="工作时间">{workOrder.work_time || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="休息天数">{workOrder.rest_days || '-'}</Descriptions.Item>
+                      <Descriptions.Item label="工作待遇">{workOrder.benefits || '-'}</Descriptions.Item>
+                    </Descriptions>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+              暂无工单信息
+            </div>
+          )}
+        </div>
+
+        {/* 企业文档 - 仅日方员工/管理员可见和操作 */}
+        {!isReadOnly && (
           <div style={{ marginTop: 24 }}>
             <h3 style={{ marginBottom: 16 }}>企业文档</h3>
             <Row gutter={[16, 16]}>
@@ -295,15 +319,15 @@ export default function CompanyDetailPage() {
                     <Card size="small">
                       <div style={{ marginBottom: 8, fontWeight: 500 }}>{field.label}</div>
                       <Space>
-                        <Button 
-                          size="small" 
+                        <Button
+                          size="small"
                           icon={<UploadOutlined />}
                           onClick={() => handleUpload(field.key)}
                         >
                           上传
                         </Button>
-                        <Button 
-                          size="small" 
+                        <Button
+                          size="small"
                           icon={<FilePdfOutlined />}
                           onClick={() => handleViewPdfs(urls)}
                           disabled={fileCount === 0}
@@ -346,20 +370,13 @@ export default function CompanyDetailPage() {
         width={600}
       >
         <Upload
-          accept=".pdf"
+          accept=".pdf,.jpg,.jpeg,.png"
           multiple
           fileList={fileList}
-          onChange={handleUploadChange}
-          beforeUpload={(file) => {
-            // TODO: 实际上传文件到服务器
-            // 这里先模拟上传成功
-            setTimeout(() => {
-              message.success(`${file.name} 上传成功`)
-            }, 1000)
-            return false // 阻止自动上传，手动处理
-          }}
+          customRequest={handleUploadRequest}
+          onRemove={handleRemove}
         >
-          <Button icon={<UploadOutlined />}>选择PDF文件（可多选）</Button>
+          <Button icon={<UploadOutlined />}>选择文件（可多选）</Button>
         </Upload>
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
           支持一次选择多个PDF文件上传
