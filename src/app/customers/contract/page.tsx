@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { 
-  Table, 
-  Button, 
-  Form, 
-  Input, 
-  Select, 
-  Space, 
+import {
+  Table,
+  Button,
+  Form,
+  Input,
+  Select,
+  Space,
   message,
   Card,
   Tag,
@@ -47,8 +47,8 @@ export default function ContractCustomersPage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [companies, setCompanies] = useState<Map<string, string>>(new Map()) // company_id -> company_name
   const [workOrders, setWorkOrders] = useState<Map<string, string>>(new Map()) // work_order_id -> work_order_name
-  const [companyList, setCompanyList] = useState<Array<{id: string, name: string}>>([])
-  const [workOrderList, setWorkOrderList] = useState<Array<{id: string, name: string, company_id: string}>>([])
+  const [companyList, setCompanyList] = useState<Array<{ id: string, name: string }>>([])
+  const [workOrderList, setWorkOrderList] = useState<Array<{ id: string, name: string, company_id: string }>>([])
   const [selectedBindCompanyId, setSelectedBindCompanyId] = useState<string>('')
   const [statusForm] = Form.useForm()
   const [paymentForm] = Form.useForm()
@@ -62,7 +62,7 @@ export default function ContractCustomersPage() {
   const [ownerFilter, setOwnerFilter] = useState<string>('')
 
   // 用户列表状态
-  const [users, setUsers] = useState<Array<{username: string}>>([])
+  const [users, setUsers] = useState<Array<{ username: string }>>([])
 
   // 分页和排序状态
   const [currentPage, setCurrentPage] = useState(1)
@@ -74,7 +74,7 @@ export default function ContractCustomersPage() {
   // 获取用户列表（仅管理员需要）
   const fetchUsers = useCallback(async () => {
     if (!isAdmin) return
-    
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -106,7 +106,7 @@ export default function ContractCustomersPage() {
       if (searchName) {
         query = query.ilike('real_name', `%${searchName}%`)
       }
-      
+
       if (stage2StatusFilter) {
         query = query.eq('stage2_status', stage2StatusFilter)
       }
@@ -184,7 +184,7 @@ export default function ContractCustomersPage() {
       if (companiesError) throw companiesError
 
       const companiesMap = new Map<string, string>()
-      const companiesList: Array<{id: string, name: string}> = []
+      const companiesList: Array<{ id: string, name: string }> = []
       companiesData?.forEach(company => {
         companiesMap.set(company.id, company.name)
         companiesList.push({ id: company.id, name: company.name })
@@ -201,13 +201,13 @@ export default function ContractCustomersPage() {
       if (workOrdersError) throw workOrdersError
 
       const workOrdersMap = new Map<string, string>()
-      const workOrdersList: Array<{id: string, name: string, company_id: string}> = []
+      const workOrdersList: Array<{ id: string, name: string, company_id: string }> = []
       workOrdersData?.forEach(workOrder => {
         workOrdersMap.set(workOrder.id, workOrder.name)
-        workOrdersList.push({ 
-          id: workOrder.id, 
-          name: workOrder.name, 
-          company_id: workOrder.company_id 
+        workOrdersList.push({
+          id: workOrder.id,
+          name: workOrder.name,
+          company_id: workOrder.company_id
         })
       })
       setWorkOrders(workOrdersMap)
@@ -301,7 +301,7 @@ export default function ContractCustomersPage() {
       setCurrentPage(pagination.current || 1)
       setPageSize(pagination.pageSize || 10)
     }
-    
+
     if (sorter && !Array.isArray(sorter) && sorter.field) {
       setSortField(String(sorter.field))
       setSortOrder(sorter.order === 'ascend' ? 'asc' : 'desc')
@@ -477,7 +477,7 @@ export default function ContractCustomersPage() {
           '已完成': { color: 'default', text: '已完成' }
         }
         const config = statusConfig[status] || { color: 'default', text: status || '-' }
-        
+
         // 如果是"已通知面试"且有面试时间，在Tag内显示时间
         if (status === '已通知面试' && record.interview_notice_time) {
           const interviewTime = new Date(record.interview_notice_time)
@@ -495,7 +495,7 @@ export default function ContractCustomersPage() {
             </Tag>
           )
         }
-        
+
         return <Tag color={config.color}>{config.text}</Tag>
       },
     },
@@ -548,8 +548,8 @@ export default function ContractCustomersPage() {
         const workOrderName = record.work_order_id ? workOrders.get(record.work_order_id) : null
         if (!companyName && !workOrderName) {
           return (
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               size="small"
               onClick={() => handleBind(record)}
             >
@@ -557,20 +557,20 @@ export default function ContractCustomersPage() {
             </Button>
           )
         }
-        const displayText = companyName && workOrderName 
+        const displayText = companyName && workOrderName
           ? `${companyName} / ${workOrderName}`
           : companyName || workOrderName || '-'
-        const fullText = companyName && workOrderName 
+        const fullText = companyName && workOrderName
           ? `${companyName} / ${workOrderName}`
           : companyName || workOrderName || '-'
         const truncatedText = displayText.length > 15 ? `${displayText.substring(0, 15)}...` : displayText
-        
+
         // 如果有企业ID，显示为可点击的链接
         if (record.company_id) {
           return (
             <Tooltip title={fullText} placement="topLeft">
-              <Button 
-                type="link" 
+              <Button
+                type="link"
                 size="small"
                 style={{ padding: 0, height: 'auto' }}
                 onClick={() => router.push(`/companies/${record.company_id}`)}
@@ -580,7 +580,7 @@ export default function ContractCustomersPage() {
             </Tooltip>
           )
         }
-        
+
         return (
           <Tooltip title={fullText} placement="topLeft">
             <span style={{ cursor: 'help', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{truncatedText}</span>
@@ -636,8 +636,8 @@ export default function ContractCustomersPage() {
         const currentBalance = balance || 0
         const walletLimit = 30000
         return (
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             onClick={() => handleViewPaymentHistory(record)}
             style={{ padding: 0, fontWeight: 'bold', color: currentBalance > 0 ? '#52c41a' : '#999' }}
           >
@@ -695,7 +695,7 @@ export default function ContractCustomersPage() {
             onClick: () => handlePayment(record)
           }
         ]
-        
+
         // 在admin身份下添加删除选项
         if (isAdmin) {
           menuItems.push({
@@ -705,11 +705,11 @@ export default function ContractCustomersPage() {
             onClick: () => handleDelete(record.id)
           })
         }
-        
+
         const menu = {
           items: menuItems
         }
-        
+
         return (
           <Dropdown menu={menu} trigger={['click']}>
             <Button type="text" icon={<MoreOutlined />} />
@@ -966,7 +966,7 @@ export default function ContractCustomersPage() {
               key: payment.id,
               color: payment.amount >= 0 ? 'green' : 'red',
               children: (
-                <div style={{ 
+                <div style={{
                   padding: '12px',
                   marginBottom: '12px',
                   backgroundColor: '#fafafa',
@@ -996,9 +996,9 @@ export default function ContractCustomersPage() {
             }))}
           />
         ) : (
-          <div style={{ 
-            textAlign: 'center', 
-            color: '#999', 
+          <div style={{
+            textAlign: 'center',
+            color: '#999',
             padding: '40px 0'
           }}>
             暂无付款记录
@@ -1024,7 +1024,7 @@ export default function ContractCustomersPage() {
             label="关联企业"
             rules={[{ required: true, message: '请选择关联企业' }]}
           >
-            <Select 
+            <Select
               placeholder="请选择关联企业"
               onChange={handleBindCompanyChange}
               allowClear
@@ -1042,10 +1042,10 @@ export default function ContractCustomersPage() {
             label="关联工单"
             rules={[{ required: true, message: '请选择关联工单' }]}
           >
-            <Select 
+            <Select
               placeholder={selectedBindCompanyId ? (workOrderList.length === 0 ? "该企业暂无工单" : "请选择关联工单") : "请先选择关联企业"}
               disabled={!selectedBindCompanyId}
-              loading={selectedBindCompanyId && workOrderList.length === 0}
+              loading={!!(selectedBindCompanyId && workOrderList.length === 0)}
             >
               {workOrderList.map(workOrder => (
                 <Option key={workOrder.id} value={workOrder.id}>

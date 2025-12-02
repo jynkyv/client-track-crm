@@ -14,7 +14,7 @@ interface AuthContextType {
   isJapaneseEmployee: boolean // 是否是日方员工（role='employee' + country='日本'）
   canAccessCustomers: boolean // 是否可以访问客户管理
   canAccessCompanies: boolean // 是否可以访问企业管理
-  canAccessTasks: boolean // 是否可以访问任务中心
+  canAccessTickets: boolean // 是否可以访问工单列表
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const user = users[0]
-      
+
       // 验证密码
       if (user.password === password) {
         setUser(user)
@@ -87,11 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 权限判断
   // 管理员可以访问所有功能
-  // 中方员工（role='employee' + country='中国'）：只能访问客户管理和任务中心（处理任务）
-  // 日方员工（role='employee' + country='日本'）：只能访问企业管理和任务中心（报错/下发任务）
+  // 中方员工（role='employee' + country='中国'）：可以访问客户管理和工单列表（查看所有日方员工创建的工单）
+  // 日方员工（role='employee' + country='日本'）：可以访问企业管理和工单列表（仅查看自己创建的工单）
   const canAccessCustomers = isAdmin || isChineseEmployee
   const canAccessCompanies = isAdmin || isJapaneseEmployee
-  const canAccessTasks = isAdmin || isChineseEmployee || isJapaneseEmployee
+  const canAccessTickets = isAdmin || isChineseEmployee || isJapaneseEmployee
 
   // 防止水合错误，在客户端挂载前不渲染内容
   if (!mounted) {
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isJapaneseEmployee,
       canAccessCustomers,
       canAccessCompanies,
-      canAccessTasks
+      canAccessTickets
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { 
-  Table, 
-  Button, 
-  Form, 
-  Input, 
-  Select, 
-  Space, 
+import {
+  Table,
+  Button,
+  Form,
+  Input,
+  Select,
+  Space,
   message,
   Card,
   Tag,
@@ -41,15 +41,15 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [completeDrawerVisible, setCompleteDrawerVisible] = useState(false)
   const [completingCustomer, setCompletingCustomer] = useState<Customer | null>(null)
-  const [companies, setCompanies] = useState<Array<{id: string, name: string}>>([])
-  const [workOrders, setWorkOrders] = useState<Array<{id: string, name: string, company_id: string}>>([])
+  const [companies, setCompanies] = useState<Array<{ id: string, name: string }>>([])
+  const [workOrders, setWorkOrders] = useState<Array<{ id: string, name: string, company_id: string }>>([])
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [companyDetailModalVisible, setCompanyDetailModalVisible] = useState(false)
   const [selectedCompanyDetail, setSelectedCompanyDetail] = useState<any>(null)
   const [form] = Form.useForm()
   const [followUpForm] = Form.useForm()
   const [completeForm] = Form.useForm()
-  const { isAdmin, user } = useAuth()
+  const { isAdmin, user, canAccessCustomers } = useAuth()
 
   // 筛选和搜索状态
   const [searchName, setSearchName] = useState('')
@@ -60,7 +60,7 @@ export default function CustomersPage() {
   const [ownerFilter, setOwnerFilter] = useState<string>('')
 
   // 用户列表状态
-  const [users, setUsers] = useState<Array<{username: string}>>([])
+  const [users, setUsers] = useState<Array<{ username: string }>>([])
 
   // 分页和排序状态
   const [currentPage, setCurrentPage] = useState(1)
@@ -72,7 +72,7 @@ export default function CustomersPage() {
   // 获取用户列表（仅管理员需要）
   const fetchUsers = useCallback(async () => {
     if (!isAdmin) return
-    
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -106,11 +106,11 @@ export default function CustomersPage() {
       if (searchName) {
         query = query.ilike('nickname', `%${searchName}%`)
       }
-      
+
       if (statusFilter) {
         query = query.eq('status', statusFilter)
       }
-      
+
       if (intentionFilter) {
         query = query.eq('intention', intentionFilter)
       }
@@ -212,7 +212,7 @@ export default function CustomersPage() {
       setCurrentPage(pagination.current || 1)
       setPageSize(pagination.pageSize || 10)
     }
-    
+
     if (sorter && !Array.isArray(sorter) && sorter.field) {
       setSortField(String(sorter.field))
       setSortOrder(sorter.order === 'ascend' ? 'asc' : 'desc')
@@ -508,7 +508,7 @@ export default function CustomersPage() {
       align: 'center' as const,
     },
     {
-      title: '工作经验',  
+      title: '工作经验',
       width: 100,
       dataIndex: 'work_experience',
       key: 'work_experience',
@@ -553,8 +553,8 @@ export default function CustomersPage() {
       align: 'center' as const,
       sorter: true,
       render: (followUps: FollowUp[], record: Customer) => (
-        <Button 
-          type="link" 
+        <Button
+          type="link"
           onClick={() => handleAddFollowUp(record)}
           style={{ padding: 0 }}
         >
@@ -623,7 +623,7 @@ export default function CustomersPage() {
             ]
           }
         ]
-        
+
         if (!isAdmin) {
           menuItems.push(
             {
@@ -640,11 +640,11 @@ export default function CustomersPage() {
             }
           )
         }
-        
+
         const menu = {
           items: menuItems
         }
-        
+
         return (
           <Dropdown menu={menu} trigger={['click']}>
             <Button type="text" icon={<MoreOutlined />} />
@@ -680,112 +680,112 @@ export default function CustomersPage() {
         {/* 筛选和搜索区域 */}
         <Card style={{ marginBottom: 16 }}>
           <h3 style={{ marginBottom: 16 }}>筛选和搜索</h3>
-        {/* 第一行筛选器 */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
-            <div>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>客户昵称搜索</label>
-              <Input
-                placeholder="搜索客户昵称"
-                prefix={<SearchOutlined />}
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                allowClear
-              />
-            </div>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <div>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>状态筛选</label>
-              <Select
-                placeholder="筛选状态"
-                value={statusFilter}
-                onChange={setStatusFilter}
-                allowClear
-                style={{ width: '100%' }}
-              >
-                <Option value="communicating">沟通中</Option>
-                <Option value="rejected">已拒绝</Option>
-              </Select>
-            </div>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <div>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>意向度筛选</label>
-              <Select
-                placeholder="筛选意向度"
-                value={intentionFilter}
-                onChange={setIntentionFilter}
-                allowClear
-                style={{ width: '100%' }}
-              >
-                <Option value="高">高</Option>
-                <Option value="中">中</Option>
-                <Option value="低">低</Option>
-              </Select>
-            </div>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <div>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>年龄范围筛选</label>
-              <Space.Compact style={{ width: '100%' }}>
-                <InputNumber
-                  placeholder="最小"
-                  min={0}
-                  max={100}
-                  value={minAge}
-                  onChange={setMinAge}
-                  style={{ width: '45%' }}
-                  addonAfter="岁"
-                />
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  width: '10%',
-                  color: '#666',
-                  fontSize: '14px',
-                  fontWeight: 500
-                }}>
-                  至
-                </div>
-                <InputNumber
-                  placeholder="最大"
-                  min={0}
-                  max={100}
-                  value={maxAge}
-                  onChange={setMaxAge}
-                  style={{ width: '45%' }}
-                  addonAfter="岁"
-                />
-              </Space.Compact>
-            </div>
-          </Col>
-        </Row>
-        
-        {/* 第二行筛选器（仅管理员可见） */}
-        {isAdmin && (
-          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+          {/* 第一行筛选器 */}
+          <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} md={6}>
               <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>所属人筛选</label>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>客户昵称搜索</label>
+                <Input
+                  placeholder="搜索客户昵称"
+                  prefix={<SearchOutlined />}
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  allowClear
+                />
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>状态筛选</label>
                 <Select
-                  placeholder="筛选所属人"
-                  value={ownerFilter}
-                  onChange={setOwnerFilter}
+                  placeholder="筛选状态"
+                  value={statusFilter}
+                  onChange={setStatusFilter}
                   allowClear
                   style={{ width: '100%' }}
                 >
-                  {users.map(user => (
-                    <Option key={user.username} value={user.username}>
-                      {user.username}
-                    </Option>
-                  ))}
+                  <Option value="communicating">沟通中</Option>
+                  <Option value="rejected">已拒绝</Option>
                 </Select>
               </div>
             </Col>
+            <Col xs={24} sm={12} md={6}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>意向度筛选</label>
+                <Select
+                  placeholder="筛选意向度"
+                  value={intentionFilter}
+                  onChange={setIntentionFilter}
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="高">高</Option>
+                  <Option value="中">中</Option>
+                  <Option value="低">低</Option>
+                </Select>
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>年龄范围筛选</label>
+                <Space.Compact style={{ width: '100%' }}>
+                  <InputNumber
+                    placeholder="最小"
+                    min={0}
+                    max={100}
+                    value={minAge}
+                    onChange={setMinAge}
+                    style={{ width: '45%' }}
+                    addonAfter="岁"
+                  />
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '10%',
+                    color: '#666',
+                    fontSize: '14px',
+                    fontWeight: 500
+                  }}>
+                    至
+                  </div>
+                  <InputNumber
+                    placeholder="最大"
+                    min={0}
+                    max={100}
+                    value={maxAge}
+                    onChange={setMaxAge}
+                    style={{ width: '45%' }}
+                    addonAfter="岁"
+                  />
+                </Space.Compact>
+              </div>
+            </Col>
           </Row>
-        )}
+
+          {/* 第二行筛选器（仅管理员可见） */}
+          {isAdmin && (
+            <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+              <Col xs={24} sm={12} md={6}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>所属人筛选</label>
+                  <Select
+                    placeholder="筛选所属人"
+                    value={ownerFilter}
+                    onChange={setOwnerFilter}
+                    allowClear
+                    style={{ width: '100%' }}
+                  >
+                    {users.map(user => (
+                      <Option key={user.username} value={user.username}>
+                        {user.username}
+                      </Option>
+                    ))}
+                  </Select>
+                </div>
+              </Col>
+            </Row>
+          )}
           <Row style={{ marginTop: 16 }}>
             <Col span={24}>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -968,9 +968,9 @@ export default function CustomersPage() {
       >
         <div style={{ marginBottom: 16 }}>
           <h4>历史跟进记录：</h4>
-          <div 
-            style={{ 
-              maxHeight: '400px', 
+          <div
+            style={{
+              maxHeight: '400px',
               overflowY: 'auto',
               border: '1px solid #f0f0f0',
               borderRadius: '6px',
@@ -982,9 +982,9 @@ export default function CustomersPage() {
                 items={selectedCustomer.follow_ups.map((followUp, index) => ({
                   key: index,
                   children: (
-                    <Card 
-                      size="small" 
-                      style={{ 
+                    <Card
+                      size="small"
+                      style={{
                         marginBottom: '8px',
                         backgroundColor: '#fafafa'
                       }}
@@ -1003,9 +1003,9 @@ export default function CustomersPage() {
                 }))}
               />
             ) : (
-              <div style={{ 
-                textAlign: 'center', 
-                color: '#999', 
+              <div style={{
+                textAlign: 'center',
+                color: '#999',
                 padding: '40px 0',
                 backgroundColor: '#f9f9f9',
                 borderRadius: '6px'
@@ -1183,7 +1183,7 @@ export default function CustomersPage() {
                 label="企业/工单"
                 rules={[{ required: true, message: '请选择关联企业' }]}
               >
-                <Select 
+                <Select
                   placeholder="请选择关联企业"
                   onChange={handleCompanyChange}
                   allowClear
@@ -1202,28 +1202,26 @@ export default function CustomersPage() {
                 label=" "
                 rules={[{ required: true, message: '请选择关联工单' }]}
               >
-                <Space.Compact style={{ width: '100%' }}>
-                  <Select 
-                    placeholder={selectedCompanyId ? "请选择关联工单" : "请先选择关联企业"}
-                    disabled={!selectedCompanyId || workOrders.length === 0}
-                    style={{ flex: 1 }}
-                  >
-                    {workOrders.map(workOrder => (
-                      <Option key={workOrder.id} value={workOrder.id}>
-                        {workOrder.name}
-                      </Option>
-                    ))}
-                  </Select>
-                  {selectedCompanyId && (
-                    <Button 
-                      type="primary"
-                      onClick={() => handleViewCompanyDetail(selectedCompanyId)}
-                    >
-                      查看企业详情
-                    </Button>
-                  )}
-                </Space.Compact>
+                <Select
+                  placeholder={selectedCompanyId ? "请选择关联工单" : "请先选择关联企业"}
+                  disabled={!selectedCompanyId || workOrders.length === 0}
+                >
+                  {workOrders.map(workOrder => (
+                    <Option key={workOrder.id} value={workOrder.id}>
+                      {workOrder.name}
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
+              {selectedCompanyId && (
+                <Button
+                  type="link"
+                  onClick={() => handleViewCompanyDetail(selectedCompanyId)}
+                  style={{ marginTop: -24 }}
+                >
+                  查看企业详情
+                </Button>
+              )}
             </Col>
           </Row>
 

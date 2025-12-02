@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import { 
-  Card, 
-  Button, 
-  Row, 
-  Col, 
-  Descriptions, 
+import {
+  Card,
+  Button,
+  Row,
+  Col,
+  Descriptions,
   Tabs,
   Form,
   Input,
@@ -23,7 +23,7 @@ import {
   DatePicker,
   Tag
 } from 'antd'
-import { 
+import {
   ArrowLeftOutlined,
   PlusOutlined,
   FileTextOutlined,
@@ -270,274 +270,274 @@ export default function ApplicantsPage() {
   }
 
   // Tab项
-  const tabItems = workOrders.length > 0 
+  const tabItems = workOrders.length > 0
     ? workOrders.map(order => ({
-        key: order.id,
-        label: order.name,
-        children: (
-          <div>
-            {/* 工单信息卡片 */}
-            <Card 
-              title="工单信息" 
-              style={{ marginBottom: 16 }}
-            >
-              <Descriptions bordered column={2}>
-                <Descriptions.Item label="工单名称">{order.name}</Descriptions.Item>
-                <Descriptions.Item label="岗位名称">{order.position}</Descriptions.Item>
-                <Descriptions.Item label="招聘人数">{order.recruit_count}人</Descriptions.Item>
-                <Descriptions.Item label="薪资">{order.salary}</Descriptions.Item>
-                <Descriptions.Item label="工作时间">{order.work_time}</Descriptions.Item>
-                <Descriptions.Item label="休息天数">{order.rest_days}</Descriptions.Item>
-                <Descriptions.Item label="工作待遇" span={2}>{order.benefits}</Descriptions.Item>
-              </Descriptions>
-            </Card>
+      key: order.id,
+      label: order.name,
+      children: (
+        <div>
+          {/* 工单信息卡片 */}
+          <Card
+            title="工单信息"
+            style={{ marginBottom: 16 }}
+          >
+            <Descriptions bordered column={2}>
+              <Descriptions.Item label="工单名称">{order.name}</Descriptions.Item>
+              <Descriptions.Item label="岗位名称">{order.position}</Descriptions.Item>
+              <Descriptions.Item label="招聘人数">{order.recruit_count}人</Descriptions.Item>
+              <Descriptions.Item label="薪资">{order.salary}</Descriptions.Item>
+              <Descriptions.Item label="工作时间">{order.work_time}</Descriptions.Item>
+              <Descriptions.Item label="休息天数">{order.rest_days}</Descriptions.Item>
+              <Descriptions.Item label="工作待遇" span={2}>{order.benefits}</Descriptions.Item>
+            </Descriptions>
+          </Card>
 
-        {/* 求职者信息 */}
-        <Card title="求职者信息">
-          {applicants
-            .filter(app => app.work_order_id === order.id)
-            .map(applicant => (
-              <Card 
-                key={applicant.id} 
-                type="inner" 
-                style={{ marginBottom: 16 }}
-                extra={
-                  <Button 
-                    danger 
-                    icon={<ExclamationCircleOutlined />}
-                    onClick={() => handleReportError(applicant)}
-                  >
-                    报错
-                  </Button>
-                }
-              >
-                <Row gutter={[16, 16]}>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>姓名：</strong>{applicant.name}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>状态：</strong>
-                      {applicant.status ? (
-                        <Tag color={
-                          applicant.status === '待面试' ? 'blue' :
-                          applicant.status === '面试中' ? 'orange' :
-                          applicant.status === '已通过' ? 'green' :
-                          applicant.status === '已拒绝' ? 'red' :
-                          'default'
-                        }>
-                          {applicant.status}
-                        </Tag>
-                      ) : '-'}
-                    </div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>性别：</strong>{applicant.gender}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>出生年月日：</strong>{applicant.birth_date}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>户籍所在地：</strong>{applicant.household_location}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>现居住地：</strong>{applicant.current_residence}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>联系方式：</strong>{applicant.contact}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>实名微信号：</strong>{applicant.wechat}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>紧急联系人：</strong>{applicant.emergency_contact}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>紧急联系人电话：</strong>{applicant.emergency_phone}</div>
-                  </Col>
-                  <Col xs={24} sm={12} md={8}>
-                    <div><strong>负责人姓名（中方员工姓名）：</strong>{applicant.manager_name || '-'}</div>
-                  </Col>
-                </Row>
-
-                <div style={{ marginTop: 16 }}>
-                  <h4>文档资料</h4>
+          {/* 求职者信息 */}
+          <Card title="求职者信息">
+            {applicants
+              .filter(app => app.work_order_id === order.id)
+              .map(applicant => (
+                <Card
+                  key={applicant.id}
+                  type="inner"
+                  style={{ marginBottom: 16 }}
+                  extra={
+                    <Button
+                      danger
+                      icon={<ExclamationCircleOutlined />}
+                      onClick={() => handleReportError(applicant)}
+                    >
+                      报错
+                    </Button>
+                  }
+                >
                   <Row gutter={[16, 16]}>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>原始简历：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.resume)}
-                          disabled={!applicant.resume}
-                        >
-                          查看
-                        </Button>
+                      <div><strong>姓名：</strong>{applicant.name}</div>
+                    </Col>
+                    <Col xs={24} sm={12} md={8}>
+                      <div><strong>状态：</strong>
+                        {applicant.status ? (
+                          <Tag color={
+                            applicant.status === '待面试' ? 'blue' :
+                              applicant.status === '面试中' ? 'orange' :
+                                applicant.status === '已通过' ? 'green' :
+                                  applicant.status === '已拒绝' ? 'red' :
+                                    'default'
+                          }>
+                            {applicant.status}
+                          </Tag>
+                        ) : '-'}
                       </div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>护照：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.passport)}
-                          disabled={!applicant.passport}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>性别：</strong>{applicant.gender}</div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>户口本：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.household_book)}
-                          disabled={!applicant.household_book}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>出生年月日：</strong>{applicant.birth_date}</div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>身份证：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.id_card)}
-                          disabled={!applicant.id_card}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>户籍所在地：</strong>{applicant.household_location}</div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>2寸照片：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.photo_2inch)}
-                          disabled={!applicant.photo_2inch}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>现居住地：</strong>{applicant.current_residence}</div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>征信报告：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.credit_report)}
-                          disabled={!applicant.credit_report}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>联系方式：</strong>{applicant.contact}</div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>无犯罪证明：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.no_crime_cert)}
-                          disabled={!applicant.no_crime_cert}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>实名微信号：</strong>{applicant.wechat}</div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>国检证书：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.national_cert)}
-                          disabled={!applicant.national_cert}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>紧急联系人：</strong>{applicant.emergency_contact}</div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>省级考试证书：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.provincial_cert)}
-                          disabled={!applicant.provincial_cert}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>紧急联系人电话：</strong>{applicant.emergency_phone}</div>
                     </Col>
                     <Col xs={24} sm={12} md={8}>
-                      <div><strong>雇佣合同：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.employment_contract)}
-                          disabled={!applicant.employment_contract}
-                        >
-                          查看
-                        </Button>
-                      </div>
-                    </Col>
-                    <Col xs={24} sm={12} md={8}>
-                      <div><strong>赴日中介合同：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.japan_agency_contract)}
-                          disabled={!applicant.japan_agency_contract}
-                        >
-                          查看
-                        </Button>
-                      </div>
-                    </Col>
-                    <Col xs={24} sm={12} md={8}>
-                      <div><strong>入管局资料：</strong>
-                        <Button 
-                          type="link" 
-                          icon={<FileTextOutlined />}
-                          onClick={() => handleViewFile(applicant.immigration_materials)}
-                          disabled={!applicant.immigration_materials}
-                        >
-                          查看
-                        </Button>
-                      </div>
+                      <div><strong>负责人姓名（中方员工姓名）：</strong>{applicant.manager_name || '-'}</div>
                     </Col>
                   </Row>
-                </div>
-              </Card>
-            ))}
-        </Card>
-      </div>
-    )
-  }))
+
+                  <div style={{ marginTop: 16 }}>
+                    <h4>文档资料</h4>
+                    <Row gutter={[16, 16]}>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>原始简历：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.resume)}
+                            disabled={!applicant.resume}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>护照：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.passport)}
+                            disabled={!applicant.passport}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>户口本：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.household_book)}
+                            disabled={!applicant.household_book}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>身份证：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.id_card)}
+                            disabled={!applicant.id_card}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>2寸照片：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.photo_2inch)}
+                            disabled={!applicant.photo_2inch}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>征信报告：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.credit_report)}
+                            disabled={!applicant.credit_report}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>无犯罪证明：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.no_crime_cert)}
+                            disabled={!applicant.no_crime_cert}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>国检证书：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.national_cert)}
+                            disabled={!applicant.national_cert}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>省级考试证书：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.provincial_cert)}
+                            disabled={!applicant.provincial_cert}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>雇佣合同：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.employment_contract)}
+                            disabled={!applicant.employment_contract}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>赴日中介合同：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.japan_agency_contract)}
+                            disabled={!applicant.japan_agency_contract}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={24} sm={12} md={8}>
+                        <div><strong>入管局资料：</strong>
+                          <Button
+                            type="link"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleViewFile(applicant.immigration_materials)}
+                            disabled={!applicant.immigration_materials}
+                          >
+                            查看
+                          </Button>
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
+                </Card>
+              ))}
+          </Card>
+        </div>
+      )
+    }))
     : [
-        {
-          key: 'empty',
-          label: '无工单',
-          children: (
-            <Card 
-              title="工单信息" 
-              extra={
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />}
-                  onClick={handleCreateWorkOrder}
-                >
-                  创建工单
-                </Button>
-              }
-            >
-              <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-                暂无工单信息，请先创建工单
-              </div>
-            </Card>
-          )
-        }
-      ]
+      {
+        key: 'empty',
+        label: '无工单',
+        children: (
+          <Card
+            title="工单信息"
+            extra={
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleCreateWorkOrder}
+              >
+                创建工单
+              </Button>
+            }
+          >
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+              暂无工单信息，请先创建工单
+            </div>
+          </Card>
+        )
+      }
+    ]
 
   if (!canAccessCompanies) {
     return (
@@ -552,8 +552,8 @@ export default function ApplicantsPage() {
 
   return (
     <div>
-      <Button 
-        icon={<ArrowLeftOutlined />} 
+      <Button
+        icon={<ArrowLeftOutlined />}
         onClick={() => router.back()}
         style={{ marginBottom: 16 }}
       >
@@ -567,8 +567,8 @@ export default function ApplicantsPage() {
             onChange={setActiveTab}
             items={tabItems}
             tabBarExtraContent={
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 icon={<PlusOutlined />}
                 onClick={handleCreateWorkOrder}
               >
@@ -577,11 +577,11 @@ export default function ApplicantsPage() {
             }
           />
         ) : (
-          <Card 
-            title="工单信息" 
+          <Card
+            title="工单信息"
             extra={
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 icon={<PlusOutlined />}
                 onClick={handleCreateWorkOrder}
               >
@@ -630,9 +630,9 @@ export default function ApplicantsPage() {
             label="招聘人数"
             rules={[{ required: true, message: '请输入招聘人数' }]}
           >
-            <InputNumber 
-              min={1} 
-              placeholder="请输入招聘人数" 
+            <InputNumber
+              min={1}
+              placeholder="请输入招聘人数"
               style={{ width: '100%' }}
             />
           </Form.Item>
@@ -700,13 +700,13 @@ export default function ApplicantsPage() {
             label="选择字段（可多选）"
             rules={[{ required: true, message: '请至少选择一个字段' }]}
           >
-            <Select 
+            <Select
               mode="multiple"
               placeholder="请选择需要报错的字段（可多选）"
               maxTagCount="responsive"
               showSearch
               filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
               }
             >
               <Option value="name" label="姓名">姓名</Option>
