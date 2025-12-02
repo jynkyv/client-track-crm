@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { 
-  Card, 
-  Button, 
-  Row, 
-  Col, 
-  Descriptions, 
+import {
+  Card,
+  Button,
+  Row,
+  Col,
+  Descriptions,
   Upload,
   message,
   Space,
@@ -17,8 +17,9 @@ import {
   Select,
   DatePicker
 } from 'antd'
-import { 
-  EditOutlined, 
+import type { UploadFile } from 'antd'
+import {
+  EditOutlined,
   ArrowLeftOutlined,
   UploadOutlined,
   FilePdfOutlined,
@@ -27,6 +28,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import { getFileUrl } from '@/lib/utils'
 
 interface CustomerDetail {
   id: string
@@ -121,7 +123,7 @@ export default function CustomerDetailPage() {
       return
     }
     urls.forEach(url => {
-      window.open(url, '_blank')
+      window.open(getFileUrl(url), '_blank')
     })
   }
 
@@ -154,31 +156,74 @@ export default function CustomerDetailPage() {
   }
 
   // 处理文件上传
-  const handleUploadChange = (info: any) => {
-    let newFileList = [...info.fileList]
-    newFileList = newFileList.slice(-10)
-    setFileList(newFileList)
-    
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} 上传成功`)
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 上传失败`)
+  const handleUploadRequest = async (options: any) => {
+    const { file, onSuccess, onError } = options
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('上传失败')
+      }
+
+      const { url } = await response.json()
+
+      // 更新文件列表
+      setFileList(prev => {
+        const newFile = {
+          uid: file.uid,
+          name: file.name,
+          status: 'done',
+          url: getFileUrl(url),
+          response: { url }
+        } as UploadFile
+        return [...prev, newFile]
+      })
+
+      onSuccess({ url })
+      message.success(`${file.name} 上传成功`)
+    } catch (error) {
+      console.error('上传失败:', error)
+      onError(error)
+      message.error(`${file.name} 上传失败`)
     }
+  }
+
+  // 处理文件移除
+  const handleRemove = (file: UploadFile) => {
+    setFileList(prev => prev.filter(f => f.uid !== file.uid))
   }
 
   // 确认上传
   const handleUploadConfirm = async () => {
-    if (fileList.length === 0 || !customer) {
+    if (fileList.length === 0 || !customer || !currentUploadField) {
       message.warning('请至少选择一个文件')
       return
     }
-    // TODO: 实际上传文件到服务器并获取URL
-    // 这里先模拟
-    const newUrls = fileList.map(file => `https://example.com/${file.name}`)
-    const currentFiles = (customer[currentUploadField as keyof CustomerDetail] as string[]) || []
-    const updatedFiles = [...currentFiles, ...newUrls]
 
     try {
+      // 获取已上传文件的URL列表
+      const uploadedUrls = fileList
+        .filter(file => file.status === 'done' && file.url)
+        .map(file => file.url as string)
+
+      if (uploadedUrls.length === 0) {
+        message.warning('没有成功上传的文件')
+        return
+      }
+
+      // 获取当前字段的现有文件列表
+      const currentFiles = (customer[currentUploadField as keyof CustomerDetail] as string[]) || []
+
+      // 合并新旧文件列表
+      const updatedFiles = [...currentFiles, ...uploadedUrls]
+
+      // 更新数据库
       const { error } = await supabase
         .from('customers')
         .update({ [currentUploadField]: updatedFiles })
@@ -189,8 +234,9 @@ export default function CustomerDetailPage() {
       setUploadModalVisible(false)
       setFileList([])
       setCustomer({ ...customer, [currentUploadField]: updatedFiles } as CustomerDetail)
-    } catch {
-      message.error('上传失败')
+    } catch (error) {
+      console.error('保存文件URL失败:', error)
+      message.error('保存失败')
     }
   }
 
@@ -295,8 +341,8 @@ export default function CustomerDetailPage() {
 
   return (
     <div>
-      <Button 
-        icon={<ArrowLeftOutlined />} 
+      <Button
+        icon={<ArrowLeftOutlined />}
         onClick={() => router.back()}
         style={{ marginBottom: 16 }}
       >
@@ -307,8 +353,8 @@ export default function CustomerDetailPage() {
         title="客户详情"
         extra={
           !isEditing ? (
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<EditOutlined />}
               onClick={handleEdit}
             >
@@ -319,7 +365,7 @@ export default function CustomerDetailPage() {
               <Button onClick={handleCancelEdit}>
                 取消
               </Button>
-              <Button 
+              <Button
                 type="primary"
                 onClick={() => form.submit()}
               >
@@ -465,15 +511,15 @@ export default function CustomerDetailPage() {
                               <span style={{ fontSize: '12px' }}>{url.split('/').pop()}</span>
                             </Space>
                             <Space>
-                              <Button 
-                                type="link" 
+                              <Button
+                                type="link"
                                 size="small"
-                                onClick={() => window.open(url, '_blank')}
+                                onClick={() => window.open(getFileUrl(url), '_blank')}
                               >
                                 查看
                               </Button>
-                              <Button 
-                                type="link" 
+                              <Button
+                                type="link"
                                 size="small"
                                 danger
                                 icon={<DeleteOutlined />}
@@ -486,8 +532,8 @@ export default function CustomerDetailPage() {
                         ))}
                       </div>
                     )}
-                    <Button 
-                      size="small" 
+                    <Button
+                      size="small"
                       icon={<UploadOutlined />}
                       onClick={() => handleUpload(field.key)}
                       style={{ width: '100%' }}
@@ -516,19 +562,13 @@ export default function CustomerDetailPage() {
         width={600}
       >
         <Upload
-          accept=".pdf"
+          accept=".pdf,.jpg,.jpeg,.png"
           multiple
           fileList={fileList}
-          onChange={handleUploadChange}
-          beforeUpload={(file) => {
-            // TODO: 实际上传文件到服务器
-            setTimeout(() => {
-              message.success(`${file.name} 上传成功`)
-            }, 1000)
-            return false
-          }}
+          customRequest={handleUploadRequest}
+          onRemove={handleRemove}
         >
-          <Button icon={<UploadOutlined />}>选择PDF文件（可多选）</Button>
+          <Button icon={<UploadOutlined />}>选择文件（可多选）</Button>
         </Upload>
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
           支持一次选择多个PDF文件上传
