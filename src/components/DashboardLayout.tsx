@@ -6,11 +6,12 @@ import { Layout, Menu, Button, Dropdown } from 'antd'
 import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined, CheckSquareOutlined } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import ChatWidget from './ChatWidget'
 
 const { Header, Sider, Content } = Layout
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading, logout, isAdmin, canAccessCustomers, canAccessCompanies, canAccessTasks } = useAuth()
+  const { user, loading, logout, isAdmin, canAccessCustomers, canAccessCompanies, canAccessTickets } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -63,10 +64,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       icon: <BankOutlined />,
       label: <Link href="/companies">企业管理</Link>,
     }] : []),
-    ...(canAccessTasks ? [{
-      key: 'tasks',
+    ...(canAccessTickets ? [{
+      key: 'work-orders',
       icon: <CheckSquareOutlined />,
-      label: <Link href="/tasks">任务中心</Link>,
+      label: <Link href="/work-orders">工单列表</Link>,
     }] : []),
     ...(isAdmin ? [{
       key: 'users',
@@ -90,7 +91,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     if (pathname === '/customers/potential' || pathname === '/customers') return ['customers/potential']
     if (pathname === '/customers/contract') return ['customers/contract']
     if (pathname?.startsWith('/companies')) return ['companies']
-    if (pathname?.startsWith('/tasks')) return ['tasks']
+    if (pathname?.startsWith('/work-orders')) return ['work-orders']
     if (pathname === '/users') return ['users']
     return ['dashboard']
   }
@@ -103,11 +104,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <Layout style={{ minHeight: '100vh', height: '100vh', overflow: 'hidden' }}>
-      <Sider 
-        width={200} 
-        theme="dark" 
+      <Sider
+        width={200}
+        theme="dark"
         collapsible={false}
-        style={{ 
+        style={{
           height: '100vh',
           position: 'fixed',
           left: 0,
@@ -116,10 +117,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           zIndex: 100
         }}
       >
-        <div style={{ 
-          height: '64px', 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          height: '64px',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
           fontSize: '18px',
@@ -128,7 +129,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         }}>
           客户跟踪管理系统
         </div>
-        <div style={{ 
+        <div style={{
           height: 'calc(100vh - 64px)',
           overflowY: 'auto',
           overflowX: 'hidden'
@@ -143,13 +144,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           />
         </div>
       </Sider>
-      
+
       <Layout style={{ marginLeft: 200, height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Header style={{ 
-          background: '#fff', 
-          padding: '0 24px', 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <Header style={{
+          background: '#fff',
+          padding: '0 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           flexShrink: 0,
@@ -165,10 +166,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </Button>
           </Dropdown>
         </Header>
-        
-        <Content style={{ 
-          margin: '24px', 
-          padding: '24px', 
+
+        <Content style={{
+          margin: '24px',
+          padding: '24px',
           background: '#fff',
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -179,6 +180,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           {children}
         </Content>
       </Layout>
+
+      {/* 聊天组件 */}
+      <ChatWidget />
     </Layout>
   )
 }
