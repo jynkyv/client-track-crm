@@ -52,6 +52,7 @@ export default function WorkOrderDetailPage() {
     const [editingApplicant, setEditingApplicant] = useState<Customer | null>(null)
     const [applicantForm] = Form.useForm()
     const [ownerUserMap, setOwnerUserMap] = useState<Record<string, string>>({})
+    const [uploadingFile, setUploadingFile] = useState<string | null>(null)
 
     // 获取工单详情
     const fetchTicketDetail = async () => {
@@ -234,6 +235,8 @@ export default function WorkOrderDetailPage() {
 
     // 上传文件
     const handleUploadFile = async (file: File, field: string, applicantId: string) => {
+        const uploadKey = `${applicantId}-${field}`
+        setUploadingFile(uploadKey)
         const formData = new FormData()
         formData.append('file', file)
 
@@ -269,6 +272,8 @@ export default function WorkOrderDetailPage() {
         } catch (error) {
             console.error('上传失败:', error)
             message.error('上传失败')
+        } finally {
+            setUploadingFile(null)
         }
     }
 
@@ -459,6 +464,7 @@ export default function WorkOrderDetailPage() {
                                                     // customers表的文档字段是数组类型
                                                     const fieldValue = applicant[field as keyof Customer] as string[] | undefined
                                                     const hasFile = fieldValue && fieldValue.length > 0
+                                                    const isUploading = uploadingFile === `${applicant.id}-${field}`
                                                     return (
                                                         <Col xs={24} sm={12} md={8} key={field}>
                                                             <div><strong>{label}：</strong>
@@ -481,13 +487,15 @@ export default function WorkOrderDetailPage() {
                                                                             showUploadList={false}
                                                                             customRequest={({ file }) => handleUploadFile(file as File, field, applicant.id)}
                                                                             accept=".pdf,.jpg,.jpeg,.png"
+                                                                            disabled={isUploading}
                                                                         >
                                                                             <Button
                                                                                 type="link"
                                                                                 icon={<UploadOutlined />}
                                                                                 size="small"
+                                                                                loading={isUploading}
                                                                             >
-                                                                                上传
+                                                                                {isUploading ? '上传中' : '上传'}
                                                                             </Button>
                                                                         </Upload>
                                                                     )}
