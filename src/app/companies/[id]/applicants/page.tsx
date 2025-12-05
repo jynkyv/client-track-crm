@@ -59,18 +59,18 @@ interface Applicant {
   emergency_phone: string // 紧急联系人电话
   manager_name?: string // 负责人姓名（中方员工姓名）
   status?: string // 状态
-  resume?: string // 原始简历
-  passport?: string // 护照
-  household_book?: string // 户口本
-  id_card?: string // 身份证
-  photo_2inch?: string // 2寸照片
-  credit_report?: string // 征信报告
-  no_crime_cert?: string // 无犯罪证明
-  national_cert?: string // 国检证书
-  provincial_cert?: string // 省级考试证书
-  employment_contract?: string // 雇佣合同
-  japan_agency_contract?: string // 赴日中介合同
-  immigration_materials?: string // 入管局资料
+  resume?: string[] // 原始简历
+  passport?: string[] // 护照
+  household_book?: string[] // 户口本
+  id_card?: string[] // 身份证
+  photo_2inch?: string[] // 2寸照片
+  credit_report?: string[] // 征信报告
+  no_crime_cert?: string[] // 无犯罪证明
+  national_cert?: string[] // 国检证书
+  provincial_cert?: string[] // 省级考试证书
+  employment_contract?: string[] // 雇佣合同
+  japan_agency_contract?: string[] // 赴日中介合同
+  immigration_materials?: string[] // 入管局资料
 }
 
 export default function ApplicantsPage() {
@@ -84,6 +84,12 @@ export default function ApplicantsPage() {
   const [workOrderDrawerVisible, setWorkOrderDrawerVisible] = useState(false)
   const [errorDrawerVisible, setErrorDrawerVisible] = useState(false)
   const [currentApplicant, setCurrentApplicant] = useState<Applicant | null>(null)
+
+  // 查看文件 Modal 状态
+  const [viewModalVisible, setViewModalVisible] = useState(false)
+  const [currentViewFiles, setCurrentViewFiles] = useState<string[]>([])
+  const [currentViewField, setCurrentViewField] = useState<string>('')
+
   const [workOrderForm] = Form.useForm()
   const [errorForm] = Form.useForm()
 
@@ -144,18 +150,18 @@ export default function ApplicantsPage() {
         emergency_phone: customer.emergency_phone || '',
         manager_name: '', // customers表中没有这个字段
         status: customer.stage2_status || '',
-        resume: Array.isArray(customer.resume) ? customer.resume[0] : customer.resume || '',
-        passport: Array.isArray(customer.passport) ? customer.passport[0] : customer.passport || '',
-        household_book: Array.isArray(customer.household_book) ? customer.household_book[0] : customer.household_book || '',
-        id_card: Array.isArray(customer.id_card) ? customer.id_card[0] : customer.id_card || '',
-        photo_2inch: Array.isArray(customer.photo_2inch) ? customer.photo_2inch[0] : customer.photo_2inch || '',
-        credit_report: Array.isArray(customer.credit_report) ? customer.credit_report[0] : customer.credit_report || '',
-        no_crime_cert: Array.isArray(customer.no_crime_cert) ? customer.no_crime_cert[0] : customer.no_crime_cert || '',
-        national_cert: Array.isArray(customer.national_cert) ? customer.national_cert[0] : customer.national_cert || '',
-        provincial_cert: Array.isArray(customer.provincial_cert) ? customer.provincial_cert[0] : customer.provincial_cert || '',
-        employment_contract: Array.isArray(customer.employment_contract) ? customer.employment_contract[0] : customer.employment_contract || '',
-        japan_agency_contract: Array.isArray(customer.japan_agency_contract) ? customer.japan_agency_contract[0] : customer.japan_agency_contract || '',
-        immigration_materials: Array.isArray(customer.immigration_materials) ? customer.immigration_materials[0] : customer.immigration_materials || '',
+        resume: Array.isArray(customer.resume) ? customer.resume : (customer.resume ? [customer.resume] : []),
+        passport: Array.isArray(customer.passport) ? customer.passport : (customer.passport ? [customer.passport] : []),
+        household_book: Array.isArray(customer.household_book) ? customer.household_book : (customer.household_book ? [customer.household_book] : []),
+        id_card: Array.isArray(customer.id_card) ? customer.id_card : (customer.id_card ? [customer.id_card] : []),
+        photo_2inch: Array.isArray(customer.photo_2inch) ? customer.photo_2inch : (customer.photo_2inch ? [customer.photo_2inch] : []),
+        credit_report: Array.isArray(customer.credit_report) ? customer.credit_report : (customer.credit_report ? [customer.credit_report] : []),
+        no_crime_cert: Array.isArray(customer.no_crime_cert) ? customer.no_crime_cert : (customer.no_crime_cert ? [customer.no_crime_cert] : []),
+        national_cert: Array.isArray(customer.national_cert) ? customer.national_cert : (customer.national_cert ? [customer.national_cert] : []),
+        provincial_cert: Array.isArray(customer.provincial_cert) ? customer.provincial_cert : (customer.provincial_cert ? [customer.provincial_cert] : []),
+        employment_contract: Array.isArray(customer.employment_contract) ? customer.employment_contract : (customer.employment_contract ? [customer.employment_contract] : []),
+        japan_agency_contract: Array.isArray(customer.japan_agency_contract) ? customer.japan_agency_contract : (customer.japan_agency_contract ? [customer.japan_agency_contract] : []),
+        immigration_materials: Array.isArray(customer.immigration_materials) ? customer.immigration_materials : (customer.immigration_materials ? [customer.immigration_materials] : []),
       }))
 
       // 合并两个列表
@@ -261,12 +267,14 @@ export default function ApplicantsPage() {
   }
 
   // 查看文件
-  const handleViewFile = (url?: string) => {
-    if (!url) {
+  const handleViewFiles = (urls: string[] | undefined, field: string) => {
+    if (!urls || urls.length === 0) {
       message.warning('暂无文件')
       return
     }
-    window.open(url, '_blank')
+    setCurrentViewFiles(urls)
+    setCurrentViewField(field)
+    setViewModalVisible(true)
   }
 
   // Tab项
@@ -320,10 +328,12 @@ export default function ApplicantsPage() {
                         {applicant.status ? (
                           <Tag color={
                             applicant.status === '待面试' ? 'blue' :
-                              applicant.status === '面试中' ? 'orange' :
-                                applicant.status === '已通过' ? 'green' :
-                                  applicant.status === '已拒绝' ? 'red' :
-                                    'default'
+                              applicant.status === '已通知面试' ? 'cyan' :
+                                applicant.status === '面试通过' ? 'green' :
+                                  applicant.status === '面试失败' ? 'red' :
+                                    applicant.status === '培训中' ? 'purple' :
+                                      applicant.status === '已完成' ? 'default' :
+                                        'default'
                           }>
                             {applicant.status}
                           </Tag>
@@ -363,14 +373,14 @@ export default function ApplicantsPage() {
                     <h4>文档资料</h4>
                     <Row gutter={[16, 16]}>
                       <Col xs={24} sm={12} md={8}>
-                        <div><strong>原始简历：</strong>
+                        <div><strong>简历：</strong>
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.resume)}
-                            disabled={!applicant.resume}
+                            onClick={() => handleViewFiles(applicant.resume, 'resume')}
+                            disabled={!applicant.resume || applicant.resume.length === 0}
                           >
-                            查看
+                            查看{applicant.resume && applicant.resume.length > 0 ? `(${applicant.resume.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -379,10 +389,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.passport)}
-                            disabled={!applicant.passport}
+                            onClick={() => handleViewFiles(applicant.passport, 'passport')}
+                            disabled={!applicant.passport || applicant.passport.length === 0}
                           >
-                            查看
+                            查看{applicant.passport && applicant.passport.length > 0 ? `(${applicant.passport.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -391,10 +401,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.household_book)}
-                            disabled={!applicant.household_book}
+                            onClick={() => handleViewFiles(applicant.household_book, 'household_book')}
+                            disabled={!applicant.household_book || applicant.household_book.length === 0}
                           >
-                            查看
+                            查看{applicant.household_book && applicant.household_book.length > 0 ? `(${applicant.household_book.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -403,10 +413,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.id_card)}
-                            disabled={!applicant.id_card}
+                            onClick={() => handleViewFiles(applicant.id_card, 'id_card')}
+                            disabled={!applicant.id_card || applicant.id_card.length === 0}
                           >
-                            查看
+                            查看{applicant.id_card && applicant.id_card.length > 0 ? `(${applicant.id_card.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -415,10 +425,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.photo_2inch)}
-                            disabled={!applicant.photo_2inch}
+                            onClick={() => handleViewFiles(applicant.photo_2inch, 'photo_2inch')}
+                            disabled={!applicant.photo_2inch || applicant.photo_2inch.length === 0}
                           >
-                            查看
+                            查看{applicant.photo_2inch && applicant.photo_2inch.length > 0 ? `(${applicant.photo_2inch.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -427,10 +437,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.credit_report)}
-                            disabled={!applicant.credit_report}
+                            onClick={() => handleViewFiles(applicant.credit_report, 'credit_report')}
+                            disabled={!applicant.credit_report || applicant.credit_report.length === 0}
                           >
-                            查看
+                            查看{applicant.credit_report && applicant.credit_report.length > 0 ? `(${applicant.credit_report.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -439,10 +449,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.no_crime_cert)}
-                            disabled={!applicant.no_crime_cert}
+                            onClick={() => handleViewFiles(applicant.no_crime_cert, 'no_crime_cert')}
+                            disabled={!applicant.no_crime_cert || applicant.no_crime_cert.length === 0}
                           >
-                            查看
+                            查看{applicant.no_crime_cert && applicant.no_crime_cert.length > 0 ? `(${applicant.no_crime_cert.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -451,10 +461,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.national_cert)}
-                            disabled={!applicant.national_cert}
+                            onClick={() => handleViewFiles(applicant.national_cert, 'national_cert')}
+                            disabled={!applicant.national_cert || applicant.national_cert.length === 0}
                           >
-                            查看
+                            查看{applicant.national_cert && applicant.national_cert.length > 0 ? `(${applicant.national_cert.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -463,10 +473,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.provincial_cert)}
-                            disabled={!applicant.provincial_cert}
+                            onClick={() => handleViewFiles(applicant.provincial_cert, 'provincial_cert')}
+                            disabled={!applicant.provincial_cert || applicant.provincial_cert.length === 0}
                           >
-                            查看
+                            查看{applicant.provincial_cert && applicant.provincial_cert.length > 0 ? `(${applicant.provincial_cert.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -475,10 +485,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.employment_contract)}
-                            disabled={!applicant.employment_contract}
+                            onClick={() => handleViewFiles(applicant.employment_contract, 'employment_contract')}
+                            disabled={!applicant.employment_contract || applicant.employment_contract.length === 0}
                           >
-                            查看
+                            查看{applicant.employment_contract && applicant.employment_contract.length > 0 ? `(${applicant.employment_contract.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -487,10 +497,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.japan_agency_contract)}
-                            disabled={!applicant.japan_agency_contract}
+                            onClick={() => handleViewFiles(applicant.japan_agency_contract, 'japan_agency_contract')}
+                            disabled={!applicant.japan_agency_contract || applicant.japan_agency_contract.length === 0}
                           >
-                            查看
+                            查看{applicant.japan_agency_contract && applicant.japan_agency_contract.length > 0 ? `(${applicant.japan_agency_contract.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -499,10 +509,10 @@ export default function ApplicantsPage() {
                           <Button
                             type="link"
                             icon={<FileTextOutlined />}
-                            onClick={() => handleViewFile(applicant.immigration_materials)}
-                            disabled={!applicant.immigration_materials}
+                            onClick={() => handleViewFiles(applicant.immigration_materials, 'immigration_materials')}
+                            disabled={!applicant.immigration_materials || applicant.immigration_materials.length === 0}
                           >
-                            查看
+                            查看{applicant.immigration_materials && applicant.immigration_materials.length > 0 ? `(${applicant.immigration_materials.length})` : ''}
                           </Button>
                         </div>
                       </Col>
@@ -755,6 +765,47 @@ export default function ApplicantsPage() {
           </Form.Item>
         </Form>
       </Drawer>
+
+      {/* 查看文件 Modal */}
+      <Modal
+        title="查看文件"
+        open={viewModalVisible}
+        onCancel={() => setViewModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setViewModalVisible(false)}>
+            关闭
+          </Button>
+        ]}
+        width={600}
+      >
+        <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+          {currentViewFiles.map((url, index) => (
+            <div
+              key={index}
+              style={{
+                padding: '12px',
+                borderBottom: '1px solid #f0f0f0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <FileTextOutlined style={{ marginRight: 8, fontSize: '16px', color: '#1890ff' }} />
+                <span style={{ wordBreak: 'break-all' }}>
+                  {url.split('/').pop()}
+                </span>
+              </div>
+              <Button
+                type="link"
+                onClick={() => window.open(url, '_blank')}
+              >
+                查看
+              </Button>
+            </div>
+          ))}
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -66,6 +66,7 @@ export default function CustomerDetailPage() {
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [fileList, setFileList] = useState<any[]>([])
+  const [uploading, setUploading] = useState(false)
   const [form] = Form.useForm()
 
   // 检查URL参数，如果包含edit=true，自动进入编辑模式
@@ -158,6 +159,9 @@ export default function CustomerDetailPage() {
   // 处理文件上传
   const handleUploadRequest = async (options: any) => {
     const { file, onSuccess, onError } = options
+
+    setUploading(true)
+
     const formData = new FormData()
     formData.append('file', file)
 
@@ -191,6 +195,8 @@ export default function CustomerDetailPage() {
       console.error('上传失败:', error)
       onError(error)
       message.error(`${file.name} 上传失败`)
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -237,6 +243,8 @@ export default function CustomerDetailPage() {
     } catch (error) {
       console.error('保存文件URL失败:', error)
       message.error('保存失败')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -560,6 +568,7 @@ export default function CustomerDetailPage() {
         okText="确认上传"
         cancelText="取消"
         width={600}
+        confirmLoading={uploading}
       >
         <Upload
           accept=".pdf,.jpg,.jpeg,.png"
@@ -568,7 +577,9 @@ export default function CustomerDetailPage() {
           customRequest={handleUploadRequest}
           onRemove={handleRemove}
         >
-          <Button icon={<UploadOutlined />}>选择文件（可多选）</Button>
+          <Button icon={<UploadOutlined />} loading={uploading}>
+            {uploading ? '上传中...' : '选择文件（可多选）'}
+          </Button>
         </Upload>
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
           支持一次选择多个PDF文件上传

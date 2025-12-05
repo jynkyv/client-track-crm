@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         // 生成文件名：timestamp-filename
         const timestamp = Date.now()
         // 处理文件名中的特殊字符
-        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+        const safeName = file.name.replace(/[\\/]/g, '_')
         const objectName = `applicants/${timestamp}-${safeName}`
 
         // 将File转换为Buffer

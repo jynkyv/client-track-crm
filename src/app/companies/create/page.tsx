@@ -45,6 +45,7 @@ export default function CreateCompanyPage() {
   const { canAccessCompanies } = useAuth()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState<Record<string, boolean>>({})
   const [fileLists, setFileLists] = useState<Record<string, UploadFile[]>>({})
 
   if (!canAccessCompanies) {
@@ -61,6 +62,9 @@ export default function CreateCompanyPage() {
   // 处理文件上传
   const handleUpload = async (options: any, field: string) => {
     const { file, onSuccess, onError } = options
+
+    setUploading(prev => ({ ...prev, [field]: true }))
+
     const formData = new FormData()
     formData.append('file', file)
 
@@ -98,6 +102,8 @@ export default function CreateCompanyPage() {
       console.error('上传失败:', error)
       onError(error)
       message.error(`${file.name} 上传失败`)
+    } finally {
+      setUploading(prev => ({ ...prev, [field]: false }))
     }
   }
 
@@ -151,7 +157,8 @@ export default function CreateCompanyPage() {
       if (error) throw error
 
       message.success('创建企业成功')
-      router.push(`/companies/${data.id}`)
+      // 使用 replace 而不是 push，防止用户回退再次提交
+      router.replace(`/companies/${data.id}`)
     } catch (error) {
       console.error('创建企业失败:', error)
       message.error('创建企业失败')
@@ -293,8 +300,8 @@ export default function CreateCompanyPage() {
                     multiple
                     accept=".pdf,.jpg,.jpeg,.png"
                   >
-                    <Button icon={<UploadOutlined />}>
-                      上传文件
+                    <Button icon={<UploadOutlined />} loading={uploading[field.key]}>
+                      {uploading[field.key] ? '上传中...' : '上传文件'}
                     </Button>
                   </Upload>
                   {fileLists[field.key] && fileLists[field.key].length > 0 && (
@@ -309,8 +316,8 @@ export default function CreateCompanyPage() {
 
           <Form.Item style={{ marginTop: 24 }}>
             <Space>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                保存
+              <Button type="primary" htmlType="submit" loading={loading} disabled={loading}>
+                {loading ? '保存中...' : '保存'}
               </Button>
               <Button onClick={() => router.back()}>
                 取消

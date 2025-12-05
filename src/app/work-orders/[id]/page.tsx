@@ -54,6 +54,10 @@ export default function WorkOrderDetailPage() {
     const [ownerUserMap, setOwnerUserMap] = useState<Record<string, string>>({})
     const [uploadingFile, setUploadingFile] = useState<string | null>(null)
 
+    // 查看文件 Modal 状态
+    const [viewModalVisible, setViewModalVisible] = useState(false)
+    const [currentViewFiles, setCurrentViewFiles] = useState<string[]>([])
+
     // 获取工单详情
     const fetchTicketDetail = async () => {
         try {
@@ -225,12 +229,13 @@ export default function WorkOrderDetailPage() {
     }
 
     // 查看文件
-    const handleViewFile = (url: string) => {
-        if (!url) { // This check is technically redundant if caller ensures url is always string, but keeping for safety.
+    const handleViewFiles = (urls: string[]) => {
+        if (!urls || urls.length === 0) {
             message.warning('暂无文件')
             return
         }
-        window.open(url, '_blank')
+        setCurrentViewFiles(urls)
+        setViewModalVisible(true)
     }
 
     // 上传文件
@@ -394,7 +399,9 @@ export default function WorkOrderDetailPage() {
                                                 <div><strong>姓名：</strong>{applicant.real_name || applicant.nickname}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>客户状态：</strong>{getStatusTag(applicant.status)}</div>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>客户状态：</strong>{getStatusTag(applicant.stage2_status || applicant.status)}</div>
+                                                </Col>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
                                                 <div><strong>性别：</strong>{applicant.gender === 'male' ? '男' : applicant.gender === 'female' ? '女' : applicant.gender || '-'}</div>
@@ -474,8 +481,7 @@ export default function WorkOrderDetailPage() {
                                                                         icon={<FileTextOutlined />}
                                                                         onClick={() => {
                                                                             if (hasFile) {
-                                                                                // 打开第一个文件
-                                                                                handleViewFile(fieldValue[0])
+                                                                                handleViewFiles(fieldValue)
                                                                             }
                                                                         }}
                                                                         disabled={!hasFile}
@@ -627,7 +633,49 @@ export default function WorkOrderDetailPage() {
                         </Space>
                     </Form.Item>
                 </Form>
+
             </Drawer>
+
+            {/* 查看文件 Modal */}
+            <Modal
+                title="查看文件"
+                open={viewModalVisible}
+                onCancel={() => setViewModalVisible(false)}
+                footer={[
+                    <Button key="close" onClick={() => setViewModalVisible(false)}>
+                        关闭
+                    </Button>
+                ]}
+                width={600}
+            >
+                <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                    {currentViewFiles.map((url, index) => (
+                        <div
+                            key={index}
+                            style={{
+                                padding: '12px',
+                                borderBottom: '1px solid #f0f0f0',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <FileTextOutlined style={{ marginRight: 8, fontSize: '16px', color: '#1890ff' }} />
+                                <span style={{ wordBreak: 'break-all' }}>
+                                    {url.split('/').pop()}
+                                </span>
+                            </div>
+                            <Button
+                                type="link"
+                                onClick={() => window.open(getFileUrl(url), '_blank')}
+                            >
+                                查看
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            </Modal>
         </div >
     )
 }

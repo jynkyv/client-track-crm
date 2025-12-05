@@ -19,7 +19,8 @@ import {
   EditOutlined,
   ArrowLeftOutlined,
   UploadOutlined,
-  FilePdfOutlined
+  FilePdfOutlined,
+  EyeOutlined
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -57,6 +58,13 @@ export default function CompanyDetailPage() {
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [fileList, setFileList] = useState<UploadFile[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [activeUploads, setActiveUploads] = useState(0)
+
+  // 查看文件 Modal 状态
+  const [viewModalVisible, setViewModalVisible] = useState(false)
+  const [currentViewFiles, setCurrentViewFiles] = useState<string[]>([])
+  const [currentViewField, setCurrentViewField] = useState<string>('')
 
   // 获取企业详情
   const fetchCompany = async () => {
@@ -102,14 +110,14 @@ export default function CompanyDetailPage() {
   }, [companyId])
 
   // 查看多个PDF
-  const handleViewPdfs = (urls?: string[]) => {
+  const handleViewPdfs = (urls: string[] | undefined, field: string) => {
     if (!urls || urls.length === 0) {
       message.warning('暂无文件')
       return
     }
-    urls.forEach(url => {
-      window.open(getFileUrl(url), '_blank')
-    })
+    setCurrentViewFiles(urls)
+    setCurrentViewField(field)
+    setViewModalVisible(true)
   }
 
   // 上传PDF
@@ -122,6 +130,9 @@ export default function CompanyDetailPage() {
   // 处理文件上传
   const handleUploadRequest = async (options: any) => {
     const { file, onSuccess, onError } = options
+
+    setActiveUploads(prev => prev + 1)
+
     const formData = new FormData()
     formData.append('file', file)
 
@@ -155,6 +166,8 @@ export default function CompanyDetailPage() {
       console.error('上传失败:', error)
       onError(error)
       message.error(`${file.name} 上传失败`)
+    } finally {
+      setActiveUploads(prev => prev - 1)
     }
   }
 
@@ -165,8 +178,10 @@ export default function CompanyDetailPage() {
 
   // 确认上传
   const handleUploadConfirm = async () => {
+    setUploading(true)
     if (fileList.length === 0 || !company || !currentUploadField) {
       message.warning('请至少选择一个文件')
+      setUploading(false)
       return
     }
 
@@ -201,6 +216,8 @@ export default function CompanyDetailPage() {
     } catch (error) {
       console.error('保存文件URL失败:', error)
       message.error('保存失败')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -329,7 +346,7 @@ export default function CompanyDetailPage() {
                         <Button
                           size="small"
                           icon={<FilePdfOutlined />}
-                          onClick={() => handleViewPdfs(urls)}
+                          onClick={() => handleViewPdfs(urls, field.key)}
                           disabled={fileCount === 0}
                         >
                           查看{fileCount > 0 ? `(${fileCount})` : ''}
@@ -368,6 +385,8 @@ export default function CompanyDetailPage() {
         okText="确认上传"
         cancelText="取消"
         width={600}
+        confirmLoading={uploading}
+        okButtonProps={{ disabled: activeUploads > 0 }}
       >
         <Upload
           accept=".pdf,.jpg,.jpeg,.png"
@@ -376,7 +395,7 @@ export default function CompanyDetailPage() {
           customRequest={handleUploadRequest}
           onRemove={handleRemove}
         >
-          <Button icon={<UploadOutlined />}>选择文件（可多选）</Button>
+          <Button icon={<UploadOutlined />} loading={activeUploads > 0}>选择文件（可多选）</Button>
         </Upload>
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
           支持一次选择多个PDF文件上传
@@ -401,8 +420,50 @@ export default function CompanyDetailPage() {
             />
           </div>
         )}
+
       </Modal>
-    </div>
+
+      {/* 查看文件 Modal */}
+      <Modal
+        title={`查看${currentViewField === 'teihon' ? '藤本' :
+          currentViewField === 'financial_report' ? '决算报告书' :
+            currentViewField === 'industry_license' ? '行业许可证' :
+              currentViewField === 'gmo_contract' ? 'GMO合同' :
+                currentViewField === 'otit_materials' ? 'OTIT资料' :
+                  currentViewField === 'central_materials' ? '中央会资料' : '文件'}`}
+        open={viewModalVisible}
+        onCancel={() => setViewModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setViewModalVisible(false)}>
+            关闭
+          </Button>
+        ]}
+        width={600}
+      >
+        <List
+          dataSource={currentViewFiles}
+          renderItem={(url, index) => (
+            <List.Item
+              actions={[
+                <Button
+                  type="link"
+                  icon={<EyeOutlined />}
+                  onClick={() => window.open(getFileUrl(url), '_blank')}
+                >
+                  查看
+                </Button>
+              ]}
+            >
+              <List.Item.Meta
+                avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
+                title={`文件 ${index + 1}`}
+                description={<div style={{ wordBreak: 'break-all', fontSize: '12px' }}>{url.split('/').pop()}</div>}
+              />
+            </List.Item>
+          )}
+        />
+      </Modal>
+    </div >
   )
 }
 
