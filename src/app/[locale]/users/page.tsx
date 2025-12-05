@@ -16,6 +16,7 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { supabase, User } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslations } from 'next-intl'
 
 const { Option } = Select
 
@@ -26,6 +27,8 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [form] = Form.useForm()
   const { isAdmin } = useAuth()
+  const t = useTranslations('User')
+  const tCommon = useTranslations('Common')
 
   useEffect(() => {
     if (isAdmin) {
@@ -44,7 +47,7 @@ export default function UsersPage() {
       if (error) throw error
       setUsers(data || [])
     } catch (error) {
-      message.error('获取用户列表失败')
+      message.error(t('messages.fetchError'))
     } finally {
       setLoading(false)
     }
@@ -70,10 +73,10 @@ export default function UsersPage() {
         .eq('id', id)
 
       if (error) throw error
-      message.success('删除成功')
+      message.success(t('messages.deleteSuccess'))
       fetchUsers()
     } catch (error) {
-      message.error('删除失败')
+      message.error(t('messages.deleteError'))
     }
   }
 
@@ -86,30 +89,30 @@ export default function UsersPage() {
           .eq('id', editingUser.id)
 
         if (error) throw error
-        message.success('更新成功')
+        message.success(t('messages.updateSuccess'))
       } else {
         const { error } = await supabase
           .from('users')
           .insert([values])
 
         if (error) throw error
-        message.success('添加成功')
+        message.success(t('messages.addSuccess'))
       }
       setModalVisible(false)
       fetchUsers()
     } catch (error) {
-      message.error('操作失败')
+      message.error(t('messages.operationError'))
     }
   }
 
   const columns = [
     {
-      title: '用户名',
+      title: t('columns.username'),
       dataIndex: 'username',
       key: 'username',
     },
     {
-      title: '角色',
+      title: t('columns.role'),
       dataIndex: 'role',
       key: 'role',
       render: (role: string) => (
@@ -117,24 +120,24 @@ export default function UsersPage() {
           color: role === 'admin' ? '#ff4d4f' : '#1890ff',
           fontWeight: 'bold'
         }}>
-          {role === 'admin' ? '管理员' : '员工'}
+          {role === 'admin' ? t('roles.admin') : t('roles.employee')}
         </span>
       ),
     },
     {
-      title: '国家',
+      title: t('columns.country'),
       dataIndex: 'country',
       key: 'country',
       render: (country: string) => country || '-',
     },
     {
-      title: '创建时间',
+      title: t('columns.createdAt'),
       dataIndex: 'created_at',
       key: 'created_at',
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {
-      title: '操作',
+      title: t('columns.actions'),
       key: 'action',
       render: (_: any, record: User) => (
         <Space>
@@ -143,16 +146,16 @@ export default function UsersPage() {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            编辑
+            {t('actions.edit')}
           </Button>
           <Popconfirm
-            title="确定删除这个用户吗？"
+            title={t('actions.confirmDelete')}
             onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('actions.confirm')}
+            cancelText={t('actions.cancel')}
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              删除
+              {t('actions.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -175,9 +178,9 @@ export default function UsersPage() {
     <div>
       <Card>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-          <h2>账号管理</h2>
+          <h2>{t('title')}</h2>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            添加用户
+            {t('add')}
           </Button>
         </div>
 
@@ -197,7 +200,7 @@ export default function UsersPage() {
       </Card>
 
       <Modal
-        title={editingUser ? '编辑用户' : '添加用户'}
+        title={editingUser ? t('form.editTitle') : t('form.addTitle')}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
@@ -210,49 +213,49 @@ export default function UsersPage() {
         >
           <Form.Item
             name="username"
-            label="用户名"
-            rules={[{ required: true, message: '请输入用户名' }]}
+            label={t('form.username')}
+            rules={[{ required: true, message: t('form.usernamePlaceholder') }]}
           >
-            <Input placeholder="请输入用户名" />
+            <Input placeholder={t('form.usernamePlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="password"
-            label="密码"
-            rules={[{ required: true, message: '请输入密码' }]}
+            label={t('form.password')}
+            rules={[{ required: true, message: t('form.passwordPlaceholder') }]}
           >
-            <Input.Password placeholder="请输入密码" />
+            <Input.Password placeholder={t('form.passwordPlaceholder')} />
           </Form.Item>
 
           <Form.Item
             name="role"
-            label="角色"
-            rules={[{ required: true, message: '请选择角色' }]}
+            label={t('form.role')}
+            rules={[{ required: true, message: t('form.rolePlaceholder') }]}
           >
-            <Select placeholder="请选择角色">
-              <Option value="admin">管理员</Option>
-              <Option value="employee">员工</Option>
+            <Select placeholder={t('form.rolePlaceholder')}>
+              <Option value="admin">{t('roles.admin')}</Option>
+              <Option value="employee">{t('roles.employee')}</Option>
             </Select>
           </Form.Item>
 
           <Form.Item
             name="country"
-            label="国家"
-            rules={[{ required: true, message: '请选择国家' }]}
+            label={t('form.country')}
+            rules={[{ required: true, message: t('form.countryPlaceholder') }]}
           >
-            <Select placeholder="请选择国家">
-              <Option value="中国">中国</Option>
-              <Option value="日本">日本</Option>
+            <Select placeholder={t('form.countryPlaceholder')}>
+              <Option value="中国">{t('countries.china')}</Option>
+              <Option value="日本">{t('countries.japan')}</Option>
             </Select>
           </Form.Item>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
-                {editingUser ? '更新' : '添加'}
+                {editingUser ? t('form.update') : t('form.add')}
               </Button>
               <Button onClick={() => setModalVisible(false)}>
-                取消
+                {t('form.cancel')}
               </Button>
             </Space>
           </Form.Item>

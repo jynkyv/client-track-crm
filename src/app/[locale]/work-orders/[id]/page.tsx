@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useRouter } from '@/navigation'
 import { supabase, Ticket, Applicant, Company, Customer } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -22,18 +23,10 @@ import {
     Tabs,
     Tag
 } from 'antd'
-import {
-    ArrowLeftOutlined,
-    PlusOutlined,
-    FileTextOutlined,
-    EditOutlined,
-    DeleteOutlined,
-    MessageOutlined,
-    UploadOutlined,
-    FilePdfOutlined
-} from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
 import dayjs from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -57,6 +50,10 @@ export default function WorkOrderDetailPage() {
     // 查看文件 Modal 状态
     const [viewModalVisible, setViewModalVisible] = useState(false)
     const [currentViewFiles, setCurrentViewFiles] = useState<string[]>([])
+
+    const t = useTranslations('WorkOrder')
+    const tCommon = useTranslations('Common')
+    const tApplicant = useTranslations('Applicant')
 
     // 获取工单详情
     const fetchTicketDetail = async () => {
@@ -83,7 +80,7 @@ export default function WorkOrderDetailPage() {
             }
         } catch (error) {
             console.error('获取工单详情失败:', error)
-            message.error('获取工单详情失败')
+            message.error(t('messages.fetchDetailError'))
         }
     }
 
@@ -120,7 +117,7 @@ export default function WorkOrderDetailPage() {
             }
         } catch (error) {
             console.error('获取应聘者列表失败:', error)
-            message.error('获取应聘者列表失败')
+            message.error(tApplicant('messages.fetchError'))
         } finally {
             setLoading(false)
         }
@@ -177,7 +174,7 @@ export default function WorkOrderDetailPage() {
                     .eq('id', editingApplicant.id)
 
                 if (error) throw error
-                message.success('更新应聘者信息成功')
+                message.success(tApplicant('messages.submitSuccess'))
             } else {
                 // 新增
                 const { error } = await supabase
@@ -185,24 +182,24 @@ export default function WorkOrderDetailPage() {
                     .insert([applicantData])
 
                 if (error) throw error
-                message.success('添加应聘者成功')
+                message.success(tApplicant('messages.submitSuccess'))
             }
 
             setApplicantDrawerVisible(false)
             fetchApplicants()
         } catch (error) {
             console.error('提交应聘者信息失败:', error)
-            message.error('提交应聘者信息失败')
+            message.error(tApplicant('messages.submitError'))
         }
     }
 
     // 删除应聘者
     const handleDeleteApplicant = (applicantId: string) => {
         Modal.confirm({
-            title: '确认删除',
-            content: '确定要删除这个应聘者吗？此操作无法撤销。',
-            okText: '确认',
-            cancelText: '取消',
+            title: tCommon('confirmDelete'),
+            content: tApplicant('messages.confirmDelete'),
+            okText: tCommon('confirm'),
+            cancelText: tCommon('cancel'),
             onOk: async () => {
                 try {
                     const { error } = await supabase
@@ -211,11 +208,11 @@ export default function WorkOrderDetailPage() {
                         .eq('id', applicantId)
 
                     if (error) throw error
-                    message.success('删除成功')
+                    message.success(tApplicant('messages.deleteSuccess'))
                     fetchApplicants()
                 } catch (error) {
                     console.error('删除应聘者失败:', error)
-                    message.error('删除应聘者失败')
+                    message.error(tApplicant('messages.deleteError'))
                 }
             }
         })
@@ -231,7 +228,7 @@ export default function WorkOrderDetailPage() {
     // 查看文件
     const handleViewFiles = (urls: string[]) => {
         if (!urls || urls.length === 0) {
-            message.warning('暂无文件')
+            message.warning(t('messages.noFileWarning'))
             return
         }
         setCurrentViewFiles(urls)
@@ -272,11 +269,11 @@ export default function WorkOrderDetailPage() {
 
             if (error) throw error
 
-            message.success('上传成功')
+            message.success(t('messages.uploadSuccess'))
             fetchApplicants() // 刷新列表
         } catch (error) {
             console.error('上传失败:', error)
-            message.error('上传失败')
+            message.error(t('messages.uploadError'))
         } finally {
             setUploadingFile(null)
         }
@@ -286,13 +283,15 @@ export default function WorkOrderDetailPage() {
     const getStatusTag = (status?: string) => {
         if (!status) return '-'
         const statusConfig: Record<string, { color: string, text: string }> = {
-            '待面试': { color: 'blue', text: '待面试' },
-            '面试中': { color: 'orange', text: '面试中' },
-            '已通过': { color: 'green', text: '已通过' },
-            '已拒绝': { color: 'red', text: '已拒绝' },
-            '培训中': { color: 'cyan', text: '培训中' },
-            '已完成': { color: 'purple', text: '已完成' }
+            '待面试': { color: 'blue', text: t('status.pending') },
+            '面试中': { color: 'orange', text: t('status.interviewing') },
+            '已通过': { color: 'green', text: t('status.passed') },
+            '已拒绝': { color: 'red', text: t('status.rejected') },
+            '培训中': { color: 'cyan', text: t('status.training') },
+            '已完成': { color: 'purple', text: t('status.completed') }
         }
+        // Try to match by key or text if status is already localized (though it shouldn't be in DB ideally)
+        // For now assuming DB has Chinese status strings as keys
         const config = statusConfig[status] || { color: 'default', text: status }
         return <Tag color={config.color}>{config.text}</Tag>
     }
@@ -301,8 +300,8 @@ export default function WorkOrderDetailPage() {
         return (
             <Card>
                 <div style={{ textAlign: 'center', padding: '50px' }}>
-                    <h2>权限不足</h2>
-                    <p>您没有权限访问此页面</p>
+                    <h2>{tCommon('noPermission')}</h2>
+                    <p>{tCommon('noPermissionMessage')}</p>
                 </div>
             </Card>
         )
@@ -315,20 +314,20 @@ export default function WorkOrderDetailPage() {
                 onClick={() => router.back()}
                 style={{ marginBottom: 16 }}
             >
-                返回
+                {tCommon('back')}
             </Button>
 
             {/* 工单信息卡片 */}
-            <Card title="工单信息" style={{ marginBottom: 16 }}>
+            <Card title={t('detail.title')} style={{ marginBottom: 16 }}>
                 <Descriptions bordered column={2}>
-                    <Descriptions.Item label="工单名称">{ticket?.name}</Descriptions.Item>
-                    <Descriptions.Item label="企业名称">{company?.name}</Descriptions.Item>
-                    <Descriptions.Item label="岗位名称">{ticket?.position}</Descriptions.Item>
-                    <Descriptions.Item label="招聘人数">{ticket?.recruit_count}人</Descriptions.Item>
-                    <Descriptions.Item label="薪资">{ticket?.salary}</Descriptions.Item>
-                    <Descriptions.Item label="工作时间">{ticket?.work_time}</Descriptions.Item>
-                    <Descriptions.Item label="休息天数">{ticket?.rest_days}</Descriptions.Item>
-                    <Descriptions.Item label="负责人">
+                    <Descriptions.Item label={t('columns.name')}>{ticket?.name}</Descriptions.Item>
+                    <Descriptions.Item label={t('columns.companyName')}>{company?.name}</Descriptions.Item>
+                    <Descriptions.Item label={t('form.position')}>{ticket?.position}</Descriptions.Item>
+                    <Descriptions.Item label={t('form.recruitCount')}>{ticket?.recruit_count}人</Descriptions.Item>
+                    <Descriptions.Item label={t('form.salary')}>{ticket?.salary}</Descriptions.Item>
+                    <Descriptions.Item label={t('form.workTime')}>{ticket?.work_time}</Descriptions.Item>
+                    <Descriptions.Item label={t('form.restDays')}>{ticket?.rest_days}</Descriptions.Item>
+                    <Descriptions.Item label={t('columns.owner')}>
                         <Space>
                             <span>{ticket?.owner_name || '-'}</span>
                             {ticket?.owner_id && ticket.owner_id !== user?.id && (
@@ -342,19 +341,19 @@ export default function WorkOrderDetailPage() {
                                         }
                                     }}
                                 >
-                                    聊天
+                                    {t('actions.chat')}
                                 </Button>
                             )}
                         </Space>
                     </Descriptions.Item>
-                    <Descriptions.Item label="工作待遇" span={2}>{ticket?.benefits}</Descriptions.Item>
+                    <Descriptions.Item label={t('form.benefits')} span={2}>{ticket?.benefits}</Descriptions.Item>
                 </Descriptions>
             </Card>
 
             {/* 应聘者列表 - 仅日方员工可见 */}
             {!isChineseEmployee && (
                 <Card
-                    title="应聘者列表"
+                    title={t('detail.applicantList')}
                     extra={
                         isAdmin && (
                             <Button
@@ -362,7 +361,7 @@ export default function WorkOrderDetailPage() {
                                 icon={<PlusOutlined />}
                                 onClick={handleAddApplicant}
                             >
-                                添加应聘者
+                                {tApplicant('add')}
                             </Button>
                         )
                     }
@@ -381,14 +380,14 @@ export default function WorkOrderDetailPage() {
                                                     icon={<EditOutlined />}
                                                     onClick={() => handleEditApplicant(applicant)}
                                                 >
-                                                    编辑
+                                                    {tCommon('edit')}
                                                 </Button>
                                                 <Button
                                                     danger
                                                     icon={<DeleteOutlined />}
                                                     onClick={() => handleDeleteApplicant(applicant.id)}
                                                 >
-                                                    删除
+                                                    {tCommon('delete')}
                                                 </Button>
                                             </Space>
                                         )}
@@ -396,40 +395,38 @@ export default function WorkOrderDetailPage() {
 
                                         <Row gutter={[16, 16]}>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>姓名：</strong>{applicant.real_name || applicant.nickname}</div>
+                                                <div><strong>{tApplicant('form.name')}：</strong>{applicant.real_name || applicant.nickname}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <Col xs={24} sm={12} md={8}>
-                                                    <div><strong>客户状态：</strong>{getStatusTag(applicant.stage2_status || applicant.status)}</div>
-                                                </Col>
+
+                                            </Col >
+                                            <Col xs={24} sm={12} md={8}>
+                                                <div><strong>{tApplicant('form.gender')}：</strong>{applicant.gender === 'male' ? tApplicant('gender.male') : applicant.gender === 'female' ? tApplicant('gender.female') : applicant.gender || '-'}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>性别：</strong>{applicant.gender === 'male' ? '男' : applicant.gender === 'female' ? '女' : applicant.gender || '-'}</div>
+                                                <div><strong>{tApplicant('form.birthDate')}：</strong>{applicant.birth_date}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>出生年月日：</strong>{applicant.birth_date}</div>
+                                                <div><strong>{tApplicant('form.householdLocation')}：</strong>{applicant.household_location}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>户籍所在地：</strong>{applicant.household_location}</div>
+                                                <div><strong>{tApplicant('form.currentResidence')}：</strong>{applicant.current_residence}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>现居住地：</strong>{applicant.current_residence}</div>
+                                                <div><strong>{tApplicant('form.contact')}：</strong>{applicant.phone || applicant.contact}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>联系方式：</strong>{applicant.phone || applicant.contact}</div>
+                                                <div><strong>{tApplicant('form.wechat')}：</strong>{applicant.wechat}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>实名微信号：</strong>{applicant.wechat}</div>
+                                                <div><strong>{tApplicant('form.emergencyContact')}：</strong>{applicant.emergency_contact}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-                                                <div><strong>紧急联系人：</strong>{applicant.emergency_contact}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>紧急联系人电话：</strong>{applicant.emergency_phone}</div>
+                                                <div><strong>{tApplicant('form.emergencyPhone')}：</strong>{applicant.emergency_phone}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
                                                 <div>
-                                                    <strong>负责人：</strong>
+                                                    <strong>{tApplicant('form.owner')}：</strong>
                                                     <Space>
                                                         <span>{applicant.owner || '-'}</span>
                                                         {applicant.owner && ownerUserMap[applicant.owner] && ownerUserMap[applicant.owner] !== user?.id && (
@@ -443,30 +440,30 @@ export default function WorkOrderDetailPage() {
                                                                     }
                                                                 }}
                                                             >
-                                                                聊天
+                                                                {t('actions.chat')}
                                                             </Button>
                                                         )}
                                                     </Space>
                                                 </div>
                                             </Col>
-                                        </Row>
+                                        </Row >
 
                                         <div style={{ marginTop: 16 }}>
-                                            <h4>文档资料</h4>
+                                            <h4>{t('detail.documents')}</h4>
                                             <Row gutter={[16, 16]}>
                                                 {[
-                                                    { label: '原始简历', field: 'resume' },
-                                                    { label: '护照', field: 'passport' },
-                                                    { label: '户口本', field: 'household_book' },
-                                                    { label: '身份证', field: 'id_card' },
-                                                    { label: '2寸照片', field: 'photo_2inch' },
-                                                    { label: '征信报告', field: 'credit_report' },
-                                                    { label: '无犯罪证明', field: 'no_crime_cert' },
-                                                    { label: '国检证书', field: 'national_cert' },
-                                                    { label: '省级考试证书', field: 'provincial_cert' },
-                                                    { label: '雇佣合同', field: 'employment_contract' },
-                                                    { label: '赴日中介合同', field: 'japan_agency_contract' },
-                                                    { label: '入管局资料', field: 'immigration_materials' },
+                                                    { label: tApplicant('documents.resume'), field: 'resume' },
+                                                    { label: tApplicant('documents.passport'), field: 'passport' },
+                                                    { label: tApplicant('documents.householdBook'), field: 'household_book' },
+                                                    { label: tApplicant('documents.idCard'), field: 'id_card' },
+                                                    { label: tApplicant('documents.photo2inch'), field: 'photo_2inch' },
+                                                    { label: tApplicant('documents.creditReport'), field: 'credit_report' },
+                                                    { label: tApplicant('documents.noCrimeCert'), field: 'no_crime_cert' },
+                                                    { label: tApplicant('documents.nationalCert'), field: 'national_cert' },
+                                                    { label: tApplicant('documents.provincialCert'), field: 'provincial_cert' },
+                                                    { label: tApplicant('documents.employmentContract'), field: 'employment_contract' },
+                                                    { label: tApplicant('documents.japanAgencyContract'), field: 'japan_agency_contract' },
+                                                    { label: tApplicant('documents.immigrationMaterials'), field: 'immigration_materials' },
                                                 ].map(({ label, field }) => {
                                                     // customers表的文档字段是数组类型
                                                     const fieldValue = applicant[field as keyof Customer] as string[] | undefined
@@ -486,7 +483,7 @@ export default function WorkOrderDetailPage() {
                                                                         }}
                                                                         disabled={!hasFile}
                                                                     >
-                                                                        查看{hasFile ? `(${fieldValue.length})` : ''}
+                                                                        {t('actions.view')}{hasFile ? `(${fieldValue.length})` : ''}
                                                                     </Button>
                                                                     {isAdmin && (
                                                                         <Upload
@@ -501,7 +498,7 @@ export default function WorkOrderDetailPage() {
                                                                                 size="small"
                                                                                 loading={isUploading}
                                                                             >
-                                                                                {isUploading ? '上传中' : '上传'}
+                                                                                {isUploading ? t('actions.uploading') : t('actions.upload')}
                                                                             </Button>
                                                                         </Upload>
                                                                     )}
@@ -512,22 +509,22 @@ export default function WorkOrderDetailPage() {
                                                 })}
                                             </Row>
                                         </div>
-                                    </div>
+                                    </div >
                                 )
                             }))}
                         />
                     ) : (
                         <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-                            暂无应聘者信息，请添加应聘者
+                            {t('detail.noApplicant')}
                         </div>
                     )}
-                </Card>
+                </Card >
             )
             }
 
             {/* 添加/编辑应聘者Drawer */}
             <Drawer
-                title={editingApplicant ? '编辑应聘者' : '添加应聘者'}
+                title={editingApplicant ? tApplicant('edit') : tApplicant('add')}
                 open={applicantDrawerVisible}
                 onClose={() => setApplicantDrawerVisible(false)}
                 width={600}
@@ -540,95 +537,95 @@ export default function WorkOrderDetailPage() {
                 >
                     <Form.Item
                         name="name"
-                        label="姓名"
-                        rules={[{ required: true, message: '请输入姓名' }]}
+                        label={tApplicant('form.name')}
+                        rules={[{ required: true, message: tApplicant('form.namePlaceholder') }]}
                     >
-                        <Input placeholder="请输入姓名" />
+                        <Input placeholder={tApplicant('form.namePlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="gender"
-                        label="性别"
-                        rules={[{ required: true, message: '请选择性别' }]}
+                        label={tApplicant('form.gender')}
+                        rules={[{ required: true, message: tApplicant('form.genderPlaceholder') }]}
                     >
-                        <Select placeholder="请选择性别">
-                            <Option value="male">男</Option>
-                            <Option value="female">女</Option>
-                            <Option value="other">其他</Option>
+                        <Select placeholder={tApplicant('form.genderPlaceholder')}>
+                            <Option value="male">{tApplicant('gender.male')}</Option>
+                            <Option value="female">{tApplicant('gender.female')}</Option>
+                            <Option value="other">{tApplicant('gender.other')}</Option>
                         </Select>
                     </Form.Item>
 
                     <Form.Item
                         name="birth_date"
-                        label="出生年月日"
+                        label={tApplicant('form.birthDate')}
                     >
-                        <DatePicker style={{ width: '100%' }} placeholder="请选择出生日期" />
+                        <DatePicker style={{ width: '100%' }} placeholder={tApplicant('form.birthDatePlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="household_location"
-                        label="户籍所在地"
+                        label={tApplicant('form.householdLocation')}
                     >
-                        <Input placeholder="请输入户籍所在地" />
+                        <Input placeholder={tApplicant('form.householdLocationPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="current_residence"
-                        label="现居住地"
+                        label={tApplicant('form.currentResidence')}
                     >
-                        <Input placeholder="请输入现居住地" />
+                        <Input placeholder={tApplicant('form.currentResidencePlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="contact"
-                        label="联系方式"
-                        rules={[{ required: true, message: '请输入联系方式' }]}
+                        label={tApplicant('form.contact')}
+                        rules={[{ required: true, message: tApplicant('form.contactPlaceholder') }]}
                     >
-                        <Input placeholder="请输入联系方式" />
+                        <Input placeholder={tApplicant('form.contactPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="wechat"
-                        label="实名微信号"
+                        label={tApplicant('form.wechat')}
                     >
-                        <Input placeholder="请输入实名微信号" />
+                        <Input placeholder={tApplicant('form.wechatPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="emergency_contact"
-                        label="紧急联系人"
+                        label={tApplicant('form.emergencyContact')}
                     >
-                        <Input placeholder="请输入紧急联系人" />
+                        <Input placeholder={tApplicant('form.emergencyContactPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="emergency_phone"
-                        label="紧急联系人电话"
+                        label={tApplicant('form.emergencyPhone')}
                     >
-                        <Input placeholder="请输入紧急联系人电话" />
+                        <Input placeholder={tApplicant('form.emergencyPhonePlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="status"
-                        label="状态"
+                        label={tApplicant('form.status')}
                     >
-                        <Select placeholder="请选择状态">
-                            <Option value="待面试">待面试</Option>
-                            <Option value="面试中">面试中</Option>
-                            <Option value="已通过">已通过</Option>
-                            <Option value="已拒绝">已拒绝</Option>
-                            <Option value="培训中">培训中</Option>
-                            <Option value="已完成">已完成</Option>
+                        <Select placeholder={tApplicant('form.statusPlaceholder')}>
+                            <Option value="待面试">{t('status.pending')}</Option>
+                            <Option value="面试中">{t('status.interviewing')}</Option>
+                            <Option value="已通过">{t('status.passed')}</Option>
+                            <Option value="已拒绝">{t('status.rejected')}</Option>
+                            <Option value="培训中">{t('status.training')}</Option>
+                            <Option value="已完成">{t('status.completed')}</Option>
                         </Select>
                     </Form.Item>
 
                     <Form.Item>
                         <Space>
                             <Button type="primary" htmlType="submit">
-                                {editingApplicant ? '更新' : '添加'}
+                                {editingApplicant ? tApplicant('form.update') : tApplicant('form.add')}
                             </Button>
                             <Button onClick={() => setApplicantDrawerVisible(false)}>
-                                取消
+                                {tApplicant('form.cancel')}
                             </Button>
                         </Space>
                     </Form.Item>
@@ -638,17 +635,13 @@ export default function WorkOrderDetailPage() {
 
             {/* 查看文件 Modal */}
             <Modal
-                title="查看文件"
                 open={viewModalVisible}
+                title={t('fileViewer')}
+                footer={null}
                 onCancel={() => setViewModalVisible(false)}
-                footer={[
-                    <Button key="close" onClick={() => setViewModalVisible(false)}>
-                        关闭
-                    </Button>
-                ]}
-                width={600}
+                width={800}
             >
-                <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
                     {currentViewFiles.map((url, index) => (
                         <div
                             key={index}
@@ -672,10 +665,11 @@ export default function WorkOrderDetailPage() {
                             >
                                 查看
                             </Button>
-                        </div>
-                    ))}
-                </div>
-            </Modal>
+                        </div >
+                    ))
+                    }
+                </div >
+            </Modal >
         </div >
     )
 }

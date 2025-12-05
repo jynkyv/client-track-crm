@@ -24,9 +24,10 @@ import {
 import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { supabase, Customer, Payment } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/navigation'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const { Option } = Select
 
@@ -55,6 +56,8 @@ export default function ContractCustomersPage() {
   const [bindForm] = Form.useForm()
   const { isAdmin, user, canAccessCustomers } = useAuth()
   const router = useRouter()
+  const t = useTranslations('contract')
+  const tCommon = useTranslations('Common')
 
   // 筛选和搜索状态
   const [searchName, setSearchName] = useState('')
@@ -130,11 +133,11 @@ export default function ContractCustomersPage() {
       setCustomers(data || [])
       setTotal(count || 0)
     } catch {
-      message.error('获取客户列表失败')
+      message.error(tCommon('error'))
     } finally {
       setLoading(false)
     }
-  }, [isAdmin, user, searchName, stage2StatusFilter, ownerFilter, currentPage, pageSize, sortField, sortOrder])
+  }, [isAdmin, user, searchName, stage2StatusFilter, ownerFilter, currentPage, pageSize, sortField, sortOrder, tCommon])
 
   // 获取付款记录
   const fetchPayments = useCallback(async (customerId: string) => {
@@ -149,9 +152,9 @@ export default function ContractCustomersPage() {
         console.error('获取付款记录错误:', error)
         // 如果是表不存在的错误
         if (error.code === 'PGRST204' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
-          message.error('payments表不存在，请先在Supabase执行 update-database-stage2.sql 脚本创建表')
+          message.error(t('messages.paymentTableError'))
         } else {
-          message.error(`获取付款记录失败: ${error.message}`)
+          message.error(`${t('messages.fetchPaymentError')}: ${error.message}`)
         }
         setPayments([])
         return
@@ -159,7 +162,7 @@ export default function ContractCustomersPage() {
       setPayments(data || [])
     } catch (error: any) {
       console.error('获取付款记录异常:', error)
-      message.error(`获取付款记录失败: ${error?.message || '未知错误'}`)
+      message.error(`${t('messages.fetchPaymentError')}: ${error?.message || tCommon('error')}`)
       setPayments([])
     }
   }, [])
@@ -281,13 +284,13 @@ export default function ContractCustomersPage() {
         .eq('id', selectedCustomer.id)
 
       if (error) throw error
-      message.success('绑定成功')
+      message.success(tCommon('success'))
       setBindDrawerVisible(false)
       fetchCustomers()
       // 刷新企业和工单名称映射
       fetchCompanyAndWorkOrderNames()
     } catch {
-      message.error('绑定失败')
+      message.error(tCommon('error'))
     }
   }
 
@@ -332,7 +335,7 @@ export default function ContractCustomersPage() {
       // 如果是"已通知面试"，需要填写时间
       if (values.stage2_status === '已通知面试') {
         if (!values.interview_notice_time) {
-          message.error('已通知面试必须填写通知时间')
+          message.error(t('messages.interviewTimeRequired'))
           return
         }
         updateData.interview_notice_time = values.interview_notice_time.toISOString()
@@ -347,11 +350,11 @@ export default function ContractCustomersPage() {
         .eq('id', selectedCustomer.id)
 
       if (error) throw error
-      message.success('状态更新成功')
+      message.success(tCommon('success'))
       setStatusDrawerVisible(false)
       fetchCustomers()
     } catch {
-      message.error('状态更新失败')
+      message.error(tCommon('error'))
     }
   }
 
@@ -369,10 +372,10 @@ export default function ContractCustomersPage() {
         .eq('id', id)
 
       if (error) throw error
-      message.success('删除成功')
+      message.success(tCommon('success'))
       fetchCustomers()
     } catch {
-      message.error('删除失败')
+      message.error(tCommon('error'))
     }
   }
 
@@ -413,9 +416,9 @@ export default function ContractCustomersPage() {
         console.error('插入付款记录错误:', paymentError)
         // 如果是表不存在的错误
         if (paymentError.code === 'PGRST204' || paymentError.message?.includes('relation') || paymentError.message?.includes('does not exist')) {
-          message.error('payments表不存在，请先在Supabase执行 update-database-stage2.sql 脚本创建表')
+          message.error(t('messages.paymentTableError'))
         } else {
-          message.error(`添加付款记录失败: ${paymentError.message}`)
+          message.error(`${t('messages.paymentError')}: ${paymentError.message}`)
         }
         return
       }
@@ -432,11 +435,11 @@ export default function ContractCustomersPage() {
 
       if (updateError) throw updateError
 
-      message.success('付款记录添加成功')
+      message.success(t('messages.paymentSuccess'))
       setPaymentDrawerVisible(false)
       fetchCustomers()
     } catch {
-      message.error('添加付款记录失败')
+      message.error(t('messages.paymentError'))
     }
   }
 
@@ -454,7 +457,7 @@ export default function ContractCustomersPage() {
 
   const columns = [
     {
-      title: '真实姓名',
+      title: t('columns.realName'),
       width: 100,
       dataIndex: 'real_name',
       key: 'real_name',
@@ -462,23 +465,23 @@ export default function ContractCustomersPage() {
       render: (name: string) => name || '-',
     },
     {
-      title: '客户状态',
+      title: t('columns.status'),
       width: 120,
       dataIndex: 'stage2_status',
       key: 'stage2_status',
       align: 'center' as const,
       render: (status: string, record: Customer) => {
         const statusConfig: Record<string, { color: string; text: string }> = {
-          '待面试': { color: 'blue', text: '待面试' },
-          '已通知面试': { color: 'orange', text: '已通知面试' },
-          '面试通过': { color: 'green', text: '面试通过' },
-          '面试失败': { color: 'red', text: '面试失败' },
-          '培训中': { color: 'purple', text: '培训中' },
-          '已完成': { color: 'default', text: '已完成' }
+          '待面试': { color: 'blue', text: t('status.pending') },
+          '已通知面试': { color: 'orange', text: t('status.interviewNotified') },
+          '面试通过': { color: 'green', text: t('status.interviewPassed') },
+          '面试失败': { color: 'red', text: t('status.interviewFailed') },
+          '培训中': { color: 'purple', text: t('status.training') },
+          '已完成': { color: 'default', text: t('status.completed') }
         }
         const config = statusConfig[status] || { color: 'default', text: status || '-' }
 
-        // 如果是"已通知面试"且有面试时间，在Tag内显示时间
+        // 如果是"已通知面试"，需要填写时间
         if (status === '已通知面试' && record.interview_notice_time) {
           const interviewTime = new Date(record.interview_notice_time)
           const formattedTime = interviewTime.toLocaleString('zh-CN', {
@@ -500,15 +503,15 @@ export default function ContractCustomersPage() {
       },
     },
     {
-      title: '年龄',
+      title: t('columns.age'),
       width: 80,
       dataIndex: 'age',
       key: 'age',
       align: 'center' as const,
-      render: (age: number) => age ? `${age}岁` : '-',
+      render: (age: number) => age ? `${age}${tCommon('ageUnit')}` : '-',
     },
     {
-      title: '性别',
+      title: t('columns.gender'),
       width: 60,
       dataIndex: 'gender',
       key: 'gender',
@@ -516,15 +519,15 @@ export default function ContractCustomersPage() {
       render: (gender: string) => {
         if (!gender) return '-'
         const genderText = {
-          male: '男',
-          female: '女',
-          other: '其他'
+          male: tCommon('gender.male'),
+          female: tCommon('gender.female'),
+          other: tCommon('gender.other')
         }
         return genderText[gender as keyof typeof genderText] || gender
       },
     },
     {
-      title: '电话',
+      title: t('columns.phone'),
       width: 120,
       dataIndex: 'phone',
       key: 'phone',
@@ -532,14 +535,14 @@ export default function ContractCustomersPage() {
       render: (phone: string) => phone || '-',
     },
     {
-      title: '联系方式',
+      title: t('columns.contact'),
       width: 120,
       dataIndex: 'contact',
       key: 'contact',
       align: 'center' as const,
     },
     {
-      title: '企业/工单',
+      title: t('columns.companyWorkOrder'),
       width: 200,
       key: 'company_work_order',
       align: 'center' as const,
@@ -553,7 +556,7 @@ export default function ContractCustomersPage() {
               size="small"
               onClick={() => handleBind(record)}
             >
-              绑定
+              {t('actions.bind')}
             </Button>
           )
         }
@@ -589,7 +592,7 @@ export default function ContractCustomersPage() {
       },
     },
     {
-      title: '工作经验',
+      title: t('columns.workExperience'),
       width: 100,
       dataIndex: 'work_experience',
       key: 'work_experience',
@@ -604,7 +607,7 @@ export default function ContractCustomersPage() {
       },
     },
     {
-      title: '备注',
+      title: t('columns.notes'),
       width: 100,
       dataIndex: 'notes',
       key: 'notes',
@@ -619,7 +622,7 @@ export default function ContractCustomersPage() {
       },
     },
     ...(isAdmin ? [{
-      title: '所属人',
+      title: t('columns.owner'),
       width: 90,
       dataIndex: 'owner',
       key: 'owner',
@@ -627,7 +630,7 @@ export default function ContractCustomersPage() {
       render: (owner: string) => owner || '-',
     }] : []),
     {
-      title: '汇款金额',
+      title: t('columns.walletBalance'),
       width: 150,
       dataIndex: 'wallet_balance',
       key: 'wallet_balance',
@@ -647,7 +650,7 @@ export default function ContractCustomersPage() {
       },
     },
     {
-      title: '创建时间',
+      title: t('columns.createdAt'),
       width: 100,
       dataIndex: 'created_at',
       key: 'created_at',
@@ -656,7 +659,7 @@ export default function ContractCustomersPage() {
       render: (date: string) => new Date(date).toLocaleDateString(),
     },
     {
-      title: '最后汇款时间',
+      title: t('columns.lastPaymentTime'),
       width: 120,
       dataIndex: 'last_payment_time',
       key: 'last_payment_time',
@@ -664,7 +667,7 @@ export default function ContractCustomersPage() {
       render: (date: string) => date ? new Date(date).toLocaleDateString() : '-',
     },
     {
-      title: '操作',
+      title: t('columns.actions'),
       key: 'action',
       width: 20,
       align: 'center' as const,
@@ -672,25 +675,25 @@ export default function ContractCustomersPage() {
         const menuItems = [
           {
             key: 'view',
-            label: '查看',
+            label: t('actions.view'),
             icon: <EyeOutlined />,
             onClick: () => router.push(`/customers/contract/${record.id}`)
           },
           {
             key: 'edit',
-            label: '编辑',
+            label: t('actions.edit'),
             icon: <EditOutlined />,
             onClick: () => handleEdit(record)
           },
           {
             key: 'status',
-            label: '状态变更',
+            label: t('actions.changeStatus'),
             icon: <SwapOutlined />,
             onClick: () => handleStatusChange(record)
           },
           {
             key: 'payment',
-            label: '付款/退款',
+            label: t('actions.payment'),
             icon: <DollarOutlined />,
             onClick: () => handlePayment(record)
           }
@@ -700,7 +703,7 @@ export default function ContractCustomersPage() {
         if (isAdmin) {
           menuItems.push({
             key: 'delete',
-            label: '删除',
+            label: t('actions.delete'),
             icon: <DeleteOutlined />,
             onClick: () => handleDelete(record.id)
           })
@@ -719,22 +722,33 @@ export default function ContractCustomersPage() {
     },
   ]
 
+  if (!canAccessCustomers) {
+    return (
+      <Card>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <h2>{tCommon('noPermission')}</h2>
+          <p>{tCommon('noPermissionMessage')}</p>
+        </div>
+      </Card>
+    )
+  }
+
   return (
     <div>
       <Card>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>正式客户管理</h2>
+          <h2>{t('title')}</h2>
         </div>
 
         {/* 筛选和搜索区域 */}
         <Card style={{ marginBottom: 16 }}>
-          <h3 style={{ marginBottom: 16 }}>筛选和搜索</h3>
+          <h3 style={{ marginBottom: 16 }}>{tCommon('search')}</h3>
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} md={6}>
               <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>真实姓名搜索</label>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('search.realName')}</label>
                 <Input
-                  placeholder="搜索真实姓名"
+                  placeholder={t('search.realNamePlaceholder')}
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value)}
                   allowClear
@@ -743,29 +757,29 @@ export default function ContractCustomersPage() {
             </Col>
             <Col xs={24} sm={12} md={6}>
               <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>状态筛选</label>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('search.status')}</label>
                 <Select
-                  placeholder="筛选状态"
+                  placeholder={t('search.status')}
                   value={stage2StatusFilter}
                   onChange={setStage2StatusFilter}
                   allowClear
                   style={{ width: '100%' }}
                 >
-                  <Option value="待面试">待面试</Option>
-                  <Option value="已通知面试">已通知面试</Option>
-                  <Option value="面试通过">面试通过</Option>
-                  <Option value="面试失败">面试失败</Option>
-                  <Option value="培训中">培训中</Option>
-                  <Option value="已完成">已完成</Option>
+                  <Option value="待面试">{t('status.pending')}</Option>
+                  <Option value="已通知面试">{t('status.interviewNotified')}</Option>
+                  <Option value="面试通过">{t('status.interviewPassed')}</Option>
+                  <Option value="面试失败">{t('status.interviewFailed')}</Option>
+                  <Option value="培训中">{t('status.training')}</Option>
+                  <Option value="已完成">{t('status.completed')}</Option>
                 </Select>
               </div>
             </Col>
             {isAdmin && (
               <Col xs={24} sm={12} md={6}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>所属人筛选</label>
+                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('columns.owner')}</label>
                   <Select
-                    placeholder="筛选所属人"
+                    placeholder={t('columns.owner')}
                     value={ownerFilter}
                     onChange={setOwnerFilter}
                     allowClear
@@ -792,7 +806,7 @@ export default function ContractCustomersPage() {
                   setSortField('created_at')
                   setSortOrder('desc')
                 }}>
-                  重置筛选
+                  {tCommon('reset')}
                 </Button>
               </div>
             </Col>

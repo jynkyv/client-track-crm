@@ -21,9 +21,10 @@ import {
     PlusOutlined,
     MessageOutlined
 } from '@ant-design/icons'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/navigation'
 import { supabase, Ticket, Company } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslations } from 'next-intl'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -37,6 +38,8 @@ export default function WorkOrdersPage() {
     const [tickets, setTickets] = useState<Ticket[]>([])
     const [companies, setCompanies] = useState<Company[]>([])
     const [createDrawerVisible, setCreateDrawerVisible] = useState(false)
+    const t = useTranslations('WorkOrder')
+    const tCommon = useTranslations('Common')
 
     // 搜索状态
     const [searchCompanyName, setSearchCompanyName] = useState('')
@@ -55,7 +58,7 @@ export default function WorkOrdersPage() {
             setCompanies(data || [])
         } catch (error) {
             console.error('获取企业列表失败:', error)
-            message.error('获取企业列表失败')
+            message.error(t('messages.fetchCompaniesError'))
         }
     }
 
@@ -90,7 +93,7 @@ export default function WorkOrdersPage() {
             setTickets(data || [])
         } catch (error) {
             console.error('获取工单列表失败:', error)
-            message.error('获取工单列表失败')
+            message.error(t('messages.fetchError'))
         } finally {
             setLoading(false)
         }
@@ -147,18 +150,18 @@ export default function WorkOrdersPage() {
                 }])
 
             if (error) throw error
-            message.success('创建工单成功')
+            message.success(t('messages.createSuccess'))
             setCreateDrawerVisible(false)
             fetchTickets()
         } catch (error) {
             console.error('创建工单失败:', error)
-            message.error('创建工单失败')
+            message.error(t('messages.createError'))
         }
     }
 
     const columns = [
         {
-            title: '创建时间',
+            title: t('columns.createdAt'),
             dataIndex: 'created_at',
             key: 'created_at',
             width: 180,
@@ -166,28 +169,28 @@ export default function WorkOrdersPage() {
             render: (text: string) => new Date(text).toLocaleString('zh-CN')
         },
         {
-            title: '企业名称',
+            title: t('columns.companyName'),
             dataIndex: ['companies', 'name'],
             key: 'company_name',
             width: 150,
             align: 'center' as const,
         },
         {
-            title: '工单名称',
+            title: t('columns.ticketName'),
             dataIndex: 'name',
             key: 'name',
             width: 150,
             align: 'center' as const,
         },
         {
-            title: '岗位名称',
+            title: t('columns.position'),
             dataIndex: 'position',
             key: 'position',
             width: 120,
             align: 'center' as const,
         },
         {
-            title: '招聘人数',
+            title: t('columns.recruitCount'),
             dataIndex: 'recruit_count',
             key: 'recruit_count',
             width: 100,
@@ -195,7 +198,7 @@ export default function WorkOrdersPage() {
             render: (count: number) => `${count}人`
         },
         {
-            title: '负责人',
+            title: t('columns.owner'),
             dataIndex: 'owner_name',
             key: 'owner_name',
             width: 150,
@@ -215,14 +218,14 @@ export default function WorkOrdersPage() {
                                 }
                             }}
                         >
-                            聊天
+                            {t('actions.chat')}
                         </Button>
                     )}
                 </Space>
             )
         },
         {
-            title: '操作',
+            title: t('columns.actions'),
             key: 'action',
             width: 100,
             align: 'center' as const,
@@ -232,7 +235,7 @@ export default function WorkOrdersPage() {
                     icon={<EyeOutlined />}
                     onClick={() => handleViewDetail(record.id)}
                 >
-                    查看详情
+                    {t('actions.viewDetail')}
                 </Button>
             )
         }
@@ -253,13 +256,13 @@ export default function WorkOrdersPage() {
         <div>
             <Card>
                 <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2>工单列表</h2>
+                    <h2>{t('title')}</h2>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
                         onClick={handleCreateTicket}
                     >
-                        创建工单
+                        {t('create')}
                     </Button>
                 </div>
 
@@ -270,9 +273,9 @@ export default function WorkOrdersPage() {
                         layout="inline"
                         style={{ width: '100%' }}
                     >
-                        <Form.Item label="企业名称" style={{ marginBottom: 16 }}>
+                        <Form.Item label={t('search.companyName')} style={{ marginBottom: 16 }}>
                             <Input
-                                placeholder="请输入企业名称"
+                                placeholder={t('search.companyNamePlaceholder')}
                                 prefix={<SearchOutlined />}
                                 value={searchCompanyName}
                                 onChange={(e) => setSearchCompanyName(e.target.value)}
@@ -280,9 +283,9 @@ export default function WorkOrdersPage() {
                                 style={{ width: 200 }}
                             />
                         </Form.Item>
-                        <Form.Item label="工单名称" style={{ marginBottom: 16 }}>
+                        <Form.Item label={t('search.ticketName')} style={{ marginBottom: 16 }}>
                             <Input
-                                placeholder="请输入工单名称"
+                                placeholder={t('search.ticketNamePlaceholder')}
                                 prefix={<SearchOutlined />}
                                 value={searchTicketName}
                                 onChange={(e) => setSearchTicketName(e.target.value)}
@@ -290,9 +293,9 @@ export default function WorkOrdersPage() {
                                 style={{ width: 200 }}
                             />
                         </Form.Item>
-                        <Form.Item label="负责人" style={{ marginBottom: 16 }}>
+                        <Form.Item label={t('search.owner')} style={{ marginBottom: 16 }}>
                             <Input
-                                placeholder="请输入负责人姓名"
+                                placeholder={t('search.ownerPlaceholder')}
                                 prefix={<SearchOutlined />}
                                 value={searchOwnerName}
                                 onChange={(e) => setSearchOwnerName(e.target.value)}
@@ -302,7 +305,7 @@ export default function WorkOrdersPage() {
                         </Form.Item>
                         <Form.Item style={{ marginBottom: 16 }}>
                             <Button icon={<ReloadOutlined />} onClick={handleResetSearch}>
-                                重置筛选
+                                {tCommon('reset')}
                             </Button>
                         </Form.Item>
                     </Form>
@@ -327,7 +330,7 @@ export default function WorkOrdersPage() {
 
             {/* 创建工单Drawer */}
             <Drawer
-                title="创建工单"
+                title={t('title')}
                 open={createDrawerVisible}
                 onClose={() => setCreateDrawerVisible(false)}
                 width={600}
@@ -340,10 +343,10 @@ export default function WorkOrdersPage() {
                 >
                     <Form.Item
                         name="company_id"
-                        label="选择企业"
-                        rules={[{ required: true, message: '请选择企业' }]}
+                        label={t('form.selectCompany')}
+                        rules={[{ required: true, message: t('form.selectCompanyPlaceholder') }]}
                     >
-                        <Select placeholder="请选择企业" showSearch optionFilterProp="children">
+                        <Select placeholder={t('form.selectCompanyPlaceholder')} showSearch optionFilterProp="children">
                             {companies.map(company => (
                                 <Option key={company.id} value={company.id}>{company.name}</Option>
                             ))}
@@ -352,71 +355,71 @@ export default function WorkOrdersPage() {
 
                     <Form.Item
                         name="name"
-                        label="工单名称"
-                        rules={[{ required: true, message: '请输入工单名称' }]}
+                        label={t('form.ticketName')}
+                        rules={[{ required: true, message: t('form.ticketNamePlaceholder') }]}
                     >
-                        <Input placeholder="请输入工单名称" />
+                        <Input placeholder={t('form.ticketNamePlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="position"
-                        label="岗位名称"
-                        rules={[{ required: true, message: '请输入岗位名称' }]}
+                        label={t('form.position')}
+                        rules={[{ required: true, message: t('form.positionPlaceholder') }]}
                     >
-                        <Input placeholder="请输入岗位名称" />
+                        <Input placeholder={t('form.positionPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="recruit_count"
-                        label="招聘人数"
-                        rules={[{ required: true, message: '请输入招聘人数' }]}
+                        label={t('form.recruitCount')}
+                        rules={[{ required: true, message: t('form.recruitCountPlaceholder') }]}
                     >
                         <InputNumber
                             min={1}
-                            placeholder="请输入招聘人数"
+                            placeholder={t('form.recruitCountPlaceholder')}
                             style={{ width: '100%' }}
                         />
                     </Form.Item>
 
                     <Form.Item
                         name="salary"
-                        label="薪资"
-                        rules={[{ required: true, message: '请输入薪资' }]}
+                        label={t('form.salary')}
+                        rules={[{ required: true, message: t('form.salaryPlaceholder') }]}
                     >
-                        <Input placeholder="请输入薪资" />
+                        <Input placeholder={t('form.salaryPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="work_time"
-                        label="工作时间"
-                        rules={[{ required: true, message: '请输入工作时间' }]}
+                        label={t('form.workTime')}
+                        rules={[{ required: true, message: t('form.workTimePlaceholder') }]}
                     >
-                        <Input placeholder="请输入工作时间" />
+                        <Input placeholder={t('form.workTimePlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="rest_days"
-                        label="休息天数"
-                        rules={[{ required: true, message: '请输入休息天数' }]}
+                        label={t('form.restDays')}
+                        rules={[{ required: true, message: t('form.restDaysPlaceholder') }]}
                     >
-                        <Input placeholder="请输入休息天数" />
+                        <Input placeholder={t('form.restDaysPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
                         name="benefits"
-                        label="工作待遇"
-                        rules={[{ required: true, message: '请输入工作待遇' }]}
+                        label={t('form.benefits')}
+                        rules={[{ required: true, message: t('form.benefitsPlaceholder') }]}
                     >
-                        <TextArea rows={4} placeholder="请输入工作待遇" />
+                        <TextArea rows={4} placeholder={t('form.benefitsPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item>
                         <Space>
                             <Button type="primary" htmlType="submit">
-                                创建
+                                {t('form.create')}
                             </Button>
                             <Button onClick={() => setCreateDrawerVisible(false)}>
-                                取消
+                                {t('form.cancel')}
                             </Button>
                         </Space>
                     </Form.Item>

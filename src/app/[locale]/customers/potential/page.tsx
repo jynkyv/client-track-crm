@@ -25,10 +25,12 @@ import {
   Descriptions
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { useRouter } from 'next/navigation'
 import { supabase, Customer, FollowUp } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const { Option } = Select
 
@@ -50,6 +52,9 @@ export default function CustomersPage() {
   const [followUpForm] = Form.useForm()
   const [completeForm] = Form.useForm()
   const { isAdmin, user, canAccessCustomers } = useAuth()
+  const t = useTranslations('potential')
+  const tCommon = useTranslations('Common')
+  const router = useRouter()
 
   // 筛选和搜索状态
   const [searchName, setSearchName] = useState('')
@@ -142,11 +147,11 @@ export default function CustomersPage() {
       setCustomers(data || [])
       setTotal(count || 0)
     } catch {
-      message.error('获取客户列表失败')
+      message.error(tCommon('error'))
     } finally {
       setLoading(false)
     }
-  }, [isAdmin, user, searchName, statusFilter, intentionFilter, minAge, maxAge, ownerFilter, currentPage, pageSize, sortField, sortOrder])
+  }, [isAdmin, user, searchName, statusFilter, intentionFilter, minAge, maxAge, ownerFilter, currentPage, pageSize, sortField, sortOrder, tCommon])
 
   useEffect(() => {
     fetchCustomers()
@@ -240,10 +245,10 @@ export default function CustomersPage() {
         .eq('id', id)
 
       if (error) throw error
-      message.success('删除成功')
+      message.success(tCommon('success'))
       fetchCustomers()
     } catch {
-      message.error('删除失败')
+      message.error(tCommon('error'))
     }
   }
 
@@ -256,10 +261,10 @@ export default function CustomersPage() {
         .eq('id', id)
 
       if (error) throw error
-      message.success('状态更新成功')
+      message.success(tCommon('success'))
       fetchCustomers()
     } catch {
-      message.error('状态更新失败')
+      message.error(tCommon('error'))
     }
   }
 
@@ -278,19 +283,19 @@ export default function CustomersPage() {
           .eq('id', editingCustomer.id)
 
         if (error) throw error
-        message.success('更新成功')
+        message.success(tCommon('success'))
       } else {
         const { error } = await supabase
           .from('customers')
           .insert([submitValues])
 
         if (error) throw error
-        message.success('添加成功')
+        message.success(tCommon('success'))
       }
       setDrawerVisible(false)
       fetchCustomers()
     } catch {
-      message.error('操作失败')
+      message.error(tCommon('error'))
     }
   }
 
@@ -318,11 +323,11 @@ export default function CustomersPage() {
         .eq('id', selectedCustomer.id)
 
       if (error) throw error
-      message.success('跟进记录添加成功')
+      message.success(tCommon('success'))
       setFollowUpDrawerVisible(false)
       fetchCustomers()
     } catch {
-      message.error('添加跟进记录失败')
+      message.error(tCommon('error'))
     }
   }
 
@@ -361,9 +366,9 @@ export default function CustomersPage() {
       setCompanyDetailModalVisible(true)
     } catch (error) {
       console.error('获取企业详情失败:', error)
-      message.error('获取企业详情失败')
+      message.error(tCommon('error'))
     }
-  }, [])
+  }, [tCommon])
 
   // 查看企业详情
   const handleViewCompanyDetail = (companyId: string) => {
@@ -415,39 +420,39 @@ export default function CustomersPage() {
         console.error('更新错误详情:', error)
         // 如果是字段不存在的错误，提示用户执行SQL更新
         if (error.message?.includes('column') || error.code === 'PGRST204') {
-          message.error('数据库字段未创建，请先在Supabase执行 update-database-stage2.sql 脚本')
+          message.error(t('messages.dbError'))
         } else {
-          message.error(`操作失败: ${error.message || JSON.stringify(error)}`)
+          message.error(`${tCommon('error')}: ${error.message || JSON.stringify(error)}`)
         }
         return
       }
 
-      message.success('客户已转为正式客户')
+      message.success(tCommon('success'))
       setCompleteDrawerVisible(false)
       fetchCustomers()
     } catch (error: any) {
       console.error('更新异常:', error)
-      message.error(`操作失败: ${error?.message || '未知错误'}`)
+      message.error(`${tCommon('error')}: ${error?.message || '未知错误'}`)
     }
   }
 
   const columns = [
     {
-      title: '客户昵称',
+      title: t('columns.nickname'),
       width: 90,
       dataIndex: 'nickname',
       key: 'nickname',
       align: 'center' as const,
     },
     {
-      title: '来源',
+      title: t('columns.source'),
       width: 90,
       dataIndex: 'source',
       key: 'source',
       align: 'center' as const,
     },
     {
-      title: '意向度',
+      title: t('columns.intention'),
       width: 80,
       dataIndex: 'intention',
       key: 'intention',
@@ -460,32 +465,32 @@ export default function CustomersPage() {
       ),
     },
     {
-      title: '状态',
+      title: t('columns.status'),
       dataIndex: 'status',
       key: 'status',
       width: 20,
       align: 'center' as const,
       render: (status: string) => {
         const statusConfig = {
-          communicating: { color: 'green', text: '沟通中' },
-          closed: { color: 'default', text: '已成交' },
-          rejected: { color: 'red', text: '已拒绝' }
+          communicating: { color: 'green', text: t('status.communicating') },
+          closed: { color: 'default', text: t('status.closed') },
+          rejected: { color: 'red', text: t('status.rejected') }
         }
         const config = statusConfig[status as keyof typeof statusConfig] || { color: 'default', text: status }
         return <Tag color={config.color}>{config.text}</Tag>
       },
     },
     {
-      title: '年龄',
+      title: t('columns.age'),
       width: 80,
       dataIndex: 'age',
       key: 'age',
       align: 'center' as const,
       sorter: true,
-      render: (age: number) => age ? `${age}岁` : '-',
+      render: (age: number) => age ? `${age}${t('form.ageUnit')}` : '-',
     },
     {
-      title: '性别',
+      title: t('columns.gender'),
       width: 60,
       dataIndex: 'gender',
       key: 'gender',
@@ -493,22 +498,22 @@ export default function CustomersPage() {
       render: (gender: string) => {
         if (!gender) return '-'
         const genderText = {
-          male: '男',
-          female: '女',
-          other: '其他'
+          male: t('gender.male'),
+          female: t('gender.female'),
+          other: t('gender.other')
         }
         return genderText[gender as keyof typeof genderText] || gender
       },
     },
     {
-      title: '联系方式',
+      title: t('columns.contact'),
       width: 120,
       dataIndex: 'contact',
       key: 'contact',
       align: 'center' as const,
     },
     {
-      title: '工作经验',
+      title: t('columns.workExperience'),
       width: 100,
       dataIndex: 'work_experience',
       key: 'work_experience',
@@ -523,7 +528,7 @@ export default function CustomersPage() {
       },
     },
     {
-      title: '备注',
+      title: t('columns.notes'),
       width: 100,
       dataIndex: 'notes',
       key: 'notes',
@@ -538,7 +543,7 @@ export default function CustomersPage() {
       },
     },
     ...(isAdmin ? [{
-      title: '所属人',
+      title: t('columns.owner'),
       width: 90,
       dataIndex: 'owner',
       key: 'owner',
@@ -546,7 +551,7 @@ export default function CustomersPage() {
       render: (owner: string) => owner || '-',
     }] : []),
     {
-      title: '跟进次数',
+      title: t('columns.followUps'),
       dataIndex: 'follow_ups',
       key: 'follow_ups',
       width: 100,
@@ -563,7 +568,7 @@ export default function CustomersPage() {
       ),
     },
     {
-      title: '创建时间',
+      title: t('columns.createdAt'),
       width: 100,
       dataIndex: 'created_at',
       key: 'created_at',
@@ -572,7 +577,7 @@ export default function CustomersPage() {
       render: (date: string) => new Date(date).toLocaleDateString(),
     },
     {
-      title: '最后跟进时间',
+      title: t('columns.lastFollowUp'),
       width: 150,
       dataIndex: 'follow_ups',
       key: 'last_follow_up',
@@ -580,77 +585,25 @@ export default function CustomersPage() {
       sorter: true,
       render: (followUps: FollowUp[]) => {
         if (!followUps || followUps.length === 0) {
-          return <span style={{ color: '#999' }}>暂无跟进</span>
+          return <span style={{ color: '#999' }}>{t('messages.noFollowUp')}</span>
         }
         const lastFollowUp = followUps[followUps.length - 1]
         return new Date(lastFollowUp.time).toLocaleDateString()
       },
     },
     {
-      title: '操作',
+      title: t('columns.actions'),
       key: 'action',
-      width: 20,
+      fixed: 'right' as const,
+      width: 120,
       align: 'center' as const,
-      render: (_: unknown, record: Customer) => {
-        const menuItems = [
-          {
-            key: 'follow',
-            label: '跟进',
-            icon: <EyeOutlined />,
-            onClick: () => handleAddFollowUp(record)
-          },
-          {
-            key: 'complete',
-            label: '已完成',
-            icon: <CheckCircleOutlined />,
-            onClick: () => handleComplete(record)
-          },
-          {
-            key: 'status',
-            label: '状态切换',
-            icon: <FilterOutlined />,
-            children: [
-              {
-                key: 'communicating',
-                label: '沟通中',
-                onClick: () => handleStatusChange(record.id, 'communicating')
-              },
-              {
-                key: 'rejected',
-                label: '已拒绝',
-                onClick: () => handleStatusChange(record.id, 'rejected')
-              }
-            ]
-          }
-        ]
-
-        if (!isAdmin) {
-          menuItems.push(
-            {
-              key: 'edit',
-              label: '编辑',
-              icon: <EditOutlined />,
-              onClick: () => handleEdit(record)
-            },
-            {
-              key: 'delete',
-              label: '删除',
-              icon: <DeleteOutlined />,
-              onClick: () => handleDelete(record.id)
-            }
-          )
-        }
-
-        const menu = {
-          items: menuItems
-        }
-
-        return (
-          <Dropdown menu={menu} trigger={['click']}>
-            <Button type="text" icon={<MoreOutlined />} />
-          </Dropdown>
-        )
-      },
+      render: (_: any, record: Customer) => (
+        <Space size="middle">
+          <Button type="link" onClick={() => router.push(`/customers/potential/${record.id}`)}>
+            {t('actions.view')}
+          </Button>
+        </Space>
+      ),
     },
   ]
 
@@ -658,8 +611,8 @@ export default function CustomersPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '50px' }}>
-          <h2>权限不足</h2>
-          <p>您没有权限访问此页面</p>
+          <h2>{tCommon('noPermission')}</h2>
+          <p>{tCommon('noPermissionMessage')}</p>
         </div>
       </Card>
     )
@@ -669,24 +622,24 @@ export default function CustomersPage() {
     <div>
       <Card>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>意向客户管理</h2>
+          <h2>{t('title')}</h2>
           {!isAdmin && (
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              添加客户
+              {t('add')}
             </Button>
           )}
         </div>
 
         {/* 筛选和搜索区域 */}
         <Card style={{ marginBottom: 16 }}>
-          <h3 style={{ marginBottom: 16 }}>筛选和搜索</h3>
+          <h3 style={{ marginBottom: 16 }}>{tCommon('search')}</h3>
           {/* 第一行筛选器 */}
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} md={6}>
               <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>客户昵称搜索</label>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('form.nickname')}</label>
                 <Input
-                  placeholder="搜索客户昵称"
+                  placeholder={t('form.nickname')}
                   prefix={<SearchOutlined />}
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value)}
@@ -696,24 +649,24 @@ export default function CustomersPage() {
             </Col>
             <Col xs={24} sm={12} md={6}>
               <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>状态筛选</label>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('form.status')}</label>
                 <Select
-                  placeholder="筛选状态"
+                  placeholder={t('form.status')}
                   value={statusFilter}
                   onChange={setStatusFilter}
                   allowClear
                   style={{ width: '100%' }}
                 >
-                  <Option value="communicating">沟通中</Option>
-                  <Option value="rejected">已拒绝</Option>
+                  <Option value="communicating">{t('status.communicating')}</Option>
+                  <Option value="rejected">{t('status.rejected')}</Option>
                 </Select>
               </div>
             </Col>
             <Col xs={24} sm={12} md={6}>
               <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>意向度筛选</label>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('form.intention')}</label>
                 <Select
-                  placeholder="筛选意向度"
+                  placeholder={t('form.intention')}
                   value={intentionFilter}
                   onChange={setIntentionFilter}
                   allowClear
@@ -727,16 +680,16 @@ export default function CustomersPage() {
             </Col>
             <Col xs={24} sm={12} md={6}>
               <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>年龄范围筛选</label>
+                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('form.age')}</label>
                 <Space.Compact style={{ width: '100%' }}>
                   <InputNumber
-                    placeholder="最小"
+                    placeholder={t('form.min')}
                     min={0}
                     max={100}
                     value={minAge}
                     onChange={setMinAge}
                     style={{ width: '45%' }}
-                    addonAfter="岁"
+                    addonAfter={t('form.ageUnit')}
                   />
                   <div style={{
                     display: 'flex',
@@ -747,16 +700,16 @@ export default function CustomersPage() {
                     fontSize: '14px',
                     fontWeight: 500
                   }}>
-                    至
+                    {t('form.to')}
                   </div>
                   <InputNumber
-                    placeholder="最大"
+                    placeholder={t('form.max')}
                     min={0}
                     max={100}
                     value={maxAge}
                     onChange={setMaxAge}
                     style={{ width: '45%' }}
-                    addonAfter="岁"
+                    addonAfter={t('form.ageUnit')}
                   />
                 </Space.Compact>
               </div>
@@ -768,9 +721,9 @@ export default function CustomersPage() {
             <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
               <Col xs={24} sm={12} md={6}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>所属人筛选</label>
+                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('columns.owner')}</label>
                   <Select
-                    placeholder="筛选所属人"
+                    placeholder={t('columns.owner')}
                     value={ownerFilter}
                     onChange={setOwnerFilter}
                     allowClear
@@ -797,11 +750,8 @@ export default function CustomersPage() {
                     setMinAge(null)
                     setMaxAge(null)
                     setOwnerFilter('')
-                    setCurrentPage(1)
-                    setSortField('created_at')
-                    setSortOrder('desc')
                   }}>
-                    重置筛选
+                    {tCommon('reset')}
                   </Button>
                 </Space>
               </div>
@@ -812,27 +762,26 @@ export default function CustomersPage() {
         <Table
           columns={columns}
           dataSource={customers}
-          loading={loading}
           rowKey="id"
-          onChange={handleTableChange}
+          loading={loading}
           pagination={{
             current: currentPage,
             pageSize: pageSize,
             total: total,
             showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条记录`,
+            showTotal: (total) => `${tCommon('total')} ${total} ${tCommon('items')}`
           }}
           scroll={{ x: 'max-content' }}
+          onChange={handleTableChange}
         />
       </Card>
 
       <Drawer
-        title={editingCustomer ? '编辑客户' : '添加客户'}
-        open={drawerVisible}
+        title={editingCustomer ? t('edit') : t('add')}
+        width={720}
         onClose={() => setDrawerVisible(false)}
-        width={600}
-        placement="right"
+        open={drawerVisible}
+        bodyStyle={{ paddingBottom: 80 }}
       >
         <Form
           form={form}
@@ -843,117 +792,97 @@ export default function CustomersPage() {
             <Col span={12}>
               <Form.Item
                 name="nickname"
-                label="客户昵称"
-                rules={[{ required: true, message: '请输入客户昵称' }]}
+                label={t('form.nickname')}
+                rules={[{ required: true, message: t('form.nicknameRequired') }]}
               >
-                <Input placeholder="请输入客户昵称" />
+                <Input placeholder={t('form.nickname')} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="contact"
-                label="联系方式"
-                rules={[{ required: true, message: '请输入联系方式' }]}
+                label={t('form.contact')}
+                rules={[{ required: true, message: t('form.contactRequired') }]}
               >
-                <Input placeholder="请输入联系方式" />
+                <Input placeholder={t('form.contact')} />
               </Form.Item>
             </Col>
           </Row>
-
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="source"
-                label="来源"
-                rules={[{ required: true, message: '请选择来源' }]}
-              >
-                <Select placeholder="请选择来源">
-                  <Option value="线下推广">线下推广</Option>
-                  <Option value="小红书">小红书</Option>
-                  <Option value="抖音">抖音</Option>
-                  <Option value="快手">快手</Option>
-                  <Option value="其他渠道">其他渠道</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
                 name="intention"
-                label="意向度"
-                rules={[{ required: true, message: '请选择意向度' }]}
+                label={t('form.intention')}
+                rules={[{ required: true, message: t('form.intentionRequired') }]}
               >
-                <Select placeholder="请选择意向度">
+                <Select placeholder={t('form.intention')}>
                   <Option value="高">高</Option>
                   <Option value="中">中</Option>
                   <Option value="低">低</Option>
                 </Select>
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="status"
-                label="状态"
-                rules={[{ required: true, message: '请选择状态' }]}
+                label={t('form.status')}
+                rules={[{ required: true, message: t('form.statusRequired') }]}
                 initialValue="communicating"
               >
-                <Select placeholder="请选择状态">
-                  <Option value="communicating">沟通中</Option>
-                  <Option value="rejected">已拒绝</Option>
+                <Select placeholder={t('form.status')}>
+                  <Option value="communicating">{t('status.communicating')}</Option>
+                  <Option value="rejected">{t('status.rejected')}</Option>
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                name="age"
-                label="年龄"
-              >
-                <Input type="number" placeholder="请输入年龄" min={1} max={100} />
-              </Form.Item>
-            </Col>
           </Row>
-
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="gender"
-                label="性别"
+                name="age"
+                label={t('form.age')}
               >
-                <Select placeholder="请选择性别">
-                  <Option value="male">男</Option>
-                  <Option value="female">女</Option>
-                  <Option value="other">其他</Option>
-                </Select>
+                <InputNumber style={{ width: '100%' }} min={0} max={100} placeholder={t('form.age')} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              {/* 占位，保持布局对称 */}
+              <Form.Item
+                name="gender"
+                label={t('form.gender')}
+              >
+                <Select placeholder={t('form.gender')}>
+                  <Option value="male">{t('gender.male')}</Option>
+                  <Option value="female">{t('gender.female')}</Option>
+                  <Option value="other">{t('gender.other')}</Option>
+                </Select>
+              </Form.Item>
             </Col>
           </Row>
-
-          <Form.Item
-            name="work_experience"
-            label="工作经验"
-          >
-            <Input.TextArea rows={3} placeholder="请输入工作经验" />
-          </Form.Item>
-
-          <Form.Item
-            name="notes"
-            label="备注"
-          >
-            <Input.TextArea rows={3} placeholder="请输入备注信息" />
-          </Form.Item>
-
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="work_experience"
+                label={t('form.workExperience')}
+              >
+                <Input.TextArea rows={4} placeholder={t('form.workExperience')} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="notes"
+                label={t('form.notes')}
+              >
+                <Input.TextArea rows={4} placeholder={t('form.notes')} />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item>
             <Space>
+              <Button onClick={() => setDrawerVisible(false)}>{tCommon('cancel')}</Button>
               <Button type="primary" htmlType="submit">
-                {editingCustomer ? '更新' : '添加'}
-              </Button>
-              <Button onClick={() => setDrawerVisible(false)}>
-                取消
+                {tCommon('submit')}
               </Button>
             </Space>
           </Form.Item>
@@ -961,307 +890,256 @@ export default function CustomersPage() {
       </Drawer>
 
       <Drawer
-        title={`跟进记录 - ${selectedCustomer?.nickname}`}
-        open={followUpDrawerVisible}
+        title="跟进记录"
+        width={500}
         onClose={() => setFollowUpDrawerVisible(false)}
-        width={600}
-        placement="right"
+        open={followUpDrawerVisible}
       >
-        <div style={{ marginBottom: 16 }}>
-          <h4>历史跟进记录：</h4>
-          <div
-            style={{
-              maxHeight: '400px',
-              overflowY: 'auto',
-              border: '1px solid #f0f0f0',
-              borderRadius: '6px',
-              padding: '12px'
-            }}
+        <div style={{ marginBottom: 24 }}>
+          <h3>添加跟进记录</h3>
+          <Form
+            form={followUpForm}
+            onFinish={handleFollowUpSubmit}
           >
-            {selectedCustomer?.follow_ups && selectedCustomer.follow_ups.length > 0 ? (
-              <Timeline
-                items={selectedCustomer.follow_ups.map((followUp, index) => ({
-                  key: index,
-                  children: (
-                    <Card
-                      size="small"
-                      style={{
-                        marginBottom: '8px',
-                        backgroundColor: '#fafafa'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <strong style={{ color: '#1890ff' }}>
-                          {new Date(followUp.time).toLocaleString()}
-                        </strong>
-                        <span style={{ color: '#666', fontSize: '12px' }}>
-                          第 {index + 1} 次跟进
-                        </span>
-                      </div>
-                      <p style={{ margin: 0, lineHeight: '1.5' }}>{followUp.content}</p>
-                    </Card>
-                  )
-                }))}
-              />
-            ) : (
-              <div style={{
-                textAlign: 'center',
-                color: '#999',
-                padding: '40px 0',
-                backgroundColor: '#f9f9f9',
-                borderRadius: '6px'
-              }}>
-                暂无跟进记录
-              </div>
-            )}
-          </div>
+            <Form.Item
+              name="content"
+              rules={[{ required: true, message: '请输入跟进内容' }]}
+            >
+              <Input.TextArea rows={4} placeholder="请输入跟进内容..." />
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit">
+                提交跟进
+              </Button>
+            </Form.Item>
+          </Form>
         </div>
 
-        <Form
-          form={followUpForm}
-          layout="vertical"
-          onFinish={handleFollowUpSubmit}
-        >
-          <Form.Item
-            name="content"
-            label="新增跟进内容"
-            rules={[{ required: true, message: '请输入跟进内容' }]}
-          >
-            <Input.TextArea rows={4} placeholder="请输入跟进内容" />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                添加跟进记录
-              </Button>
-              <Button onClick={() => setFollowUpDrawerVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
+        <div>
+          <h3>历史跟进记录</h3>
+          {selectedCustomer?.follow_ups && selectedCustomer.follow_ups.length > 0 ? (
+            <Timeline
+              items={selectedCustomer.follow_ups.map((item) => ({
+                children: (
+                  <>
+                    <p>{new Date(item.time).toLocaleString()}</p>
+                    <p>{item.content}</p>
+                  </>
+                ),
+              })).reverse()}
+            />
+          ) : (
+            <p style={{ color: '#999' }}>暂无跟进记录</p>
+          )}
+        </div>
       </Drawer>
 
-      {/* 补充信息Drawer（已完成） */}
+      {/* 补充信息 Drawer */}
       <Drawer
-        title={`补充信息 - ${completingCustomer?.nickname}`}
-        open={completeDrawerVisible}
+        title="完善客户信息（转为正式客户）"
+        width={720}
         onClose={() => setCompleteDrawerVisible(false)}
-        width={800}
-        placement="right"
+        open={completeDrawerVisible}
+        maskClosable={false}
       >
         <Form
           form={completeForm}
           layout="vertical"
           onFinish={handleCompleteSubmit}
+          initialValues={{
+            gender: completingCustomer?.gender || undefined,
+            contact: completingCustomer?.contact || undefined,
+          }}
         >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="real_name"
-                label="姓名"
-                rules={[{ required: true, message: '请输入姓名' }]}
-              >
-                <Input placeholder="请输入姓名" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="gender"
-                label="性别"
-              >
-                <Select placeholder="请选择性别">
-                  <Option value="male">男</Option>
-                  <Option value="female">女</Option>
-                  <Option value="other">其他</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="birth_date"
-                label="出生年月日"
-              >
-                <DatePicker
-                  style={{ width: '100%' }}
-                  placeholder="请选择出生年月日"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="phone"
-                label="电话"
-                rules={[{ required: true, message: '请输入电话' }]}
-              >
-                <Input placeholder="请输入电话" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="household_location"
-                label="户籍所在地"
-              >
-                <Input placeholder="请输入户籍所在地" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="current_residence"
-                label="现居住地"
-              >
-                <Input placeholder="请输入现居住地" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="contact"
-                label="联系方式"
-              >
-                <Input placeholder="请输入联系方式" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="wechat"
-                label="实名微信号"
-              >
-                <Input placeholder="请输入实名微信号" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="emergency_contact"
-                label="紧急联系人"
-              >
-                <Input placeholder="请输入紧急联系人" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="emergency_phone"
-                label="紧急联系人电话"
-              >
-                <Input placeholder="请输入紧急联系人电话" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="hourly_rate"
-                label="时薪"
-                rules={[{ required: true, message: '请输入时薪' }]}
-              >
-                <InputNumber
-                  placeholder="请输入时薪"
-                  min={0}
-                  style={{ width: '100%' }}
-                  addonAfter="元/小时"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="company_id"
-                label="企业/工单"
-                rules={[{ required: true, message: '请选择关联企业' }]}
-              >
-                <Select
-                  placeholder="请选择关联企业"
-                  onChange={handleCompanyChange}
-                  allowClear
+          <Card title="基本信息" style={{ marginBottom: 16 }}>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="real_name"
+                  label="真实姓名"
+                  rules={[{ required: true, message: '请输入真实姓名' }]}
                 >
-                  {companies.map(company => (
-                    <Option key={company.id} value={company.id}>
-                      {company.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="work_order_id"
-                label=" "
-                rules={[{ required: true, message: '请选择关联工单' }]}
-              >
-                <Select
-                  placeholder={selectedCompanyId ? "请选择关联工单" : "请先选择关联企业"}
-                  disabled={!selectedCompanyId || workOrders.length === 0}
+                  <Input placeholder="请输入真实姓名" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="gender"
+                  label="性别"
+                  rules={[{ required: true, message: '请选择性别' }]}
                 >
-                  {workOrders.map(workOrder => (
-                    <Option key={workOrder.id} value={workOrder.id}>
-                      {workOrder.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              {selectedCompanyId && (
-                <Button
-                  type="link"
-                  onClick={() => handleViewCompanyDetail(selectedCompanyId)}
-                  style={{ marginTop: -24 }}
+                  <Select placeholder="请选择性别">
+                    <Option value="male">男</Option>
+                    <Option value="female">女</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="birth_date"
+                  label="出生日期"
+                  rules={[{ required: true, message: '请选择出生日期' }]}
                 >
-                  查看企业详情
-                </Button>
-              )}
-            </Col>
-          </Row>
+                  <DatePicker style={{ width: '100%' }} placeholder="请选择出生日期" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="phone"
+                  label="手机号码"
+                  rules={[{ required: true, message: '请输入手机号码' }]}
+                >
+                  <Input placeholder="请输入手机号码" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="household_location"
+                  label="户籍所在地"
+                  rules={[{ required: true, message: '请输入户籍所在地' }]}
+                >
+                  <Input placeholder="请输入户籍所在地" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="current_residence"
+                  label="现居住地"
+                  rules={[{ required: true, message: '请输入现居住地' }]}
+                >
+                  <Input placeholder="请输入现居住地" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="contact"
+                  label="其他联系方式"
+                >
+                  <Input placeholder="请输入其他联系方式" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="wechat"
+                  label="微信号"
+                >
+                  <Input placeholder="请输入微信号" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="emergency_contact"
+                  label="紧急联系人"
+                >
+                  <Input placeholder="请输入紧急联系人" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="emergency_phone"
+                  label="紧急联系人电话"
+                >
+                  <Input placeholder="请输入紧急联系人电话" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Card>
+
+          <Card title="工作信息" style={{ marginBottom: 16 }}>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="company_id"
+                  label="所属企业"
+                  rules={[{ required: true, message: '请选择所属企业' }]}
+                >
+                  <Select
+                    placeholder="请选择所属企业"
+                    onChange={handleCompanyChange}
+                    showSearch
+                    optionFilterProp="children"
+                  >
+                    {companies.map(company => (
+                      <Option key={company.id} value={company.id}>{company.name}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="work_order_id"
+                  label="关联工单"
+                  rules={[{ required: true, message: '请选择关联工单' }]}
+                >
+                  <Select
+                    placeholder={selectedCompanyId ? "请选择关联工单" : "请先选择企业"}
+                    disabled={!selectedCompanyId}
+                    showSearch
+                    optionFilterProp="children"
+                  >
+                    {workOrders.map(order => (
+                      <Option key={order.id} value={order.id}>{order.name}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="hourly_rate"
+                  label="时薪 (日元)"
+                  rules={[{ required: true, message: '请输入时薪' }]}
+                >
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    placeholder="请输入时薪"
+                    min={0}
+                    precision={0}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Card>
 
           <Form.Item>
-            <Space>
+            <Space style={{ float: 'right' }}>
+              <Button onClick={() => setCompleteDrawerVisible(false)}>取消</Button>
               <Button type="primary" htmlType="submit">
-                保存
-              </Button>
-              <Button onClick={() => setCompleteDrawerVisible(false)}>
-                取消
+                确认转为正式客户
               </Button>
             </Space>
           </Form.Item>
         </Form>
       </Drawer>
 
-      {/* 企业详情Modal */}
+      {/* 企业详情弹窗 */}
       <Modal
         title="企业详情"
         open={companyDetailModalVisible}
         onCancel={() => setCompanyDetailModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setCompanyDetailModalVisible(false)}>
-            关闭
-          </Button>
-        ]}
+        footer={null}
         width={800}
       >
         {selectedCompanyDetail && (
           <Descriptions bordered column={2}>
-            <Descriptions.Item label="会社名称">{selectedCompanyDetail.name || '-'}</Descriptions.Item>
-            <Descriptions.Item label="法人番号">{selectedCompanyDetail.legal_number || '-'}</Descriptions.Item>
-            <Descriptions.Item label="代表取缔役">{selectedCompanyDetail.representative || '-'}</Descriptions.Item>
-            <Descriptions.Item label="所属行业">{selectedCompanyDetail.industry || '-'}</Descriptions.Item>
-            <Descriptions.Item label="公司从业人数">{selectedCompanyDetail.employee_count ? `${selectedCompanyDetail.employee_count}人` : '-'}</Descriptions.Item>
-            <Descriptions.Item label="注册资本金">{selectedCompanyDetail.registered_capital || '-'}</Descriptions.Item>
-            <Descriptions.Item label="公司地址" span={2}>{selectedCompanyDetail.address || '-'}</Descriptions.Item>
-            <Descriptions.Item label="联系方式">{selectedCompanyDetail.contact || '-'}</Descriptions.Item>
-            <Descriptions.Item label="联系邮箱">{selectedCompanyDetail.email || '-'}</Descriptions.Item>
+            <Descriptions.Item label="企业名称">{selectedCompanyDetail.name}</Descriptions.Item>
+            <Descriptions.Item label="所属行业">{selectedCompanyDetail.industry}</Descriptions.Item>
+            <Descriptions.Item label="法人番号">{selectedCompanyDetail.legal_number}</Descriptions.Item>
+            <Descriptions.Item label="代表取缔役">{selectedCompanyDetail.representative}</Descriptions.Item>
+            <Descriptions.Item label="公司从业人数">{selectedCompanyDetail.employee_count}</Descriptions.Item>
+            <Descriptions.Item label="注册资本金">{selectedCompanyDetail.registered_capital}</Descriptions.Item>
+            <Descriptions.Item label="公司地址" span={2}>{selectedCompanyDetail.address}</Descriptions.Item>
+            <Descriptions.Item label="联系方式">{selectedCompanyDetail.contact}</Descriptions.Item>
+            <Descriptions.Item label="联系邮箱">{selectedCompanyDetail.email}</Descriptions.Item>
           </Descriptions>
         )}
       </Modal>
