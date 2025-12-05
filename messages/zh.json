@@ -1,0 +1,477 @@
+{
+    "Common": {
+        "search": "搜索",
+        "reset": "重置",
+        "edit": "编辑",
+        "delete": "删除",
+        "save": "保存",
+        "cancel": "取消",
+        "confirm": "确认",
+        "back": "返回",
+        "success": "操作成功",
+        "error": "操作失败",
+        "confirmDelete": "确认删除",
+        "noPermission": "权限不足",
+        "noPermissionMessage": "您没有权限访问此页面",
+        "total": "共",
+        "items": "条",
+        "ageUnit": "岁",
+        "gender": {
+            "male": "男",
+            "female": "女",
+            "other": "其他"
+        }
+    },
+    "Dashboard": {
+        "title": "仪表盘",
+        "menu": {
+            "dashboard": "仪表盘",
+            "customers": "客户管理",
+            "potentialCustomers": "意向客户",
+            "contractCustomers": "正式客户",
+            "workOrders": "工单管理",
+            "companies": "企业管理",
+            "users": "账号管理"
+        },
+        "stats": {
+            "totalCustomers": "客户总数",
+            "communicating": "沟通中",
+            "closed": "已成交",
+            "rejected": "已拒绝"
+        },
+        "recentActivities": "最近活动",
+        "columns": {
+            "nickname": "客户昵称",
+            "contact": "联系方式",
+            "intention": "意向度",
+            "status": "状态",
+            "age": "年龄",
+            "gender": "性别",
+            "workExperience": "工作经验",
+            "notes": "备注",
+            "owner": "所属人",
+            "followUps": "跟进次数"
+        },
+        "status": {
+            "communicating": "沟通中",
+            "closed": "已成交",
+            "rejected": "已拒绝"
+        }
+    },
+    "potential": {
+        "title": "意向客户管理",
+        "add": "添加意向客户",
+        "edit": "编辑意向客户",
+        "deleteConfirm": "确认删除",
+        "deleteMessage": "确定要删除这个客户吗？此操作无法撤销。",
+        "columns": {
+            "nickname": "客户昵称",
+            "contact": "联系方式",
+            "intention": "意向度",
+            "status": "状态",
+            "age": "年龄",
+            "gender": "性别",
+            "workExperience": "工作经验",
+            "notes": "备注",
+            "owner": "所属人",
+            "followUps": "跟进次数",
+            "actions": "操作"
+        },
+        "status": {
+            "communicating": "沟通中",
+            "closed": "已成交",
+            "rejected": "已拒绝"
+        },
+        "gender": {
+            "male": "男",
+            "female": "女",
+            "other": "其他"
+        },
+        "form": {
+            "nickname": "客户昵称",
+            "nicknameRequired": "请输入客户昵称",
+            "contact": "联系方式",
+            "contactRequired": "请输入联系方式",
+            "intention": "意向度",
+            "intentionRequired": "请选择意向度",
+            "status": "状态",
+            "statusRequired": "请选择状态",
+            "age": "年龄",
+            "gender": "性别",
+            "workExperience": "工作经验",
+            "notes": "备注",
+            "min": "最小",
+            "max": "最大",
+            "to": "至",
+            "ageUnit": "岁"
+        },
+        "actions": {
+            "followUp": "跟进",
+            "complete": "已完成",
+            "changeStatus": "状态切换"
+        },
+        "messages": {
+            "noFollowUp": "暂无跟进",
+            "dbError": "数据库字段未创建，请先在Supabase执行 update-database-stage2.sql 脚本"
+        }
+    },
+    "contract": {
+        "title": "正式客户管理",
+        "add": "添加正式客户",
+        "edit": "编辑正式客户",
+        "search": {
+            "realName": "真实姓名",
+            "realNamePlaceholder": "请输入真实姓名",
+            "status": "客户状态"
+        },
+        "detail": {
+            "title": "客户详情",
+            "documents": "文档资料"
+        },
+        "form": {
+            "realName": "姓名",
+            "realNamePlaceholder": "请输入姓名",
+            "gender": "性别",
+            "genderPlaceholder": "请选择性别",
+            "birthDate": "出生年月日",
+            "birthDatePlaceholder": "请选择出生年月日",
+            "householdLocation": "户籍所在地",
+            "householdLocationPlaceholder": "请输入户籍所在地",
+            "currentResidence": "现居住地",
+            "currentResidencePlaceholder": "请输入现居住地",
+            "contact": "联系方式",
+            "contactPlaceholder": "请输入联系方式",
+            "wechat": "实名微信号",
+            "wechatPlaceholder": "请输入实名微信号",
+            "emergencyContact": "紧急联系人",
+            "emergencyContactPlaceholder": "请输入紧急联系人",
+            "emergencyPhone": "紧急联系人电话",
+            "emergencyPhonePlaceholder": "请输入紧急联系人电话"
+        },
+        "documents": {
+            "resume": "原始简历",
+            "passport": "护照",
+            "householdBook": "户口本",
+            "idCard": "身份证",
+            "photo2inch": "2寸照片",
+            "creditReport": "征信报告",
+            "noCrimeCert": "无犯罪证明",
+            "nationalCert": "国检证书",
+            "provincialCert": "省级考试证书",
+            "employmentContract": "雇佣合同",
+            "japanAgencyContract": "赴日中介合同",
+            "immigrationMaterials": "入管局资料"
+        },
+        "upload": {
+            "title": "上传",
+            "confirm": "确认上传",
+            "selectFiles": "选择文件（可多选）",
+            "hint": "支持一次选择多个PDF文件上传"
+        },
+        "columns": {
+            "realName": "真实姓名",
+            "status": "客户状态",
+            "age": "年龄",
+            "gender": "性别",
+            "phone": "电话",
+            "contact": "联系方式",
+            "companyWorkOrder": "企业/工单",
+            "workExperience": "工作经验",
+            "notes": "备注",
+            "walletBalance": "汇款金额",
+            "createdAt": "创建时间",
+            "lastPaymentTime": "最后汇款时间",
+            "owner": "所属人",
+            "actions": "操作"
+        },
+        "actions": {
+            "bind": "绑定",
+            "view": "查看",
+            "edit": "编辑",
+            "changeStatus": "状态变更",
+            "payment": "付款/退款",
+            "delete": "删除",
+            "upload": "上传"
+        },
+        "messages": {
+            "paymentTableError": "payments表不存在，请先在Supabase执行 update-database-stage2.sql 脚本创建表",
+            "fetchPaymentError": "获取付款记录失败",
+            "interviewTimeRequired": "已通知面试必须填写通知时间",
+            "paymentSuccess": "付款记录添加成功",
+            "paymentError": "添加付款记录失败",
+            "fetchDetailError": "获取客户详情失败",
+            "noFileWarning": "暂无文件",
+            "uploadSuccess": "上传成功",
+            "uploadError": "上传失败",
+            "selectFileWarning": "请至少选择一个文件",
+            "noUploadedFileWarning": "没有成功上传的文件",
+            "uploadComplete": "上传完成",
+            "saveError": "保存失败",
+            "updateSuccess": "更新成功",
+            "updateError": "更新失败",
+            "customerNotFound": "客户不存在"
+        },
+        "status": {
+            "pending": "待面试",
+            "interviewNotified": "已通知面试",
+            "interviewPassed": "面试通过",
+            "interviewFailed": "面试失败",
+            "training": "培训中",
+            "completed": "已完成",
+            "active": "执行中",
+            "terminated": "已终止"
+        }
+    },
+    "WorkOrder": {
+        "title": "工单列表",
+        "create": "创建工单",
+        "search": {
+            "companyName": "企业名称",
+            "companyNamePlaceholder": "请输入企业名称",
+            "ticketName": "工单名称",
+            "ticketNamePlaceholder": "请输入工单名称",
+            "owner": "负责人",
+            "ownerPlaceholder": "请输入负责人姓名"
+        },
+        "columns": {
+            "createdAt": "创建时间",
+            "companyName": "企业名称",
+            "ticketName": "工单名称",
+            "position": "岗位名称",
+            "recruitCount": "招聘人数",
+            "owner": "负责人",
+            "actions": "操作"
+        },
+        "actions": {
+            "chat": "聊天",
+            "view": "查看",
+            "viewDetail": "查看详情"
+        },
+        "form": {
+            "selectCompany": "选择企业",
+            "selectCompanyPlaceholder": "请选择企业",
+            "ticketName": "工单名称",
+            "ticketNamePlaceholder": "请输入工单名称",
+            "position": "岗位名称",
+            "positionPlaceholder": "请输入岗位名称",
+            "recruitCount": "招聘人数",
+            "recruitCountPlaceholder": "请输入招聘人数",
+            "salary": "薪资",
+            "salaryPlaceholder": "请输入薪资",
+            "workTime": "工作时间",
+            "workTimePlaceholder": "请输入工作时间",
+            "restDays": "休息天数",
+            "restDaysPlaceholder": "请输入休息天数",
+            "benefits": "工作待遇",
+            "benefitsPlaceholder": "请输入工作待遇",
+            "create": "创建",
+            "cancel": "取消"
+        },
+        "messages": {
+            "fetchError": "获取工单列表失败",
+            "fetchDetailError": "获取工单详情失败",
+            "createSuccess": "创建工单成功",
+            "createError": "创建工单失败",
+            "fetchCompaniesError": "获取企业列表失败"
+        },
+        "detail": {
+            "title": "工单信息",
+            "applicantList": "应聘者列表",
+            "noApplicant": "暂无应聘者信息，请添加应聘者",
+            "documents": "文档资料"
+        },
+        "status": {
+            "pending": "待面试",
+            "interviewing": "面试中",
+            "passed": "已通过",
+            "rejected": "已拒绝",
+            "training": "培训中",
+            "completed": "已完成"
+        }
+    },
+    "Applicant": {
+        "add": "添加应聘者",
+        "edit": "编辑应聘者",
+        "form": {
+            "name": "姓名",
+            "namePlaceholder": "请输入姓名",
+            "gender": "性别",
+            "genderPlaceholder": "请选择性别",
+            "birthDate": "出生年月日",
+            "birthDatePlaceholder": "请选择出生日期",
+            "householdLocation": "户籍所在地",
+            "householdLocationPlaceholder": "请输入户籍所在地",
+            "currentResidence": "现居住地",
+            "currentResidencePlaceholder": "请输入现居住地",
+            "contact": "联系方式",
+            "contactPlaceholder": "请输入联系方式",
+            "wechat": "实名微信号",
+            "wechatPlaceholder": "请输入实名微信号",
+            "emergencyContact": "紧急联系人",
+            "emergencyContactPlaceholder": "请输入紧急联系人",
+            "emergencyPhone": "紧急联系人电话",
+            "emergencyPhonePlaceholder": "请输入紧急联系人电话",
+            "status": "状态",
+            "statusPlaceholder": "请选择状态",
+            "owner": "负责人",
+            "update": "更新",
+            "add": "添加",
+            "cancel": "取消"
+        },
+        "gender": {
+            "male": "男",
+            "female": "女",
+            "other": "其他"
+        },
+        "documents": {
+            "resume": "原始简历",
+            "passport": "护照",
+            "householdBook": "户口本",
+            "idCard": "身份证",
+            "photo2inch": "2寸照片",
+            "creditReport": "征信报告",
+            "noCrimeCert": "无犯罪证明",
+            "nationalCert": "国检证书",
+            "provincialCert": "省级考试证书",
+            "employmentContract": "雇佣合同",
+            "japanAgencyContract": "赴日中介合同",
+            "immigrationMaterials": "入管局资料"
+        },
+        "messages": {
+            "fetchError": "获取应聘者列表失败",
+            "submitSuccess": "提交应聘者信息成功",
+            "submitError": "提交应聘者信息失败",
+            "deleteSuccess": "删除成功",
+            "deleteError": "删除应聘者失败",
+            "confirmDelete": "确定要删除这个应聘者吗？此操作无法撤销。"
+        }
+    },
+    "Company": {
+        "title": "企业管理",
+        "create": "创建企业",
+        "search": {
+            "name": "企业名称",
+            "namePlaceholder": "搜索企业名称",
+            "industry": "所属行业",
+            "industryPlaceholder": "选择所属行业"
+        },
+        "columns": {
+            "name": "企业名称",
+            "industry": "所属行业",
+            "teihon": "藤本",
+            "financialReport": "决算报告书",
+            "industryLicense": "行业许可证",
+            "gmoContract": "GMO合同",
+            "otitMaterials": "OTIT资料",
+            "centralMaterials": "中央会资料",
+            "actions": "操作"
+        },
+        "actions": {
+            "upload": "上传",
+            "view": "查看",
+            "viewDetail": "查看详情"
+        },
+        "upload": {
+            "title": "上传",
+            "selectFiles": "选择文件（可多选）",
+            "hint": "支持一次选择多个PDF文件上传",
+            "selected": "已选择文件：",
+            "confirm": "确认上传",
+            "cancel": "取消"
+        },
+        "form": {
+            "name": "企业名称",
+            "namePlaceholder": "请输入企业名称",
+            "legalNumber": "法人番号",
+            "legalNumberPlaceholder": "请输入法人番号",
+            "representative": "代表取缔役",
+            "representativePlaceholder": "请输入代表取缔役",
+            "industry": "所属行业",
+            "industryPlaceholder": "请输入所属行业",
+            "employeeCount": "公司从业人数",
+            "employeeCountPlaceholder": "请输入公司从业人数",
+            "registeredCapital": "注册资本金",
+            "registeredCapitalPlaceholder": "请输入注册资本金",
+            "address": "公司地址",
+            "addressPlaceholder": "请输入公司地址",
+            "contact": "联系方式",
+            "contactPlaceholder": "请输入联系方式",
+            "email": "联系邮箱",
+            "emailPlaceholder": "请输入联系邮箱",
+            "documents": "企业文档",
+            "create": "创建",
+            "save": "保存",
+            "cancel": "取消"
+        },
+        "messages": {
+            "fetchError": "获取企业列表失败",
+            "fetchDetailError": "获取企业详情失败",
+            "createSuccess": "创建企业成功",
+            "createError": "创建企业失败",
+            "uploadSuccess": "上传成功",
+            "uploadError": "上传失败",
+            "saveError": "保存失败",
+            "deleteSuccess": "删除成功",
+            "deleteError": "删除失败",
+            "uploadComplete": "上传完成",
+            "selectFileWarning": "请至少选择一个文件",
+            "noUploadedFileWarning": "没有成功上传的文件",
+            "noFileWarning": "暂无文件"
+        },
+        "detail": {
+            "title": "企业详情",
+            "workOrderInfo": "工单信息",
+            "noWorkOrder": "暂无工单信息",
+            "editTitle": "编辑企业信息"
+        }
+    },
+    "User": {
+        "title": "账号管理",
+        "add": "添加用户",
+        "columns": {
+            "username": "用户名",
+            "role": "角色",
+            "country": "国家",
+            "createdAt": "创建时间",
+            "actions": "操作"
+        },
+        "roles": {
+            "admin": "管理员",
+            "employee": "员工"
+        },
+        "countries": {
+            "china": "中国",
+            "japan": "日本"
+        },
+        "actions": {
+            "edit": "编辑",
+            "delete": "删除",
+            "confirmDelete": "确定删除这个用户吗？",
+            "confirm": "确定",
+            "cancel": "取消"
+        },
+        "form": {
+            "editTitle": "编辑用户",
+            "addTitle": "添加用户",
+            "username": "用户名",
+            "usernamePlaceholder": "请输入用户名",
+            "password": "密码",
+            "passwordPlaceholder": "请输入密码",
+            "role": "角色",
+            "rolePlaceholder": "请选择角色",
+            "country": "国家",
+            "countryPlaceholder": "请选择国家",
+            "update": "更新",
+            "add": "添加",
+            "cancel": "取消"
+        },
+        "messages": {
+            "fetchError": "获取用户列表失败",
+            "deleteSuccess": "删除成功",
+            "deleteError": "删除失败",
+            "updateSuccess": "更新成功",
+            "addSuccess": "添加成功",
+            "operationError": "操作失败"
+        }
+    }
+}

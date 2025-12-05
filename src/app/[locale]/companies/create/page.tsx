@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/navigation'
 import {
   Card,
   Button,
@@ -23,6 +23,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFileUrl } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 const { TextArea } = Input
 
@@ -31,21 +32,23 @@ interface DocumentField {
   label: string
 }
 
-const documentFields: DocumentField[] = [
-  { key: 'teihon', label: '藤本' },
-  { key: 'financial_report', label: '决算报告书' },
-  { key: 'industry_license', label: '行业许可证' },
-  { key: 'gmo_contract', label: 'GMO合同' },
-  { key: 'otit_materials', label: 'OTIT资料' },
-  { key: 'central_materials', label: '中央会资料' },
-]
-
 export default function CreateCompanyPage() {
   const router = useRouter()
   const { canAccessCompanies } = useAuth()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [fileLists, setFileLists] = useState<Record<string, UploadFile[]>>({})
+  const t = useTranslations('Company')
+  const tCommon = useTranslations('Common')
+
+  const documentFields: DocumentField[] = [
+    { key: 'teihon', label: t('columns.teihon') },
+    { key: 'financial_report', label: t('columns.financialReport') },
+    { key: 'industry_license', label: t('columns.industryLicense') },
+    { key: 'gmo_contract', label: t('columns.gmoContract') },
+    { key: 'otit_materials', label: t('columns.otitMaterials') },
+    { key: 'central_materials', label: t('columns.centralMaterials') },
+  ]
 
   if (!canAccessCompanies) {
     return (
@@ -93,11 +96,11 @@ export default function CreateCompanyPage() {
       })
 
       onSuccess({ url })
-      message.success(`${file.name} 上传成功`)
+      message.success(`${file.name} ${t('messages.uploadSuccess')}`)
     } catch (error) {
       console.error('上传失败:', error)
       onError(error)
-      message.error(`${file.name} 上传失败`)
+      message.error(`${file.name} ${t('messages.uploadError')}`)
     }
   }
 
@@ -150,11 +153,11 @@ export default function CreateCompanyPage() {
 
       if (error) throw error
 
-      message.success('创建企业成功')
+      message.success(t('messages.createSuccess'))
       router.push(`/companies/${data.id}`)
     } catch (error) {
       console.error('创建企业失败:', error)
-      message.error('创建企业失败')
+      message.error(t('messages.createError'))
     } finally {
       setLoading(false)
     }
@@ -167,10 +170,10 @@ export default function CreateCompanyPage() {
         onClick={() => router.back()}
         style={{ marginBottom: 16 }}
       >
-        返回
+        {tCommon('back')}
       </Button>
 
-      <Card title="创建企业">
+      <Card title={t('create')}>
         <Form
           form={form}
           layout="vertical"
@@ -180,19 +183,19 @@ export default function CreateCompanyPage() {
             <Col span={12}>
               <Form.Item
                 name="name"
-                label="会社名称"
-                rules={[{ required: true, message: '请输入会社名称' }]}
+                label={t('form.name')}
+                rules={[{ required: true, message: t('form.namePlaceholder') }]}
               >
-                <Input placeholder="请输入会社名称" />
+                <Input placeholder={t('form.namePlaceholder')} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="legal_number"
-                label="法人番号"
-                rules={[{ required: true, message: '请输入法人番号' }]}
+                label={t('form.legalNumber')}
+                rules={[{ required: true, message: t('form.legalNumberPlaceholder') }]}
               >
-                <Input placeholder="请输入法人番号" />
+                <Input placeholder={t('form.legalNumberPlaceholder')} />
               </Form.Item>
             </Col>
           </Row>
@@ -201,19 +204,19 @@ export default function CreateCompanyPage() {
             <Col span={12}>
               <Form.Item
                 name="representative"
-                label="代表取缔役"
-                rules={[{ required: true, message: '请输入代表取缔役' }]}
+                label={t('form.representative')}
+                rules={[{ required: true, message: t('form.representativePlaceholder') }]}
               >
-                <Input placeholder="请输入代表取缔役" />
+                <Input placeholder={t('form.representativePlaceholder')} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="industry"
-                label="所属行业"
-                rules={[{ required: true, message: '请输入所属行业' }]}
+                label={t('form.industry')}
+                rules={[{ required: true, message: t('form.industryPlaceholder') }]}
               >
-                <Input placeholder="请输入所属行业" />
+                <Input placeholder={t('form.industryPlaceholder')} />
               </Form.Item>
             </Col>
           </Row>
@@ -222,10 +225,10 @@ export default function CreateCompanyPage() {
             <Col span={12}>
               <Form.Item
                 name="employee_count"
-                label="公司从业人数"
+                label={t('form.employeeCount')}
               >
                 <InputNumber
-                  placeholder="请输入公司从业人数"
+                  placeholder={t('form.employeeCountPlaceholder')}
                   min={0}
                   style={{ width: '100%' }}
                   addonAfter="人"
@@ -235,9 +238,9 @@ export default function CreateCompanyPage() {
             <Col span={12}>
               <Form.Item
                 name="registered_capital"
-                label="注册资本金"
+                label={t('form.registeredCapital')}
               >
-                <Input placeholder="请输入注册资本金" />
+                <Input placeholder={t('form.registeredCapitalPlaceholder')} />
               </Form.Item>
             </Col>
           </Row>
@@ -246,10 +249,10 @@ export default function CreateCompanyPage() {
             <Col span={12}>
               <Form.Item
                 name="address"
-                label="公司地址"
+                label={t('form.address')}
               >
                 <TextArea
-                  placeholder="请输入公司地址"
+                  placeholder={t('form.addressPlaceholder')}
                   rows={2}
                 />
               </Form.Item>
@@ -257,9 +260,9 @@ export default function CreateCompanyPage() {
             <Col span={12}>
               <Form.Item
                 name="contact"
-                label="联系方式"
+                label={t('form.contact')}
               >
-                <Input placeholder="请输入联系方式" />
+                <Input placeholder={t('form.contactPlaceholder')} />
               </Form.Item>
             </Col>
           </Row>
@@ -268,15 +271,15 @@ export default function CreateCompanyPage() {
             <Col span={12}>
               <Form.Item
                 name="email"
-                label="联系邮箱"
+                label={t('form.email')}
               >
-                <Input placeholder="请输入联系邮箱" />
+                <Input placeholder={t('form.emailPlaceholder')} />
               </Form.Item>
             </Col>
           </Row>
 
           <div style={{ marginTop: 24, marginBottom: 16 }}>
-            <h3>企业文档</h3>
+            <h3>{t('form.documents')}</h3>
           </div>
 
           <Row gutter={[16, 16]}>
@@ -294,12 +297,12 @@ export default function CreateCompanyPage() {
                     accept=".pdf,.jpg,.jpeg,.png"
                   >
                     <Button icon={<UploadOutlined />}>
-                      上传文件
+                      {t('upload.selectFiles')}
                     </Button>
                   </Upload>
                   {fileLists[field.key] && fileLists[field.key].length > 0 && (
                     <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                      已选择 {fileLists[field.key].length} 个文件
+                      {t('upload.selected')} {fileLists[field.key].length}
                     </div>
                   )}
                 </Form.Item>
@@ -310,10 +313,10 @@ export default function CreateCompanyPage() {
           <Form.Item style={{ marginTop: 24 }}>
             <Space>
               <Button type="primary" htmlType="submit" loading={loading}>
-                保存
+                {t('form.save')}
               </Button>
               <Button onClick={() => router.back()}>
-                取消
+                {t('form.cancel')}
               </Button>
             </Space>
           </Form.Item>

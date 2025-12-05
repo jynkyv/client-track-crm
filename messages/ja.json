@@ -1,0 +1,475 @@
+{
+    "Common": {
+        "search": "検索",
+        "reset": "リセット",
+        "edit": "編集",
+        "delete": "削除",
+        "save": "保存",
+        "cancel": "キャンセル",
+        "confirm": "確認",
+        "back": "戻る",
+        "success": "操作成功",
+        "error": "操作失敗",
+        "confirmDelete": "削除確認",
+        "noPermission": "権限がありません",
+        "noPermissionMessage": "このページにアクセスする権限がありません",
+        "total": "合計",
+        "items": "件",
+        "submit": "送信",
+        "ageUnit": "歳",
+        "gender": {
+            "male": "男性",
+            "female": "女性",
+            "other": "その他"
+        }
+    },
+    "Dashboard": {
+        "title": "ダッシュボード",
+        "menu": {
+            "dashboard": "ダッシュボード",
+            "customers": "顧客管理",
+            "potentialCustomers": "見込み顧客",
+            "contractCustomers": "契約顧客",
+            "workOrders": "求人票管理",
+            "companies": "企業管理",
+            "users": "アカウント管理"
+        },
+        "stats": {
+            "totalCustomers": "顧客総数",
+            "communicating": "交渉中",
+            "closed": "成約",
+            "rejected": "却下"
+        },
+        "recentActivities": "最近の活動",
+        "columns": {
+            "nickname": "ニックネーム",
+            "contact": "連絡先",
+            "intention": "意向度",
+            "status": "ステータス",
+            "age": "年齢",
+            "gender": "性別",
+            "workExperience": "職務経歴",
+            "notes": "備考",
+            "owner": "担当者",
+            "followUps": "フォロー回数"
+        },
+        "status": {
+            "communicating": "交渉中",
+            "closed": "成約",
+            "rejected": "却下"
+        }
+    },
+    "potential": {
+        "title": "見込み顧客管理",
+        "add": "見込み顧客を追加",
+        "edit": "見込み顧客を編集",
+        "deleteConfirm": "削除確認",
+        "deleteMessage": "この顧客を削除してもよろしいですか？この操作は取り消せません。",
+        "columns": {
+            "nickname": "ニックネーム",
+            "contact": "連絡先",
+            "intention": "意向度",
+            "status": "ステータス",
+            "age": "年齢",
+            "gender": "性別",
+            "workExperience": "職務経歴",
+            "notes": "備考",
+            "owner": "担当者",
+            "followUps": "フォロー回数",
+            "actions": "操作"
+        },
+        "status": {
+            "communicating": "交渉中",
+            "closed": "成約",
+            "rejected": "却下"
+        },
+        "gender": {
+            "male": "男性",
+            "female": "女性",
+            "other": "その他"
+        },
+        "form": {
+            "nickname": "ニックネーム",
+            "nicknameRequired": "ニックネームを入力してください",
+            "contact": "連絡先",
+            "contactRequired": "連絡先を入力してください",
+            "intention": "意向度",
+            "intentionRequired": "意向度を選択してください",
+            "status": "ステータス",
+            "statusRequired": "ステータスを選択してください",
+            "age": "年齢",
+            "gender": "性別",
+            "workExperience": "職務経歴",
+            "notes": "備考",
+            "min": "最小",
+            "max": "最大",
+            "to": "〜",
+            "ageUnit": "歳"
+        },
+        "actions": {
+            "followUp": "フォロー",
+            "complete": "完了",
+            "changeStatus": "ステータス変更"
+        },
+        "messages": {
+            "noFollowUp": "フォローなし",
+            "dbError": "データベースフィールドが作成されていません。Supabaseでupdate-database-stage2.sqlスクリプトを実行してください"
+        }
+    },
+    "contract": {
+        "title": "契約顧客管理",
+        "add": "契約顧客を追加",
+        "edit": "契約顧客を編集",
+        "search": {
+            "realName": "氏名",
+            "realNamePlaceholder": "氏名を入力",
+            "status": "ステータス"
+        },
+        "detail": {
+            "title": "顧客詳細",
+            "documents": "書類資料"
+        },
+        "form": {
+            "realName": "氏名",
+            "realNamePlaceholder": "氏名を入力",
+            "gender": "性別",
+            "genderPlaceholder": "性別を選択",
+            "birthDate": "生年月日",
+            "birthDatePlaceholder": "生年月日を選択",
+            "householdLocation": "戸籍所在地",
+            "householdLocationPlaceholder": "戸籍所在地を入力",
+            "currentResidence": "現住所",
+            "currentResidencePlaceholder": "現住所を入力",
+            "contact": "連絡先",
+            "contactPlaceholder": "連絡先を入力",
+            "wechat": "WeChat ID",
+            "wechatPlaceholder": "WeChat IDを入力",
+            "emergencyContact": "緊急連絡先",
+            "emergencyContactPlaceholder": "緊急連絡先を入力",
+            "emergencyPhone": "緊急連絡先電話番号",
+            "emergencyPhonePlaceholder": "緊急連絡先電話番号を入力"
+        },
+        "documents": {
+            "resume": "履歴書",
+            "passport": "パスポート",
+            "householdBook": "戸籍謄本",
+            "idCard": "身分証明書",
+            "photo2inch": "証明写真(2インチ)",
+            "creditReport": "信用報告書",
+            "noCrimeCert": "無犯罪証明書",
+            "nationalCert": "国家検定証書",
+            "provincialCert": "省級試験証書",
+            "employmentContract": "雇用契約書",
+            "japanAgencyContract": "訪日仲介契約書",
+            "immigrationMaterials": "入管提出資料"
+        },
+        "upload": {
+            "title": "アップロード",
+            "confirm": "アップロード確認",
+            "selectFiles": "ファイル選択（複数可）",
+            "hint": "複数のPDFファイルを一度にアップロードできます"
+        },
+        "columns": {
+            "realName": "氏名",
+            "status": "ステータス",
+            "age": "年齢",
+            "gender": "性別",
+            "phone": "電話番号",
+            "contact": "連絡先",
+            "companyWorkOrder": "企業/求人票",
+            "workExperience": "職務経歴",
+            "notes": "備考",
+            "walletBalance": "送金金額",
+            "createdAt": "作成日時",
+            "lastPaymentTime": "最終送金日時",
+            "owner": "担当者",
+            "actions": "操作"
+        },
+        "actions": {
+            "bind": "紐付け",
+            "view": "詳細",
+            "edit": "編集",
+            "changeStatus": "ステータス変更",
+            "payment": "支払/返金",
+            "delete": "削除",
+            "upload": "アップロード"
+        },
+        "messages": {
+            "paymentTableError": "paymentsテーブルが存在しません。Supabaseでupdate-database-stage2.sqlスクリプトを実行してください",
+            "fetchPaymentError": "支払記録の取得に失敗しました",
+            "interviewTimeRequired": "面接通知時間を入力してください",
+            "paymentSuccess": "支払記録を追加しました",
+            "paymentError": "支払記録の追加に失敗しました",
+            "fetchDetailError": "顧客詳細の取得に失敗しました",
+            "noFileWarning": "ファイルがありません",
+            "uploadSuccess": "アップロード成功",
+            "uploadError": "アップロード失敗",
+            "selectFileWarning": "ファイルを少なくとも1つ選択してください",
+            "noUploadedFileWarning": "アップロードされたファイルがありません",
+            "uploadComplete": "アップロード完了",
+            "saveError": "保存失敗",
+            "updateSuccess": "更新成功",
+            "updateError": "更新失敗",
+            "customerNotFound": "顧客が見つかりません"
+        },
+        "status": {
+            "pending": "面接待ち",
+            "interviewNotified": "面接通知済み",
+            "interviewPassed": "面接合格",
+            "interviewFailed": "面接不合格",
+            "training": "研修中",
+            "completed": "完了",
+            "active": "実行中",
+            "terminated": "終了"
+        }
+    },
+    "WorkOrder": {
+        "title": "求人票一覧",
+        "create": "求人票作成",
+        "search": {
+            "companyName": "企業名",
+            "companyNamePlaceholder": "企業名を入力",
+            "ticketName": "求人票名",
+            "ticketNamePlaceholder": "求人票名を入力",
+            "owner": "担当者",
+            "ownerPlaceholder": "担当者名を入力"
+        },
+        "columns": {
+            "createdAt": "作成日時",
+            "companyName": "企業名",
+            "ticketName": "求人票名",
+            "position": "職種",
+            "recruitCount": "募集人数",
+            "owner": "担当者",
+            "actions": "操作"
+        },
+        "actions": {
+            "chat": "チャット",
+            "view": "詳細",
+            "viewDetail": "詳細を見る"
+        },
+        "form": {
+            "selectCompany": "企業を選択",
+            "selectCompanyPlaceholder": "企業を選択してください",
+            "ticketName": "求人票名",
+            "ticketNamePlaceholder": "求人票名を入力してください",
+            "position": "職種",
+            "positionPlaceholder": "職種を入力してください",
+            "recruitCount": "募集人数",
+            "recruitCountPlaceholder": "募集人数を入力してください",
+            "salary": "給与",
+            "salaryPlaceholder": "給与を入力してください",
+            "workTime": "勤務時間",
+            "workTimePlaceholder": "勤務時間を入力してください",
+            "restDays": "休日",
+            "restDaysPlaceholder": "休日を入力してください",
+            "benefits": "待遇・福利厚生",
+            "benefitsPlaceholder": "待遇・福利厚生を入力してください",
+            "create": "作成",
+            "cancel": "キャンセル"
+        },
+        "messages": {
+            "fetchError": "求人票一覧の取得に失敗しました",
+            "fetchDetailError": "求人票詳細の取得に失敗しました",
+            "createSuccess": "求人票の作成に成功しました",
+            "createError": "求人票の作成に失敗しました",
+            "fetchCompaniesError": "企業一覧の取得に失敗しました"
+        },
+        "detail": {
+            "title": "求人票情報",
+            "applicantList": "応募者一覧",
+            "noApplicant": "応募者情報はありません。追加してください",
+            "documents": "書類資料"
+        },
+        "status": {
+            "pending": "面接待ち",
+            "interviewing": "面接中",
+            "passed": "合格",
+            "rejected": "不合格",
+            "training": "研修中",
+            "completed": "完了"
+        }
+    },
+    "Applicant": {
+        "add": "応募者追加",
+        "edit": "応募者編集",
+        "form": {
+            "name": "氏名",
+            "namePlaceholder": "氏名を入力",
+            "gender": "性別",
+            "genderPlaceholder": "性別を選択",
+            "birthDate": "生年月日",
+            "birthDatePlaceholder": "生年月日を選択",
+            "householdLocation": "戸籍所在地",
+            "householdLocationPlaceholder": "戸籍所在地を入力",
+            "currentResidence": "現住所",
+            "currentResidencePlaceholder": "現住所を入力",
+            "contact": "連絡先",
+            "contactPlaceholder": "連絡先を入力",
+            "wechat": "WeChat ID",
+            "wechatPlaceholder": "WeChat IDを入力",
+            "emergencyContact": "緊急連絡先",
+            "emergencyContactPlaceholder": "緊急連絡先を入力",
+            "emergencyPhone": "緊急連絡先電話番号",
+            "emergencyPhonePlaceholder": "緊急連絡先電話番号を入力",
+            "status": "ステータス",
+            "statusPlaceholder": "ステータスを選択",
+            "owner": "担当者",
+            "update": "更新",
+            "add": "追加",
+            "cancel": "キャンセル"
+        },
+        "gender": {
+            "male": "男性",
+            "female": "女性",
+            "other": "その他"
+        },
+        "documents": {
+            "resume": "履歴書",
+            "passport": "パスポート",
+            "householdBook": "戸籍謄本",
+            "idCard": "身分証明書",
+            "photo2inch": "証明写真(2インチ)",
+            "creditReport": "信用報告書",
+            "noCrimeCert": "無犯罪証明書",
+            "nationalCert": "国家検定証書",
+            "provincialCert": "省級試験証書",
+            "employmentContract": "雇用契約書",
+            "japanAgencyContract": "訪日仲介契約書",
+            "immigrationMaterials": "入管提出資料"
+        },
+        "messages": {
+            "fetchError": "応募者一覧の取得に失敗しました",
+            "submitSuccess": "応募者情報の送信に成功しました",
+            "submitError": "応募者情報の送信に失敗しました",
+            "deleteSuccess": "削除しました",
+            "deleteError": "応募者の削除に失敗しました",
+            "confirmDelete": "この応募者を削除してもよろしいですか？この操作は取り消せません。"
+        }
+    },
+    "Company": {
+        "title": "企業管理",
+        "create": "企業作成",
+        "search": {
+            "name": "企業名",
+            "namePlaceholder": "企業名を検索",
+            "industry": "業種",
+            "industryPlaceholder": "業種を選択"
+        },
+        "columns": {
+            "name": "企業名",
+            "industry": "業種",
+            "teihon": "謄本",
+            "financialReport": "決算報告書",
+            "industryLicense": "業許可証",
+            "gmoContract": "GMO契約書",
+            "otitMaterials": "OTIT資料",
+            "centralMaterials": "中央会資料",
+            "actions": "操作"
+        },
+        "actions": {
+            "upload": "アップロード",
+            "view": "閲覧",
+            "viewDetail": "詳細を見る"
+        },
+        "upload": {
+            "title": "アップロード",
+            "selectFiles": "ファイル選択（複数可）",
+            "hint": "複数のPDFファイルを一度にアップロードできます"
+        },
+        "form": {
+            "name": "企業名",
+            "namePlaceholder": "企業名を入力",
+            "legalNumber": "法人番号",
+            "legalNumberPlaceholder": "法人番号を入力",
+            "representative": "代表取締役",
+            "representativePlaceholder": "代表取締役を入力",
+            "industry": "業種",
+            "industryPlaceholder": "業種を入力",
+            "employeeCount": "従業員数",
+            "employeeCountPlaceholder": "従業員数を入力",
+            "registeredCapital": "資本金",
+            "registeredCapitalPlaceholder": "資本金を入力",
+            "address": "住所",
+            "addressPlaceholder": "住所を入力",
+            "contact": "連絡先",
+            "contactPlaceholder": "連絡先を入力",
+            "email": "メールアドレス",
+            "emailPlaceholder": "メールアドレスを入力",
+            "documents": "企業書類",
+            "create": "作成",
+            "save": "保存",
+            "cancel": "キャンセル"
+        },
+        "messages": {
+            "fetchError": "企業一覧の取得に失敗しました",
+            "fetchDetailError": "企業詳細の取得に失敗しました",
+            "createSuccess": "企業の作成に成功しました",
+            "createError": "企業の作成に失敗しました",
+            "uploadSuccess": "アップロード成功",
+            "uploadError": "アップロード失敗",
+            "saveError": "保存失敗",
+            "deleteSuccess": "削除しました",
+            "deleteError": "削除に失敗しました",
+            "uploadComplete": "アップロード完了",
+            "selectFileWarning": "ファイルを少なくとも1つ選択してください",
+            "noUploadedFileWarning": "アップロードされたファイルがありません",
+            "noFileWarning": "ファイルがありません"
+        },
+        "detail": {
+            "title": "企業詳細",
+            "workOrderInfo": "求人票情報",
+            "noWorkOrder": "求人票情報はありません",
+            "editTitle": "企業情報の編集"
+        }
+    },
+    "User": {
+        "title": "アカウント管理",
+        "add": "ユーザー追加",
+        "columns": {
+            "username": "ユーザー名",
+            "role": "役割",
+            "country": "国",
+            "createdAt": "作成日時",
+            "actions": "操作"
+        },
+        "roles": {
+            "admin": "管理者",
+            "employee": "従業員"
+        },
+        "countries": {
+            "china": "中国",
+            "japan": "日本"
+        },
+        "actions": {
+            "edit": "編集",
+            "delete": "削除",
+            "confirmDelete": "このユーザーを削除してもよろしいですか？",
+            "confirm": "はい",
+            "cancel": "いいえ"
+        },
+        "form": {
+            "editTitle": "ユーザー編集",
+            "addTitle": "ユーザー追加",
+            "username": "ユーザー名",
+            "usernamePlaceholder": "ユーザー名を入力",
+            "password": "パスワード",
+            "passwordPlaceholder": "パスワードを入力",
+            "role": "役割",
+            "rolePlaceholder": "役割を選択",
+            "country": "国",
+            "countryPlaceholder": "国を選択",
+            "update": "更新",
+            "add": "追加",
+            "cancel": "キャンセル"
+        },
+        "messages": {
+            "fetchError": "ユーザー一覧の取得に失敗しました",
+            "deleteSuccess": "削除しました",
+            "deleteError": "削除に失敗しました",
+            "updateSuccess": "更新しました",
+            "addSuccess": "追加しました",
+            "operationError": "操作に失敗しました"
+        }
+    }
+}

@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslations } from 'next-intl'
 
 export default function Home() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const t = useTranslations('Common')
 
   useEffect(() => {
     if (!loading) {
@@ -19,13 +21,13 @@ export default function Home() {
   }, [user, loading, router])
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      minHeight: '100vh' 
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh'
     }}>
-      <div>加载中...</div>
+      <div>{t('loading')}</div>
     </div>
   )
 }

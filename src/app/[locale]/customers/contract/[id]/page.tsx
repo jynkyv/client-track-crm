@@ -29,6 +29,7 @@ import { supabase } from '@/lib/supabase'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { getFileUrl } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 interface CustomerDetail {
   id: string
@@ -67,6 +68,8 @@ export default function CustomerDetailPage() {
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [fileList, setFileList] = useState<any[]>([])
   const [form] = Form.useForm()
+  const t = useTranslations('contract')
+  const tCommon = useTranslations('Common')
 
   // 检查URL参数，如果包含edit=true，自动进入编辑模式
   useEffect(() => {
@@ -105,7 +108,7 @@ export default function CustomerDetailPage() {
           emergency_phone: customerData.emergency_phone,
         })
       } catch (error) {
-        message.error('获取客户详情失败')
+        message.error(t('messages.fetchDetailError'))
       } finally {
         setLoading(false)
       }
@@ -119,7 +122,7 @@ export default function CustomerDetailPage() {
   // 查看多个PDF
   const handleViewPdfs = (urls?: string[]) => {
     if (!urls || urls.length === 0) {
-      message.warning('暂无文件')
+      message.warning(t('messages.noFileWarning'))
       return
     }
     urls.forEach(url => {
@@ -148,10 +151,10 @@ export default function CustomerDetailPage() {
         .eq('id', customer.id)
 
       if (error) throw error
-      message.success('删除成功')
+      message.success(tCommon('success'))
       setCustomer({ ...customer, [field]: newFiles } as CustomerDetail)
     } catch {
-      message.error('删除失败')
+      message.error(tCommon('error'))
     }
   }
 
@@ -168,7 +171,7 @@ export default function CustomerDetailPage() {
       })
 
       if (!response.ok) {
-        throw new Error('上传失败')
+        throw new Error(t('messages.uploadError'))
       }
 
       const { url } = await response.json()
@@ -186,11 +189,11 @@ export default function CustomerDetailPage() {
       })
 
       onSuccess({ url })
-      message.success(`${file.name} 上传成功`)
+      message.success(`${file.name} ${t('messages.uploadSuccess')}`)
     } catch (error) {
       console.error('上传失败:', error)
       onError(error)
-      message.error(`${file.name} 上传失败`)
+      message.error(`${file.name} ${t('messages.uploadError')}`)
     }
   }
 
@@ -202,7 +205,7 @@ export default function CustomerDetailPage() {
   // 确认上传
   const handleUploadConfirm = async () => {
     if (fileList.length === 0 || !customer || !currentUploadField) {
-      message.warning('请至少选择一个文件')
+      message.warning(t('messages.selectFileWarning'))
       return
     }
 
@@ -213,7 +216,7 @@ export default function CustomerDetailPage() {
         .map(file => file.url as string)
 
       if (uploadedUrls.length === 0) {
-        message.warning('没有成功上传的文件')
+        message.warning(t('messages.noUploadedFileWarning'))
         return
       }
 
@@ -230,13 +233,13 @@ export default function CustomerDetailPage() {
         .eq('id', customer.id)
 
       if (error) throw error
-      message.success('上传完成')
+      message.success(t('messages.uploadComplete'))
       setUploadModalVisible(false)
       setFileList([])
       setCustomer({ ...customer, [currentUploadField]: updatedFiles } as CustomerDetail)
     } catch (error) {
       console.error('保存文件URL失败:', error)
-      message.error('保存失败')
+      message.error(t('messages.saveError'))
     }
   }
 
@@ -287,7 +290,7 @@ export default function CustomerDetailPage() {
         .eq('id', customer.id)
 
       if (error) throw error
-      message.success('更新成功')
+      message.success(t('messages.updateSuccess'))
       setIsEditing(false)
       // 刷新数据
       const { data, error: fetchError } = await supabase
@@ -312,23 +315,23 @@ export default function CustomerDetailPage() {
         emergency_phone: customerData.emergency_phone,
       })
     } catch {
-      message.error('更新失败')
+      message.error(t('messages.updateError'))
     }
   }
 
   const documentFields = [
-    { key: 'resume', label: '原始简历' },
-    { key: 'passport', label: '护照' },
-    { key: 'household_book', label: '户口本' },
-    { key: 'id_card', label: '身份证' },
-    { key: 'photo_2inch', label: '2寸照片' },
-    { key: 'credit_report', label: '征信报告' },
-    { key: 'no_crime_cert', label: '无犯罪证明' },
-    { key: 'national_cert', label: '国检证书' },
-    { key: 'provincial_cert', label: '省级考试证书' },
-    { key: 'employment_contract', label: '雇佣合同' },
-    { key: 'japan_agency_contract', label: '赴日中介合同' },
-    { key: 'immigration_materials', label: '入管局资料' },
+    { key: 'resume', label: t('documents.resume') },
+    { key: 'passport', label: t('documents.passport') },
+    { key: 'household_book', label: t('documents.householdBook') },
+    { key: 'id_card', label: t('documents.idCard') },
+    { key: 'photo_2inch', label: t('documents.photo2inch') },
+    { key: 'credit_report', label: t('documents.creditReport') },
+    { key: 'no_crime_cert', label: t('documents.noCrimeCert') },
+    { key: 'national_cert', label: t('documents.nationalCert') },
+    { key: 'provincial_cert', label: t('documents.provincialCert') },
+    { key: 'employment_contract', label: t('documents.employmentContract') },
+    { key: 'japan_agency_contract', label: t('documents.japanAgencyContract') },
+    { key: 'immigration_materials', label: t('documents.immigrationMaterials') },
   ]
 
   if (loading) {
@@ -336,7 +339,7 @@ export default function CustomerDetailPage() {
   }
 
   if (!customer) {
-    return <div>客户不存在</div>
+    return <div>{t('messages.customerNotFound')}</div>
   }
 
   return (
@@ -346,11 +349,11 @@ export default function CustomerDetailPage() {
         onClick={() => router.back()}
         style={{ marginBottom: 16 }}
       >
-        返回
+        {tCommon('back')}
       </Button>
 
       <Card
-        title="客户详情"
+        title={t('detail.title')}
         extra={
           !isEditing ? (
             <Button
@@ -358,18 +361,18 @@ export default function CustomerDetailPage() {
               icon={<EditOutlined />}
               onClick={handleEdit}
             >
-              编辑
+              {tCommon('edit')}
             </Button>
           ) : (
             <Space>
               <Button onClick={handleCancelEdit}>
-                取消
+                {tCommon('cancel')}
               </Button>
               <Button
                 type="primary"
                 onClick={() => form.submit()}
               >
-                保存
+                {tCommon('save')}
               </Button>
             </Space>
           )
@@ -377,17 +380,19 @@ export default function CustomerDetailPage() {
       >
         {!isEditing ? (
           <Descriptions bordered column={2}>
-            <Descriptions.Item label="姓名">{customer.real_name || '-'}</Descriptions.Item>
-            <Descriptions.Item label="性别">
-              {customer.gender === 'male' ? '男' : customer.gender === 'female' ? '女' : customer.gender || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="出生年月日">{customer.birth_date || '-'}</Descriptions.Item>
-            <Descriptions.Item label="户籍所在地">{customer.household_location || '-'}</Descriptions.Item>
-            <Descriptions.Item label="现居住地">{customer.current_residence || '-'}</Descriptions.Item>
-            <Descriptions.Item label="联系方式">{customer.contact || '-'}</Descriptions.Item>
-            <Descriptions.Item label="实名微信号">{customer.wechat || '-'}</Descriptions.Item>
-            <Descriptions.Item label="紧急联系人">{customer.emergency_contact || '-'}</Descriptions.Item>
-            <Descriptions.Item label="紧急联系人电话" span={2}>{customer.emergency_phone || '-'}</Descriptions.Item>
+            <Descriptions bordered column={2}>
+              <Descriptions.Item label={t('form.realName')}>{customer.real_name || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('form.gender')}>
+                {customer.gender === 'male' ? tCommon('gender.male') : customer.gender === 'female' ? tCommon('gender.female') : customer.gender || '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label={t('form.birthDate')}>{customer.birth_date || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('form.householdLocation')}>{customer.household_location || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('form.currentResidence')}>{customer.current_residence || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('form.contact')}>{customer.contact || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('form.wechat')}>{customer.wechat || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('form.emergencyContact')}>{customer.emergency_contact || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('form.emergencyPhone')} span={2}>{customer.emergency_phone || '-'}</Descriptions.Item>
+            </Descriptions>
           </Descriptions>
         ) : (
           <Form
@@ -399,21 +404,21 @@ export default function CustomerDetailPage() {
               <Col span={12}>
                 <Form.Item
                   name="real_name"
-                  label="姓名"
-                  rules={[{ required: true, message: '请输入姓名' }]}
+                  label={t('form.realName')}
+                  rules={[{ required: true, message: t('form.realNamePlaceholder') }]}
                 >
-                  <Input placeholder="请输入姓名" />
+                  <Input placeholder={t('form.realNamePlaceholder')} />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="gender"
-                  label="性别"
+                  label={t('form.gender')}
                 >
-                  <Select placeholder="请选择性别">
-                    <Select.Option value="male">男</Select.Option>
-                    <Select.Option value="female">女</Select.Option>
-                    <Select.Option value="other">其他</Select.Option>
+                  <Select placeholder={t('form.genderPlaceholder')}>
+                    <Select.Option value="male">{tCommon('gender.male')}</Select.Option>
+                    <Select.Option value="female">{tCommon('gender.female')}</Select.Option>
+                    <Select.Option value="other">{tCommon('gender.other')}</Select.Option>
                   </Select>
                 </Form.Item>
               </Col>
@@ -423,20 +428,20 @@ export default function CustomerDetailPage() {
               <Col span={12}>
                 <Form.Item
                   name="birth_date"
-                  label="出生年月日"
+                  label={t('form.birthDate')}
                 >
                   <DatePicker
                     style={{ width: '100%' }}
-                    placeholder="请选择出生年月日"
+                    placeholder={t('form.birthDatePlaceholder')}
                   />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="household_location"
-                  label="户籍所在地"
+                  label={t('form.householdLocation')}
                 >
-                  <Input placeholder="请输入户籍所在地" />
+                  <Input placeholder={t('form.householdLocationPlaceholder')} />
                 </Form.Item>
               </Col>
             </Row>
@@ -445,17 +450,17 @@ export default function CustomerDetailPage() {
               <Col span={12}>
                 <Form.Item
                   name="current_residence"
-                  label="现居住地"
+                  label={t('form.currentResidence')}
                 >
-                  <Input placeholder="请输入现居住地" />
+                  <Input placeholder={t('form.currentResidencePlaceholder')} />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="contact"
-                  label="联系方式"
+                  label={t('form.contact')}
                 >
-                  <Input placeholder="请输入联系方式" />
+                  <Input placeholder={t('form.contactPlaceholder')} />
                 </Form.Item>
               </Col>
             </Row>
@@ -464,17 +469,17 @@ export default function CustomerDetailPage() {
               <Col span={12}>
                 <Form.Item
                   name="wechat"
-                  label="实名微信号"
+                  label={t('form.wechat')}
                 >
-                  <Input placeholder="请输入实名微信号" />
+                  <Input placeholder={t('form.wechatPlaceholder')} />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="emergency_contact"
-                  label="紧急联系人"
+                  label={t('form.emergencyContact')}
                 >
-                  <Input placeholder="请输入紧急联系人" />
+                  <Input placeholder={t('form.emergencyContactPlaceholder')} />
                 </Form.Item>
               </Col>
             </Row>
@@ -483,9 +488,9 @@ export default function CustomerDetailPage() {
               <Col span={12}>
                 <Form.Item
                   name="emergency_phone"
-                  label="紧急联系人电话"
+                  label={t('form.emergencyPhone')}
                 >
-                  <Input placeholder="请输入紧急联系人电话" />
+                  <Input placeholder={t('form.emergencyPhonePlaceholder')} />
                 </Form.Item>
               </Col>
             </Row>
@@ -493,7 +498,7 @@ export default function CustomerDetailPage() {
         )}
 
         <div style={{ marginTop: 24 }}>
-          <h3 style={{ marginBottom: 16 }}>文档资料</h3>
+          <h3 style={{ marginBottom: 16 }}>{t('detail.documents')}</h3>
           <Row gutter={[16, 16]}>
             {documentFields.map((field) => {
               const urls = customer[field.key as keyof CustomerDetail] as string[] | undefined
@@ -516,7 +521,7 @@ export default function CustomerDetailPage() {
                                 size="small"
                                 onClick={() => window.open(getFileUrl(url), '_blank')}
                               >
-                                查看
+                                {t('actions.view')}
                               </Button>
                               <Button
                                 type="link"
@@ -525,7 +530,7 @@ export default function CustomerDetailPage() {
                                 icon={<DeleteOutlined />}
                                 onClick={() => handleDeleteFile(field.key, url)}
                               >
-                                删除
+                                {t('actions.delete')}
                               </Button>
                             </Space>
                           </div>
@@ -538,7 +543,7 @@ export default function CustomerDetailPage() {
                       onClick={() => handleUpload(field.key)}
                       style={{ width: '100%' }}
                     >
-                      上传
+                      {t('actions.upload')}
                     </Button>
                   </Card>
                 </Col>
@@ -550,15 +555,15 @@ export default function CustomerDetailPage() {
 
       {/* 上传PDF Modal */}
       <Modal
-        title={`上传${documentFields.find(f => f.key === currentUploadField)?.label || '文件'}`}
+        title={`${t('upload.title')} - ${documentFields.find(f => f.key === currentUploadField)?.label || ''}`}
         open={uploadModalVisible}
         onCancel={() => {
           setUploadModalVisible(false)
           setFileList([])
         }}
         onOk={handleUploadConfirm}
-        okText="确认上传"
-        cancelText="取消"
+        okText={t('upload.confirm')}
+        cancelText={tCommon('cancel')}
         width={600}
       >
         <Upload
@@ -568,10 +573,10 @@ export default function CustomerDetailPage() {
           customRequest={handleUploadRequest}
           onRemove={handleRemove}
         >
-          <Button icon={<UploadOutlined />}>选择文件（可多选）</Button>
+          <Button icon={<UploadOutlined />}>{t('upload.selectFiles')}</Button>
         </Upload>
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
-          支持一次选择多个PDF文件上传
+          {t('upload.hint')}
         </div>
       </Modal>
     </div>

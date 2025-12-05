@@ -5,11 +5,14 @@ import { Card, Statistic, Row, Col, Table, Tag, Tooltip } from 'antd'
 import { TeamOutlined, EyeOutlined } from '@ant-design/icons'
 import { supabase, Customer } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslations } from 'next-intl'
 
 export default function DashboardPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(false)
   const { isAdmin, user } = useAuth()
+  const t = useTranslations('Dashboard')
+  const tCommon = useTranslations('Common')
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
@@ -61,19 +64,19 @@ export default function DashboardPage() {
 
   const recentCustomersColumns = [
     {
-      title: '客户昵称',
+      title: t('columns.nickname'),
       dataIndex: 'nickname',
       key: 'nickname',
       align: 'center' as const,
     },
     {
-      title: '联系方式',
+      title: t('columns.contact'),
       dataIndex: 'contact',
       key: 'contact',
       align: 'center' as const,
     },
     {
-      title: '意向度',
+      title: t('columns.intention'),
       dataIndex: 'intention',
       key: 'intention',
       align: 'center' as const,
@@ -90,15 +93,15 @@ export default function DashboardPage() {
       ),
     },
     {
-      title: '状态',
+      title: t('columns.status'),
       dataIndex: 'status',
       key: 'status',
       align: 'center' as const,
       render: (status: string) => {
         const statusText = {
-          communicating: '沟通中',
-          closed: '已成交',
-          rejected: '已拒绝'
+          communicating: t('status.communicating'),
+          closed: t('status.closed'),
+          rejected: t('status.rejected')
         }
         return (
           <Tag color={getStatusColor(status)}>
@@ -108,7 +111,7 @@ export default function DashboardPage() {
       },
     },
     {
-      title: '年龄',
+      title: t('columns.age'),
       dataIndex: 'age',
       key: 'age',
       align: 'center' as const,
@@ -117,25 +120,25 @@ export default function DashboardPage() {
         const bAge = b.age || 0
         return aAge - bAge
       },
-      render: (age: number) => age ? `${age}岁` : '-',
+      render: (age: number) => age ? `${age}${tCommon('ageUnit')}` : '-',
     },
     {
-      title: '性别',
+      title: t('columns.gender'),
       dataIndex: 'gender',
       key: 'gender',
       align: 'center' as const,
       render: (gender: string) => {
         if (!gender) return '-'
         const genderText = {
-          male: '男',
-          female: '女',
-          other: '其他'
+          male: tCommon('gender.male'),
+          female: tCommon('gender.female'),
+          other: tCommon('gender.other')
         }
         return genderText[gender as keyof typeof genderText] || gender
       },
     },
     {
-      title: '工作经验',
+      title: t('columns.workExperience'),
       width: 100,
       dataIndex: 'work_experience',
       key: 'work_experience',
@@ -151,7 +154,7 @@ export default function DashboardPage() {
       },
     },
     {
-      title: '备注',
+      title: t('columns.notes'),
       width: 100,
       dataIndex: 'notes',
       key: 'notes',
@@ -167,14 +170,14 @@ export default function DashboardPage() {
       },
     },
     ...(isAdmin ? [{
-      title: '所属人',
+      title: t('columns.owner'),
       dataIndex: 'owner',
       key: 'owner',
       align: 'center' as const,
       render: (owner: string) => owner || '-',
     }] : []),
     {
-      title: '跟进次数',
+      title: t('columns.followUps'),
       dataIndex: 'follow_ups',
       key: 'follow_ups',
       align: 'center' as const,
@@ -189,13 +192,13 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: '24px' }}>仪表板</h1>
-      
+      <h1 style={{ marginBottom: '24px' }}>{t('menu.dashboard')}</h1>
+
       <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
           <Card>
             <Statistic
-              title="总客户数"
+              title={t('stats.totalCustomers')}
               value={customers.length}
               prefix={<TeamOutlined />}
             />
@@ -204,7 +207,7 @@ export default function DashboardPage() {
         <Col span={6}>
           <Card>
             <Statistic
-              title="沟通中"
+              title={t('stats.communicating')}
               value={customers.filter(c => c.status === 'communicating').length}
               prefix={<EyeOutlined />}
               valueStyle={{ color: '#52c41a' }}
@@ -214,7 +217,7 @@ export default function DashboardPage() {
         <Col span={6}>
           <Card>
             <Statistic
-              title="已成交"
+              title={t('stats.closed')}
               value={customers.filter(c => c.status === 'closed').length}
               prefix={<EyeOutlined />}
               valueStyle={{ color: '#8c8c8c' }}
@@ -224,7 +227,7 @@ export default function DashboardPage() {
         <Col span={6}>
           <Card>
             <Statistic
-              title="已拒绝"
+              title={t('stats.rejected')}
               value={customers.filter(c => c.status === 'rejected').length}
               prefix={<EyeOutlined />}
               valueStyle={{ color: '#ff4d4f' }}
@@ -233,7 +236,7 @@ export default function DashboardPage() {
         </Col>
       </Row>
 
-      <Card title="最近客户" loading={loading}>
+      <Card title={t('recentActivities')} loading={loading}>
         <Table
           columns={recentCustomersColumns}
           dataSource={customers}

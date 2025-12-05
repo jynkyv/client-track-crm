@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useRouter } from '@/navigation'
 import {
   Card,
   Button,
@@ -24,6 +25,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFileUrl } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 interface CompanyDetail {
   id: string
@@ -57,6 +59,18 @@ export default function CompanyDetailPage() {
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [fileList, setFileList] = useState<UploadFile[]>([])
+  const t = useTranslations('Company')
+  const tCommon = useTranslations('Common')
+  const tWorkOrder = useTranslations('WorkOrder')
+
+  const documentFields = [
+    { key: 'teihon', label: t('columns.teihon') },
+    { key: 'financial_report', label: t('columns.financialReport') },
+    { key: 'industry_license', label: t('columns.industryLicense') },
+    { key: 'gmo_contract', label: t('columns.gmoContract') },
+    { key: 'otit_materials', label: t('columns.otitMaterials') },
+    { key: 'central_materials', label: t('columns.centralMaterials') },
+  ]
 
   // 获取企业详情
   const fetchCompany = async () => {
@@ -72,7 +86,7 @@ export default function CompanyDetailPage() {
       setCompany(data)
     } catch (error) {
       console.error('获取企业详情失败:', error)
-      message.error('获取企业详情失败')
+      message.error(t('messages.fetchDetailError'))
     } finally {
       setLoading(false)
     }
@@ -104,7 +118,7 @@ export default function CompanyDetailPage() {
   // 查看多个PDF
   const handleViewPdfs = (urls?: string[]) => {
     if (!urls || urls.length === 0) {
-      message.warning('暂无文件')
+      message.warning(t('messages.noFileWarning'))
       return
     }
     urls.forEach(url => {
@@ -150,11 +164,11 @@ export default function CompanyDetailPage() {
       })
 
       onSuccess({ url })
-      message.success(`${file.name} 上传成功`)
+      message.success(`${file.name} ${t('messages.uploadSuccess')}`)
     } catch (error) {
       console.error('上传失败:', error)
       onError(error)
-      message.error(`${file.name} 上传失败`)
+      message.error(`${file.name} ${t('messages.uploadError')}`)
     }
   }
 
@@ -166,7 +180,7 @@ export default function CompanyDetailPage() {
   // 确认上传
   const handleUploadConfirm = async () => {
     if (fileList.length === 0 || !company || !currentUploadField) {
-      message.warning('请至少选择一个文件')
+      message.warning(t('messages.selectFileWarning'))
       return
     }
 
@@ -177,7 +191,7 @@ export default function CompanyDetailPage() {
         .map(file => file.url as string)
 
       if (uploadedUrls.length === 0) {
-        message.warning('没有成功上传的文件')
+        message.warning(t('messages.noUploadedFileWarning'))
         return
       }
 
@@ -194,13 +208,13 @@ export default function CompanyDetailPage() {
         .eq('id', company.id)
 
       if (error) throw error
-      message.success('上传完成')
+      message.success(t('messages.uploadComplete'))
       setUploadModalVisible(false)
       setFileList([])
       fetchCompany()
     } catch (error) {
       console.error('保存文件URL失败:', error)
-      message.error('保存失败')
+      message.error(t('messages.saveError'))
     }
   }
 
@@ -218,22 +232,13 @@ export default function CompanyDetailPage() {
         .eq('id', company.id)
 
       if (error) throw error
-      message.success('删除成功')
+      message.success(t('messages.deleteSuccess'))
       fetchCompany()
     } catch (error) {
       console.error('删除文件失败:', error)
-      message.error('删除失败')
+      message.error(t('messages.deleteError'))
     }
   }
-
-  const documentFields = [
-    { key: 'teihon', label: '藤本' },
-    { key: 'financial_report', label: '决算报告书' },
-    { key: 'industry_license', label: '行业许可证' },
-    { key: 'gmo_contract', label: 'GMO合同' },
-    { key: 'otit_materials', label: 'OTIT资料' },
-    { key: 'central_materials', label: '中央会资料' },
-  ]
 
   return (
     <div>
@@ -242,11 +247,11 @@ export default function CompanyDetailPage() {
         onClick={() => router.back()}
         style={{ marginBottom: 16 }}
       >
-        返回
+        {tCommon('back')}
       </Button>
 
       <Card
-        title="企业详情"
+        title={t('detail.title')}
         extra={
           !isReadOnly && (
             <Button
@@ -254,28 +259,28 @@ export default function CompanyDetailPage() {
               icon={<EditOutlined />}
               onClick={() => setEditModalVisible(true)}
             >
-              编辑
+              {t('actions.edit')}
             </Button>
           )
         }
       >
         {company && (
           <Descriptions bordered column={2}>
-            <Descriptions.Item label="会社名称">{company.name}</Descriptions.Item>
-            <Descriptions.Item label="法人番号">{company.legal_number}</Descriptions.Item>
-            <Descriptions.Item label="代表取缔役">{company.representative}</Descriptions.Item>
-            <Descriptions.Item label="所属行业">{company.industry}</Descriptions.Item>
-            <Descriptions.Item label="公司从业人数">{company.employee_count}人</Descriptions.Item>
-            <Descriptions.Item label="注册资本金">{company.registered_capital}</Descriptions.Item>
-            <Descriptions.Item label="公司地址" span={2}>{company.address}</Descriptions.Item>
-            <Descriptions.Item label="联系方式">{company.contact}</Descriptions.Item>
-            <Descriptions.Item label="联系邮箱">{company.email}</Descriptions.Item>
+            <Descriptions.Item label={t('form.name')}>{company.name}</Descriptions.Item>
+            <Descriptions.Item label={t('form.legalNumber')}>{company.legal_number}</Descriptions.Item>
+            <Descriptions.Item label={t('form.representative')}>{company.representative}</Descriptions.Item>
+            <Descriptions.Item label={t('form.industry')}>{company.industry}</Descriptions.Item>
+            <Descriptions.Item label={t('form.employeeCount')}>{company.employee_count}人</Descriptions.Item>
+            <Descriptions.Item label={t('form.registeredCapital')}>{company.registered_capital}</Descriptions.Item>
+            <Descriptions.Item label={t('form.address')} span={2}>{company.address}</Descriptions.Item>
+            <Descriptions.Item label={t('form.contact')}>{company.contact}</Descriptions.Item>
+            <Descriptions.Item label={t('form.email')}>{company.email}</Descriptions.Item>
           </Descriptions>
         )}
 
         {/* 工单信息 - 所有用户可见 */}
         <div style={{ marginTop: 24 }}>
-          <h3 style={{ marginBottom: 16 }}>工单信息</h3>
+          <h3 style={{ marginBottom: 16 }}>{t('detail.workOrderInfo')}</h3>
           {workOrders.length > 0 ? (
             <Row gutter={[16, 16]}>
               {workOrders.map((workOrder) => (
@@ -288,12 +293,12 @@ export default function CompanyDetailPage() {
                     style={{ cursor: 'pointer' }}
                   >
                     <Descriptions column={1} size="small">
-                      <Descriptions.Item label="岗位名称">{workOrder.position || '-'}</Descriptions.Item>
-                      <Descriptions.Item label="招聘人数">{workOrder.recruit_count ? `${workOrder.recruit_count}人` : '-'}</Descriptions.Item>
-                      <Descriptions.Item label="薪资">{workOrder.salary || '-'}</Descriptions.Item>
-                      <Descriptions.Item label="工作时间">{workOrder.work_time || '-'}</Descriptions.Item>
-                      <Descriptions.Item label="休息天数">{workOrder.rest_days || '-'}</Descriptions.Item>
-                      <Descriptions.Item label="工作待遇">{workOrder.benefits || '-'}</Descriptions.Item>
+                      <Descriptions.Item label={tWorkOrder('form.position')}>{workOrder.position || '-'}</Descriptions.Item>
+                      <Descriptions.Item label={tWorkOrder('form.recruitCount')}>{workOrder.recruit_count ? `${workOrder.recruit_count}人` : '-'}</Descriptions.Item>
+                      <Descriptions.Item label={tWorkOrder('form.salary')}>{workOrder.salary || '-'}</Descriptions.Item>
+                      <Descriptions.Item label={tWorkOrder('form.workTime')}>{workOrder.work_time || '-'}</Descriptions.Item>
+                      <Descriptions.Item label={tWorkOrder('form.restDays')}>{workOrder.rest_days || '-'}</Descriptions.Item>
+                      <Descriptions.Item label={tWorkOrder('form.benefits')}>{workOrder.benefits || '-'}</Descriptions.Item>
                     </Descriptions>
                   </Card>
                 </Col>
@@ -301,7 +306,7 @@ export default function CompanyDetailPage() {
             </Row>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-              暂无工单信息
+              {t('detail.noWorkOrder')}
             </div>
           )}
         </div>
@@ -309,7 +314,7 @@ export default function CompanyDetailPage() {
         {/* 企业文档 - 仅日方员工/管理员可见和操作 */}
         {!isReadOnly && (
           <div style={{ marginTop: 24 }}>
-            <h3 style={{ marginBottom: 16 }}>企业文档</h3>
+            <h3 style={{ marginBottom: 16 }}>{t('form.documents')}</h3>
             <Row gutter={[16, 16]}>
               {documentFields.map((field) => {
                 const urls = company?.[field.key as keyof CompanyDetail] as string[] | undefined
@@ -324,7 +329,7 @@ export default function CompanyDetailPage() {
                           icon={<UploadOutlined />}
                           onClick={() => handleUpload(field.key)}
                         >
-                          上传
+                          {t('actions.upload')}
                         </Button>
                         <Button
                           size="small"
@@ -332,7 +337,7 @@ export default function CompanyDetailPage() {
                           onClick={() => handleViewPdfs(urls)}
                           disabled={fileCount === 0}
                         >
-                          查看{fileCount > 0 ? `(${fileCount})` : ''}
+                          {t('actions.view')}{fileCount > 0 ? `(${fileCount})` : ''}
                         </Button>
                       </Space>
                     </Card>
@@ -346,7 +351,7 @@ export default function CompanyDetailPage() {
 
       {/* 编辑Modal */}
       <Modal
-        title="编辑企业信息"
+        title={t('detail.editTitle')}
         open={editModalVisible}
         onCancel={() => setEditModalVisible(false)}
         footer={null}
@@ -358,15 +363,15 @@ export default function CompanyDetailPage() {
 
       {/* 上传PDF Modal */}
       <Modal
-        title={`上传${documentFields.find(f => f.key === currentUploadField)?.label || '文件'}`}
+        title={`${t('upload.title')}${documentFields.find(f => f.key === currentUploadField)?.label || '文件'}`}
         open={uploadModalVisible}
         onCancel={() => {
           setUploadModalVisible(false)
           setFileList([])
         }}
         onOk={handleUploadConfirm}
-        okText="确认上传"
-        cancelText="取消"
+        okText={t('upload.confirm')}
+        cancelText={t('upload.cancel')}
         width={600}
       >
         <Upload
@@ -376,14 +381,14 @@ export default function CompanyDetailPage() {
           customRequest={handleUploadRequest}
           onRemove={handleRemove}
         >
-          <Button icon={<UploadOutlined />}>选择文件（可多选）</Button>
+          <Button icon={<UploadOutlined />}>{t('upload.selectFiles')}</Button>
         </Upload>
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
-          支持一次选择多个PDF文件上传
+          {t('upload.hint')}
         </div>
         {fileList.length > 0 && (
           <div style={{ marginTop: 16 }}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>已选择文件：</div>
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>{t('upload.selected')}</div>
             <List
               size="small"
               dataSource={fileList}

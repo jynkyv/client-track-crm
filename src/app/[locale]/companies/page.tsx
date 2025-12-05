@@ -24,10 +24,11 @@ import {
   ReloadOutlined
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFileUrl } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 const { Option } = Select
 
@@ -53,6 +54,8 @@ export default function CompaniesPage() {
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [currentCompany, setCurrentCompany] = useState<Company | null>(null)
   const [fileList, setFileList] = useState<UploadFile[]>([])
+  const t = useTranslations('Company')
+  const tCommon = useTranslations('Common')
 
   // 搜索状态
   const [searchName, setSearchName] = useState('')
@@ -81,7 +84,7 @@ export default function CompaniesPage() {
       setCompanies(data || [])
     } catch (error) {
       console.error('获取企业列表失败:', error)
-      message.error('获取企业列表失败')
+      message.error(t('messages.fetchError'))
     } finally {
       setLoading(false)
     }
@@ -144,11 +147,11 @@ export default function CompaniesPage() {
       })
 
       onSuccess({ url })
-      message.success(`${file.name} 上传成功`)
+      message.success(`${file.name} ${t('messages.uploadSuccess')}`)
     } catch (error) {
       console.error('上传失败:', error)
       onError(error)
-      message.error(`${file.name} 上传失败`)
+      message.error(`${file.name} ${t('messages.uploadError')}`)
     }
   }
 
@@ -160,7 +163,7 @@ export default function CompaniesPage() {
   // 确认上传
   const handleUploadConfirm = async () => {
     if (fileList.length === 0 || !currentCompany || !currentUploadField) {
-      message.warning('请至少选择一个文件')
+      message.warning(t('messages.selectFileWarning'))
       return
     }
 
@@ -171,7 +174,7 @@ export default function CompaniesPage() {
         .map(file => file.url as string)
 
       if (uploadedUrls.length === 0) {
-        message.warning('没有成功上传的文件')
+        message.warning(t('messages.noUploadedFileWarning'))
         return
       }
 
@@ -188,20 +191,20 @@ export default function CompaniesPage() {
         .eq('id', currentCompany.id)
 
       if (error) throw error
-      message.success('上传完成')
+      message.success(t('messages.uploadComplete'))
       setUploadModalVisible(false)
       setFileList([])
       fetchCompanies()
     } catch (error) {
       console.error('保存文件URL失败:', error)
-      message.error('保存失败')
+      message.error(t('messages.saveError'))
     }
   }
 
   // 查看多个PDF
   const handleViewPdfs = (urls?: string[]) => {
     if (!urls || urls.length === 0) {
-      message.warning('暂无文件')
+      message.warning(t('messages.noFileWarning'))
       return
     }
     urls.forEach(url => {
@@ -220,7 +223,7 @@ export default function CompaniesPage() {
           icon={<UploadOutlined />}
           onClick={() => handleUpload(field, record)}
         >
-          上传
+          {t('actions.upload')}
         </Button>
         <Button
           size="small"
@@ -228,7 +231,7 @@ export default function CompaniesPage() {
           onClick={() => handleViewPdfs(urls)}
           disabled={fileCount === 0}
         >
-          查看{fileCount > 0 ? `(${fileCount})` : ''}
+          {t('actions.view')}{fileCount > 0 ? `(${fileCount})` : ''}
         </Button>
       </Space>
     )
@@ -236,63 +239,63 @@ export default function CompaniesPage() {
 
   const columns = [
     {
-      title: '企业名称',
+      title: t('columns.name'),
       dataIndex: 'name',
       key: 'name',
       width: 150,
       align: 'center' as const,
     },
     {
-      title: '所属行业',
+      title: t('columns.industry'),
       dataIndex: 'industry',
       key: 'industry',
       width: 120,
       align: 'center' as const,
     },
     {
-      title: '藤本',
+      title: t('columns.teihon'),
       key: 'teihon',
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('teihon', record)
     },
     {
-      title: '决算报告书',
+      title: t('columns.financialReport'),
       key: 'financial_report',
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('financial_report', record)
     },
     {
-      title: '行业许可证',
+      title: t('columns.industryLicense'),
       key: 'industry_license',
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('industry_license', record)
     },
     {
-      title: 'GMO合同',
+      title: t('columns.gmoContract'),
       key: 'gmo_contract',
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('gmo_contract', record)
     },
     {
-      title: 'OTIT资料',
+      title: t('columns.otitMaterials'),
       key: 'otit_materials',
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('otit_materials', record)
     },
     {
-      title: '中央会资料',
+      title: t('columns.centralMaterials'),
       key: 'central_materials',
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('central_materials', record)
     },
     {
-      title: '操作',
+      title: t('columns.actions'),
       key: 'action',
       width: 100,
       align: 'center' as const,
@@ -302,7 +305,7 @@ export default function CompaniesPage() {
           icon={<EyeOutlined />}
           onClick={() => router.push(`/companies/${record.id}`)}
         >
-          查看详情
+          {t('actions.viewDetail')}
         </Button>
       )
     }
@@ -323,9 +326,9 @@ export default function CompaniesPage() {
     <div>
       <Card>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>企业管理</h2>
+          <h2>{t('title')}</h2>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            创建企业
+            {t('create')}
           </Button>
         </div>
 
@@ -336,9 +339,9 @@ export default function CompaniesPage() {
             layout="inline"
             style={{ width: '100%' }}
           >
-            <Form.Item label="企业名称" style={{ marginBottom: 16 }}>
+            <Form.Item label={t('search.name')} style={{ marginBottom: 16 }}>
               <Input
-                placeholder="搜索企业名称"
+                placeholder={t('search.namePlaceholder')}
                 prefix={<SearchOutlined />}
                 value={searchName}
                 onChange={(e) => setSearchName(e.target.value)}
@@ -346,9 +349,9 @@ export default function CompaniesPage() {
                 style={{ width: 200 }}
               />
             </Form.Item>
-            <Form.Item label="所属行业" style={{ marginBottom: 16 }}>
+            <Form.Item label={t('search.industry')} style={{ marginBottom: 16 }}>
               <Select
-                placeholder="选择所属行业"
+                placeholder={t('search.industryPlaceholder')}
                 value={searchIndustry}
                 onChange={setSearchIndustry}
                 allowClear
@@ -363,7 +366,7 @@ export default function CompaniesPage() {
             </Form.Item>
             <Form.Item style={{ marginBottom: 16 }}>
               <Button icon={<ReloadOutlined />} onClick={handleResetSearch}>
-                重置搜索
+                {tCommon('reset')}
               </Button>
             </Form.Item>
           </Form>
@@ -384,20 +387,20 @@ export default function CompaniesPage() {
 
       {/* 上传PDF Modal */}
       <Modal
-        title={`上传${currentUploadField === 'teihon' ? '藤本' :
-          currentUploadField === 'financial_report' ? '决算报告书' :
-            currentUploadField === 'industry_license' ? '行业许可证' :
-              currentUploadField === 'gmo_contract' ? 'GMO合同' :
-                currentUploadField === 'otit_materials' ? 'OTIT资料' :
-                  currentUploadField === 'central_materials' ? '中央会资料' : '文件'}`}
+        title={`${t('upload.title')}${currentUploadField === 'teihon' ? t('columns.teihon') :
+          currentUploadField === 'financial_report' ? t('columns.financialReport') :
+            currentUploadField === 'industry_license' ? t('columns.industryLicense') :
+              currentUploadField === 'gmo_contract' ? t('columns.gmoContract') :
+                currentUploadField === 'otit_materials' ? t('columns.otitMaterials') :
+                  currentUploadField === 'central_materials' ? t('columns.centralMaterials') : '文件'}`}
         open={uploadModalVisible}
         onCancel={() => {
           setUploadModalVisible(false)
           setFileList([])
         }}
         onOk={handleUploadConfirm}
-        okText="确认上传"
-        cancelText="取消"
+        okText={t('upload.confirm')}
+        cancelText={t('upload.cancel')}
         width={600}
       >
         <Upload
@@ -407,14 +410,14 @@ export default function CompaniesPage() {
           customRequest={handleUploadRequest}
           onRemove={handleRemove}
         >
-          <Button icon={<UploadOutlined />}>选择文件（可多选）</Button>
+          <Button icon={<UploadOutlined />}>{t('upload.selectFiles')}</Button>
         </Upload>
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
-          支持一次选择多个PDF文件上传
+          {t('upload.hint')}
         </div>
         {fileList.length > 0 && (
           <div style={{ marginTop: 16 }}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>已选择文件：</div>
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>{t('upload.selected')}</div>
             <List
               size="small"
               dataSource={fileList}

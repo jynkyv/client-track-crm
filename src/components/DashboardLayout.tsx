@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import { Layout, Menu, Button, Dropdown } from 'antd'
+import { Layout, Menu, Button, Dropdown, Space } from 'antd'
 import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined, CheckSquareOutlined } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
-import Link from 'next/link'
+import { Link, usePathname, useRouter } from '@/navigation'
 import ChatWidget from './ChatWidget'
+import { useTranslations } from 'next-intl'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const { Header, Sider, Content } = Layout
 
@@ -14,6 +15,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout, isAdmin, canAccessCustomers, canAccessCompanies, canAccessTickets } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations('Dashboard')
+  const tCommon = useTranslations('Common')
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,51 +31,51 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   // 防止水合错误，在客户端渲染完成前显示加载状态
   if (loading) {
-    return <div>加载中...</div>
+    return <div>{tCommon('loading')}</div>
   }
 
   // 如果未登录且不是登录页面，重定向到登录页
   if (!user) {
-    return <div>加载中...</div>
+    return <div>{tCommon('loading')}</div>
   }
 
   const menuItems = [
     {
       key: 'dashboard',
       icon: <HomeOutlined />,
-      label: <Link href="/dashboard">仪表板</Link>,
+      label: <Link href="/dashboard">{t('menu.dashboard')}</Link>,
     },
     ...(canAccessCustomers ? [{
       key: 'customers',
       icon: <TeamOutlined />,
-      label: '客户管理',
+      label: t('menu.customers'),
       children: [
         {
           key: 'customers/potential',
           icon: <FileTextOutlined />,
-          label: <Link href="/customers/potential">意向客户管理</Link>,
+          label: <Link href="/customers/potential">{t('menu.potentialCustomers')}</Link>,
         },
         {
           key: 'customers/contract',
           icon: <CheckCircleOutlined />,
-          label: <Link href="/customers/contract">正式客户管理</Link>,
+          label: <Link href="/customers/contract">{t('menu.contractCustomers')}</Link>,
         },
       ],
     }] : []),
     ...(canAccessCompanies ? [{
       key: 'companies',
       icon: <BankOutlined />,
-      label: <Link href="/companies">企业管理</Link>,
+      label: <Link href="/companies">{t('menu.companies')}</Link>,
     }] : []),
     ...(canAccessTickets ? [{
       key: 'work-orders',
       icon: <CheckSquareOutlined />,
-      label: <Link href="/work-orders">工单列表</Link>,
+      label: <Link href="/work-orders">{t('menu.workOrders')}</Link>,
     }] : []),
     ...(isAdmin ? [{
       key: 'users',
       icon: <UserAddOutlined />,
-      label: <Link href="/users">账号管理</Link>,
+      label: <Link href="/users">{t('menu.users')}</Link>,
     }] : [])
   ]
 
@@ -80,7 +83,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t('menu.logout'),
       onClick: logout,
     },
   ]
@@ -100,6 +103,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const getDefaultOpenKeys = () => {
     if (pathname?.startsWith('/customers')) return ['customers']
     return []
+  }
+
+  const getUserRoleLabel = () => {
+    if (user.role === 'admin') return t('userRole.admin')
+    if (user.country === '中国') return t('userRole.chineseEmployee')
+    if (user.country === '日本') return t('userRole.japaneseEmployee')
+    return t('userRole.employee')
   }
 
   return (
@@ -127,7 +137,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           fontWeight: 'bold',
           flexShrink: 0
         }}>
-          客户跟踪管理系统
+          {t('title')}
         </div>
         <div style={{
           height: 'calc(100vh - 64px)',
@@ -157,14 +167,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           zIndex: 99
         }}>
           <h2 style={{ margin: 0, color: '#1890ff' }}></h2>
-          <Dropdown
-            menu={{ items: userMenuItems }}
-            placement="bottomRight"
-          >
-            <Button type="text" icon={<UserOutlined />}>
-              {user.username} ({user.role === 'admin' ? '管理员' : user.country === '中国' ? '中方员工' : user.country === '日本' ? '日方员工' : '员工'})
-            </Button>
-          </Dropdown>
+          <Space>
+            <LanguageSwitcher />
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+            >
+              <Button type="text" icon={<UserOutlined />}>
+                {user.username} ({getUserRoleLabel()})
+              </Button>
+            </Dropdown>
+          </Space>
         </Header>
 
         <Content style={{
