@@ -31,7 +31,8 @@
             "contractCustomers": "正式客户",
             "workOrders": "工单管理",
             "companies": "企业管理",
-            "users": "账号管理"
+            "users": "账号管理",
+            "logout": "退出登录"
         },
         "stats": {
             "totalCustomers": "客户总数",
@@ -56,6 +57,12 @@
             "communicating": "沟通中",
             "closed": "已成交",
             "rejected": "已拒绝"
+        },
+        "userRole": {
+            "admin": "管理员",
+            "chineseEmployee": "中方员工",
+            "japaneseEmployee": "日方员工",
+            "employee": "员工"
         }
     },
     "potential": {

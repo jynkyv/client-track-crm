@@ -32,7 +32,8 @@
             "contractCustomers": "契約顧客",
             "workOrders": "求人票管理",
             "companies": "企業管理",
-            "users": "アカウント管理"
+            "users": "アカウント管理",
+            "logout": "ログアウト"
         },
         "stats": {
             "totalCustomers": "顧客総数",
@@ -57,6 +58,12 @@
             "communicating": "交渉中",
             "closed": "成約",
             "rejected": "却下"
+        },
+        "userRole": {
+            "admin": "管理者",
+            "chineseEmployee": "中国側従業員",
+            "japaneseEmployee": "日本側従業員",
+            "employee": "従業員"
         }
     },
     "potential": {
