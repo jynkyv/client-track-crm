@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Table, 
-  Button, 
-  Modal, 
-  Form, 
-  Input, 
-  Select, 
-  Space, 
-  Popconfirm, 
+import {
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Space,
+  Popconfirm,
   message,
   Card
 } from 'antd'
@@ -113,7 +113,7 @@ export default function UsersPage() {
       dataIndex: 'role',
       key: 'role',
       render: (role: string) => (
-        <span style={{ 
+        <span style={{
           color: role === 'admin' ? '#ff4d4f' : '#1890ff',
           fontWeight: 'bold'
         }}>
@@ -192,6 +192,7 @@ export default function UsersPage() {
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
           }}
+          scroll={{ x: 'max-content' }}
         />
       </Card>
 

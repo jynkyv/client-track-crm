@@ -321,6 +321,7 @@ export default function WorkOrdersPage() {
                         pageSizeOptions: ['10', '20', '50', '100'],
                         defaultPageSize: 20,
                     }}
+                    scroll={{ x: 'max-content' }}
                 />
             </Card>
 

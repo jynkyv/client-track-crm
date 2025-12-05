@@ -190,7 +190,7 @@ export default function DashboardPage() {
   return (
     <div>
       <h1 style={{ marginBottom: '24px' }}>仪表板</h1>
-      
+
       <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
           <Card>
@@ -240,6 +240,7 @@ export default function DashboardPage() {
           rowKey="id"
           pagination={false}
           size="small"
+          scroll={{ x: 'max-content' }}
         />
       </Card>
 

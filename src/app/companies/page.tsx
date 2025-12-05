@@ -394,6 +394,7 @@ export default function CompaniesPage() {
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
           }}
+          scroll={{ x: 'max-content' }}
         />
       </Card>
 
