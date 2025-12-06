@@ -20,7 +20,8 @@
             "male": "男",
             "female": "女",
             "other": "其他"
-        }
+        },
+        "loading": "加载中..."
     },
     "Dashboard": {
         "title": "仪表盘",
@@ -480,5 +481,16 @@
             "addSuccess": "添加成功",
             "operationError": "操作失败"
         }
+    },
+    "Login": {
+        "title": "系统登录",
+        "username": "用户名",
+        "usernameRequired": "请输入用户名",
+        "password": "密码",
+        "passwordRequired": "请输入密码",
+        "login": "登录",
+        "loginSuccess": "登录成功",
+        "loginError": "用户名或密码错误",
+        "loginFailed": "登录请求失败"
     }
 }

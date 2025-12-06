@@ -7,6 +7,8 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslations } from 'next-intl'
 
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -36,8 +38,12 @@ export default function LoginPage() {
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
+      backgroundColor: '#f5f5f5',
+      position: 'relative'
     }}>
+      <div style={{ position: 'absolute', top: 20, right: 20 }}>
+        <LanguageSwitcher />
+      </div>
       <Card
         title={t('title')}
         style={{
