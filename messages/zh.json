@@ -424,7 +424,9 @@
             "uploadComplete": "上传完成",
             "selectFileWarning": "请至少选择一个文件",
             "noUploadedFileWarning": "没有成功上传的文件",
-            "noFileWarning": "暂无文件"
+            "noFileWarning": "暂无文件",
+            "updateSuccess": "更新企业信息成功",
+            "updateError": "更新企业信息失败"
         },
         "detail": {
             "title": "企业详情",

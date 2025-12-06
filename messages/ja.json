@@ -422,7 +422,9 @@
             "uploadComplete": "アップロード完了",
             "selectFileWarning": "ファイルを少なくとも1つ選択してください",
             "noUploadedFileWarning": "アップロードされたファイルがありません",
-            "noFileWarning": "ファイルがありません"
+            "noFileWarning": "ファイルがありません",
+            "updateSuccess": "企業情報を更新しました",
+            "updateError": "企業情報の更新に失敗しました"
         },
         "detail": {
             "title": "企業詳細",

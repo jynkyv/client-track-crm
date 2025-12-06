@@ -13,7 +13,10 @@ import {
   message,
   Space,
   Modal,
-  List
+  List,
+  Form,
+  Input,
+  InputNumber
 } from 'antd'
 import type { UploadFile } from 'antd'
 import {
@@ -46,6 +49,189 @@ interface CompanyDetail {
   otit_materials?: string[] // OTIT资料 (多文件)
   central_materials?: string[] // 中央会资料 (多文件)
 }
+
+// 编辑企业信息表单组件
+function EditCompanyForm({
+  company,
+  onSuccess,
+  onCancel,
+  t
+}: {
+  company: CompanyDetail | null
+  onSuccess: () => void
+  onCancel: () => void
+  t: (key: string) => string
+}) {
+  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (company) {
+      form.setFieldsValue({
+        name: company.name,
+        legal_number: company.legal_number,
+        representative: company.representative,
+        industry: company.industry,
+        employee_count: company.employee_count,
+        registered_capital: company.registered_capital,
+        address: company.address,
+        contact: company.contact,
+        email: company.email
+      })
+    }
+  }, [company, form])
+
+  const handleSubmit = async (values: any) => {
+    if (!company) return
+
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          name: values.name,
+          legal_number: values.legal_number,
+          representative: values.representative,
+          industry: values.industry,
+          employee_count: values.employee_count || null,
+          registered_capital: values.registered_capital || null,
+          address: values.address || null,
+          contact: values.contact || null,
+          email: values.email || null
+        })
+        .eq('id', company.id)
+
+      if (error) throw error
+      onSuccess()
+    } catch (error) {
+      console.error('更新企业信息失败:', error)
+      message.error(t('messages.updateError'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!company) return null
+
+  return (
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={handleSubmit}
+    >
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="name"
+            label={t('form.name')}
+            rules={[{ required: true, message: t('form.namePlaceholder') }]}
+          >
+            <Input placeholder={t('form.namePlaceholder')} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="legal_number"
+            label={t('form.legalNumber')}
+            rules={[{ required: true, message: t('form.legalNumberPlaceholder') }]}
+          >
+            <Input placeholder={t('form.legalNumberPlaceholder')} />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="representative"
+            label={t('form.representative')}
+            rules={[{ required: true, message: t('form.representativePlaceholder') }]}
+          >
+            <Input placeholder={t('form.representativePlaceholder')} />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="industry"
+            label={t('form.industry')}
+            rules={[{ required: true, message: t('form.industryPlaceholder') }]}
+          >
+            <Input placeholder={t('form.industryPlaceholder')} />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="employee_count"
+            label={t('form.employeeCount')}
+          >
+            <InputNumber
+              placeholder={t('form.employeeCountPlaceholder')}
+              min={0}
+              style={{ width: '100%' }}
+              addonAfter="人"
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="registered_capital"
+            label={t('form.registeredCapital')}
+          >
+            <Input placeholder={t('form.registeredCapitalPlaceholder')} />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="address"
+            label={t('form.address')}
+          >
+            <Input.TextArea
+              placeholder={t('form.addressPlaceholder')}
+              rows={2}
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="contact"
+            label={t('form.contact')}
+          >
+            <Input placeholder={t('form.contactPlaceholder')} />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="email"
+            label={t('form.email')}
+          >
+            <Input placeholder={t('form.emailPlaceholder')} />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Form.Item style={{ marginTop: 24, marginBottom: 0, textAlign: 'right' }}>
+        <Space>
+          <Button onClick={onCancel}>
+            {t('form.cancel')}
+          </Button>
+          <Button type="primary" htmlType="submit" loading={loading}>
+            {t('form.save')}
+          </Button>
+        </Space>
+      </Form.Item>
+    </Form>
+  )
+}
+
 
 export default function CompanyDetailPage() {
   const params = useParams()
@@ -373,10 +559,18 @@ export default function CompanyDetailPage() {
         open={editModalVisible}
         onCancel={() => setEditModalVisible(false)}
         footer={null}
-        width={600}
+        width={800}
       >
-        {/* TODO: 添加编辑表单 */}
-        <p>编辑表单待实现</p>
+        <EditCompanyForm
+          company={company}
+          onSuccess={() => {
+            setEditModalVisible(false)
+            fetchCompany()
+            message.success(t('messages.updateSuccess'))
+          }}
+          onCancel={() => setEditModalVisible(false)}
+          t={t}
+        />
       </Modal>
 
       {/* 上传PDF Modal */}

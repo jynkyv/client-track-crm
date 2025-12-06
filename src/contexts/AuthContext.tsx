@@ -44,11 +44,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      // 先查询用户是否存在
+      // 尝试使用 RPC 函数登录（绕过 RLS）
+      const { data: rpcUser, error: rpcError } = await supabase.rpc('login_user', {
+        p_username: username.trim(),
+        p_password: password
+      })
+
+      if (!rpcError && rpcUser) {
+        console.log('Login via RPC success')
+        setUser(rpcUser)
+        localStorage.setItem('user', JSON.stringify(rpcUser))
+        return true
+      }
+
+      console.warn('Login via RPC failed or not found, falling back to direct query', rpcError)
+
+      // 降级：直接查询用户（可能会被 RLS 阻止）
       const { data: users, error: queryError } = await supabase
         .from('users')
         .select('*')
-        .eq('username', username)
+        .eq('username', username.trim())
 
       if (queryError) {
         console.error('Query error:', queryError)
