@@ -61,12 +61,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const user = users[0]
 
-      // 验证密码
-      if (user.password === password) {
+      console.log('Login check:', {
+        inputPassword: password,
+        dbPassword: user.password,
+        match: user.password === password,
+        inputLen: password.length,
+        dbLen: user.password.length
+      })
+
+      // 验证密码（增加trim处理防止空格导致无法登录）
+      if (user.password === password || user.password?.trim() === password?.trim()) {
         setUser(user)
         localStorage.setItem('user', JSON.stringify(user))
         return true
       } else {
+        console.warn('Password mismatch')
         return false
       }
     } catch (error) {
