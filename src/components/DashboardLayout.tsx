@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
-import { Layout, Menu, Button, Dropdown, Space } from 'antd'
-import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined, CheckSquareOutlined } from '@ant-design/icons'
+import { useEffect, useState } from 'react'
+import { Layout, Menu, Button, Dropdown, Space, Badge } from 'antd'
+import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined, CheckSquareOutlined, AlertOutlined } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, usePathname, useRouter } from '@/navigation'
 import ChatWidget from './ChatWidget'
@@ -17,12 +17,45 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const t = useTranslations('Dashboard')
   const tCommon = useTranslations('Common')
+  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0)
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
     }
   }, [user, loading, router])
+
+  // 获取待处理反馈数量
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      if (!user) return
+      try {
+        const { supabase } = await import('@/lib/supabase')
+        let query = supabase
+          .from('feedbacks')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending')
+
+        // 中方员工只看自己需要处理的
+        if (user.country === '中国' && user.role !== 'admin') {
+          query = query.eq('handler_id', user.id)
+        }
+        // 日方员工只看自己提交的
+        if (user.country === '日本' && user.role !== 'admin') {
+          query = query.eq('submitter_id', user.id)
+        }
+
+        const { count } = await query
+        setPendingFeedbackCount(count || 0)
+      } catch (error) {
+        console.error('获取待处理反馈数量失败:', error)
+      }
+    }
+    fetchPendingCount()
+    // 每30秒刷新一次
+    const interval = setInterval(fetchPendingCount, 30000)
+    return () => clearInterval(interval)
+  }, [user])
 
   // 如果是登录页面，直接显示内容
   if (pathname === '/login') {
@@ -71,6 +104,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       key: 'work-orders',
       icon: <CheckSquareOutlined />,
       label: <Link href="/work-orders">{t('menu.workOrders')}</Link>,
+    }] : []),
+    ...(canAccessTickets ? [{
+      key: 'feedback-center',
+      icon: <Badge count={pendingFeedbackCount} size="small" offset={[-5, 5]}><AlertOutlined /></Badge>,
+      label: <Link href="/feedback-center">{t('menu.feedbackCenter')}</Link>,
     }] : []),
     ...(isAdmin ? [{
       key: 'users',
