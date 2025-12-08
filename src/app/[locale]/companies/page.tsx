@@ -283,20 +283,6 @@ export default function CompaniesPage() {
       render: (_: any, record: Company) => renderPdfColumn('financial_report', record)
     },
     {
-      title: t('columns.industryLicense'),
-      key: 'industry_license',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: Company) => renderPdfColumn('industry_license', record)
-    },
-    {
-      title: t('columns.gmoContract'),
-      key: 'gmo_contract',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: Company) => renderPdfColumn('gmo_contract', record)
-    },
-    {
       title: t('columns.otitMaterials'),
       key: 'otit_materials',
       width: 150,
