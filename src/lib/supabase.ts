@@ -186,3 +186,21 @@ export interface Message {
   created_at: string
 }
 
+// 反馈类型定义
+export interface Feedback {
+  id: string
+  applicant_id: string // 关联应聘者ID
+  work_order_id: string // 关联工单ID
+  submitter_id: string // 提交者ID（日方员工）
+  handler_id: string // 处理者ID（中方员工/应聘者创建者）
+  fields: string[] // 选中的字段，如 ['real_name', 'passport']
+  content: string // 反馈内容
+  status: 'pending' | 'completed' | 'rejected' // 状态
+  reject_reason?: string // 驳回原因
+  created_at: string
+  updated_at: string
+  // 关联数据（查询时join）
+  applicant_name?: string
+  submitter_name?: string
+  handler_name?: string
+}
