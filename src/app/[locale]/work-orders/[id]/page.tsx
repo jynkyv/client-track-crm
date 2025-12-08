@@ -21,9 +21,10 @@ import {
     DatePicker,
     Upload,
     Tabs,
-    Tag
+    Tag,
+    Checkbox
 } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
 import dayjs from 'dayjs'
 import { useTranslations, useLocale } from 'next-intl'
@@ -50,6 +51,14 @@ export default function WorkOrderDetailPage() {
     // 查看文件 Modal 状态
     const [viewModalVisible, setViewModalVisible] = useState(false)
     const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
+
+    // 反馈 Modal 状态
+    const [feedbackModalVisible, setFeedbackModalVisible] = useState(false)
+    const [feedbackApplicant, setFeedbackApplicant] = useState<Customer | null>(null)
+    const [feedbackFields, setFeedbackFields] = useState<string[]>([])
+    const [feedbackContent, setFeedbackContent] = useState('')
+    const [submittingFeedback, setSubmittingFeedback] = useState(false)
+    const tFeedback = useTranslations('FeedbackCenter')
 
     const t = useTranslations('WorkOrder')
     const tCommon = useTranslations('Common')
@@ -236,6 +245,84 @@ export default function WorkOrderDetailPage() {
         setViewModalVisible(true)
     }
 
+    // 打开反馈弹窗
+    const handleOpenFeedback = (applicant: Customer) => {
+        setFeedbackApplicant(applicant)
+        setFeedbackFields([])
+        setFeedbackContent('')
+        setFeedbackModalVisible(true)
+    }
+
+    // 提交反馈
+    const handleSubmitFeedback = async () => {
+        if (!feedbackApplicant || !user) return
+        if (feedbackFields.length === 0) {
+            message.warning(tFeedback('messages.selectFieldsRequired'))
+            return
+        }
+        if (!feedbackContent.trim()) {
+            message.warning(tFeedback('messages.contentRequired'))
+            return
+        }
+
+        setSubmittingFeedback(true)
+        try {
+            // 获取应聘者的创建者ID作为处理者
+            const handlerId = feedbackApplicant.owner ? ownerUserMap[feedbackApplicant.owner] : null
+            if (!handlerId) {
+                message.error(tFeedback('messages.noHandler'))
+                setSubmittingFeedback(false)
+                return
+            }
+
+            const { error } = await supabase
+                .from('feedbacks')
+                .insert([{
+                    applicant_id: feedbackApplicant.id,
+                    work_order_id: ticketId,
+                    submitter_id: user.id,
+                    handler_id: handlerId,
+                    fields: feedbackFields,
+                    content: feedbackContent,
+                    status: 'pending'
+                }])
+
+            if (error) throw error
+            message.success(tFeedback('messages.submitSuccess'))
+            setFeedbackModalVisible(false)
+        } catch (error) {
+            console.error('提交反馈失败:', error)
+            message.error(tFeedback('messages.submitError'))
+        } finally {
+            setSubmittingFeedback(false)
+        }
+    }
+
+    // 反馈字段选项
+    const feedbackFieldOptions = [
+        { label: tApplicant('form.name'), value: 'real_name' },
+        { label: tApplicant('form.gender'), value: 'gender' },
+        { label: tApplicant('form.birthDate'), value: 'birth_date' },
+        { label: tApplicant('form.householdLocation'), value: 'household_location' },
+        { label: tApplicant('form.currentResidence'), value: 'current_residence' },
+        { label: tApplicant('form.contact'), value: 'contact' },
+        { label: tApplicant('form.wechat'), value: 'wechat' },
+        { label: tApplicant('form.emergencyContact'), value: 'emergency_contact' },
+        { label: tApplicant('form.emergencyPhone'), value: 'emergency_phone' },
+        { label: tApplicant('documents.resume'), value: 'resume' },
+        { label: tApplicant('documents.passport'), value: 'passport' },
+        { label: tApplicant('documents.householdBook'), value: 'household_book' },
+        { label: tApplicant('documents.idCard'), value: 'id_card' },
+        { label: tApplicant('documents.photo2inch'), value: 'photo_2inch' },
+        { label: tApplicant('documents.creditReport'), value: 'credit_report' },
+        { label: tApplicant('documents.noCrimeCert'), value: 'no_crime_cert' },
+        { label: tApplicant('documents.nationalCert'), value: 'national_cert' },
+        { label: tApplicant('documents.provincialCert'), value: 'provincial_cert' },
+        { label: tApplicant('documents.employmentContract'), value: 'employment_contract' },
+        { label: tApplicant('documents.japanAgencyContract'), value: 'japan_agency_contract' },
+        { label: tApplicant('documents.immigrationMaterials'), value: 'immigration_materials' },
+    ]
+
     // 上传文件
     const handleUploadFile = async (file: File, field: string, applicantId: string) => {
         const uploadKey = `${applicantId}-${field}`
@@ -397,6 +484,19 @@ export default function WorkOrderDetailPage() {
                                                     {tCommon('delete')}
                                                 </Button>
                                             </Space>
+                                        )}
+                                        {/* 日方员工的反馈按钮 */}
+                                        {isJapaneseEmployee && (
+                                            <div style={{ float: 'right', marginBottom: 16 }}>
+                                                <Button
+                                                    type="primary"
+                                                    danger
+                                                    icon={<AlertOutlined />}
+                                                    onClick={() => handleOpenFeedback(applicant)}
+                                                >
+                                                    {tFeedback('actions.feedback')}
+                                                </Button>
+                                            </div>
                                         )}
                                         <div style={{ clear: 'both' }}></div>
 
@@ -682,6 +782,45 @@ export default function WorkOrderDetailPage() {
                     }
                 </div >
             </Modal >
+
+            {/* 反馈弹窗 */}
+            <Modal
+                title={tFeedback('submitModal.title')}
+                open={feedbackModalVisible}
+                onOk={handleSubmitFeedback}
+                onCancel={() => {
+                    setFeedbackModalVisible(false)
+                    setFeedbackApplicant(null)
+                    setFeedbackFields([])
+                    setFeedbackContent('')
+                }}
+                okText={tFeedback('submitModal.submit')}
+                cancelText={tCommon('cancel')}
+                confirmLoading={submittingFeedback}
+                width={600}
+            >
+                <div style={{ marginBottom: 16 }}>
+                    <p><strong>{tFeedback('submitModal.applicant')}:</strong> {feedbackApplicant?.real_name || feedbackApplicant?.nickname}</p>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                    <p><strong>{tFeedback('submitModal.selectFields')}:</strong></p>
+                    <Checkbox.Group
+                        options={feedbackFieldOptions}
+                        value={feedbackFields}
+                        onChange={(values) => setFeedbackFields(values as string[])}
+                        style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+                    />
+                </div>
+                <div>
+                    <p><strong>{tFeedback('submitModal.content')}:</strong></p>
+                    <TextArea
+                        rows={4}
+                        placeholder={tFeedback('submitModal.contentPlaceholder')}
+                        value={feedbackContent}
+                        onChange={(e) => setFeedbackContent(e.target.value)}
+                    />
+                </div>
+            </Modal>
         </div >
     )
 }
