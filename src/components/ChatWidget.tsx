@@ -45,68 +45,68 @@ export default function ChatWidget() {
         if (!user?.id) return
 
         try {
-            // const { data, error } = await supabase
-            //     .from('conversations')
-            //     .select('id, user1_id, user1_name, user2_id, user2_name, last_message, last_message_time, created_at, updated_at')
-            //     .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-            //     .order('last_message_time', { ascending: false })
+            const { data, error } = await supabase
+                .from('conversations')
+                .select('id, user1_id, user1_name, user2_id, user2_name, last_message, last_message_time, created_at, updated_at')
+                .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+                .order('last_message_time', { ascending: false, nullsFirst: false })
 
-            // if (error) throw error
-            // setConversations(data || [])
-            setConversations([])
+            if (error) throw error
+            setConversations(data || [])
 
             // 获取每个对话的未读消息数
-            // if (data && data.length > 0) {
-            //     const unreadMap: Record<string, number> = {}
-            //     await Promise.all(data.map(async (conv) => {
-            //         const { count, error: countError } = await supabase
-            //             .from('messages')
-            //             .select('*', { count: 'exact', head: true })
-            //             .eq('conversation_id', conv.id)
-            //             .neq('sender_id', user.id)
-            //             .eq('is_read', false)
+            if (data && data.length > 0) {
+                const unreadMap: Record<string, number> = {}
+                await Promise.all(data.map(async (conv) => {
+                    const { count, error: countError } = await supabase
+                        .from('messages')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('conversation_id', conv.id)
+                        .neq('sender_id', user.id)
+                        .eq('is_read', false)
 
-            //         if (!countError) {
-            //             unreadMap[conv.id] = count || 0
-            //         }
-            //     }))
-            //     setConversationUnreadMap(unreadMap)
-            // }
-            setConversationUnreadMap({})
+                    if (!countError) {
+                        unreadMap[conv.id] = count || 0
+                    }
+                }))
+                setConversationUnreadMap(unreadMap)
+            } else {
+                setConversationUnreadMap({})
+            }
         } catch (error) {
             console.error('获取对话列表失败:', error)
         }
     }
+
 
     // 获取未读消息数
     const fetchUnreadCount = async () => {
         if (!user?.id) return
 
         try {
-            // const { data: conversationData, error: convError } = await supabase
-            //     .from('conversations')
-            //     .select('id')
-            //     .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+            const { data: conversationData, error: convError } = await supabase
+                .from('conversations')
+                .select('id')
+                .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
 
-            // if (convError) throw convError
+            if (convError) throw convError
 
-            // const conversationIds = conversationData?.map(c => c.id) || []
+            const conversationIds = conversationData?.map(c => c.id) || []
 
-            // if (conversationIds.length === 0) {
-            //     setUnreadCount(0)
-            //     return
-            // }
+            if (conversationIds.length === 0) {
+                setUnreadCount(0)
+                return
+            }
 
-            // const { data, error, count } = await supabase
-            //     .from('messages')
-            //     .select('*', { count: 'exact', head: true })
-            //     .in('conversation_id', conversationIds)
-            //     .neq('sender_id', user.id)
-            //     .eq('is_read', false)
+            const { error, count } = await supabase
+                .from('messages')
+                .select('*', { count: 'exact', head: true })
+                .in('conversation_id', conversationIds)
+                .neq('sender_id', user.id)
+                .eq('is_read', false)
 
-            // if (error) throw error
-            // setUnreadCount(count || 0)
-            setUnreadCount(0)
+            if (error) throw error
+            setUnreadCount(count || 0)
         } catch (error) {
             console.error('获取未读消息数失败:', error)
         }
@@ -118,31 +118,27 @@ export default function ChatWidget() {
             setLoading(true)
         }
         try {
-            // const from = (page - 1) * PAGE_SIZE
-            // const to = from + PAGE_SIZE - 1
+            const from = (page - 1) * PAGE_SIZE
+            const to = from + PAGE_SIZE - 1
 
-            // const { data, error } = await supabase
-            //     .from('messages')
-            //     .select('id, conversation_id, sender_id, sender_name, content, is_read, created_at')
-            //     .eq('conversation_id', conversationId)
-            //     .order('created_at', { ascending: false })
-            //     .range(from, to)
+            const { data, error } = await supabase
+                .from('messages')
+                .select('id, conversation_id, sender_id, sender_name, content, is_read, created_at')
+                .eq('conversation_id', conversationId)
+                .order('created_at', { ascending: false })
+                .range(from, to)
 
-            // if (error) throw error
+            if (error) throw error
 
-            // const reversedData = (data || []).reverse()
+            const reversedData = (data || []).reverse()
 
-            // if (page === 1) {
-            //     setMessages(reversedData)
-            // } else {
-            //     setMessages(prev => [...reversedData, ...prev])
-            // }
-
-            // setHasMore(data && data.length === PAGE_SIZE)
             if (page === 1) {
-                setMessages([])
+                setMessages(reversedData)
+            } else {
+                setMessages(prev => [...reversedData, ...prev])
             }
-            setHasMore(false)
+
+            setHasMore(data && data.length === PAGE_SIZE)
 
             // 标记消息为已读
             await markMessagesAsRead(conversationId)
@@ -177,12 +173,12 @@ export default function ChatWidget() {
         if (!user?.id) return
 
         try {
-            // await supabase
-            //     .from('messages')
-            //     .update({ is_read: true })
-            //     .eq('conversation_id', conversationId)
-            //     .neq('sender_id', user.id)
-            //     .eq('is_read', false)
+            await supabase
+                .from('messages')
+                .update({ is_read: true })
+                .eq('conversation_id', conversationId)
+                .neq('sender_id', user.id)
+                .eq('is_read', false)
 
             fetchUnreadCount()
             fetchConversations()
@@ -203,43 +199,33 @@ export default function ChatWidget() {
         setSending(true)
         try {
             // 插入消息
-            // const { data: messageData, error: messageError } = await supabase
-            //     .from('messages')
-            //     .insert([{
-            //         conversation_id: selectedConversation.id,
-            //         sender_id: user.id,
-            //         sender_name: user.username,
-            //         content: messageInput.trim(),
-            //         is_read: false
-            //     }])
-            //     .select()
-            //     .single()
+            const { data: messageData, error: messageError } = await supabase
+                .from('messages')
+                .insert([{
+                    conversation_id: selectedConversation.id,
+                    sender_id: user.id,
+                    sender_name: user.username,
+                    content: messageInput.trim(),
+                    is_read: false
+                }])
+                .select()
+                .single()
 
-            // if (messageError) throw messageError
+            if (messageError) throw messageError
 
-            // // 更新对话的最后消息
-            // await supabase
-            //     .from('conversations')
-            //     .update({
-            //         last_message: messageInput.trim(),
-            //         last_message_time: new Date().toISOString()
-            //     })
-            //     .eq('id', selectedConversation.id)
+            // 更新对话的最后消息
+            await supabase
+                .from('conversations')
+                .update({
+                    last_message: messageInput.trim(),
+                    last_message_time: new Date().toISOString()
+                })
+                .eq('id', selectedConversation.id)
 
-            // setMessages(prev => [...prev, messageData])
-            const mockMessage: Message = {
-                id: Date.now().toString(),
-                conversation_id: selectedConversation.id,
-                sender_id: user.id,
-                sender_name: user.username,
-                content: messageInput.trim(),
-                is_read: false,
-                created_at: new Date().toISOString()
-            }
-            setMessages(prev => [...prev, mockMessage])
+            setMessages(prev => [...prev, messageData])
 
             setMessageInput('')
-            // fetchConversations()
+            fetchConversations()
             setTimeout(() => scrollToBottom(false), 100)
         } catch (error) {
             console.error('发送消息失败:', error)
@@ -271,41 +257,29 @@ export default function ChatWidget() {
 
         try {
             // 调用数据库函数获取或创建对话
-            // const { data, error } = await supabase.rpc('get_or_create_conversation', {
-            //     p_user1_id: user.id,
-            //     p_user1_name: user.username,
-            //     p_user2_id: targetUserId,
-            //     p_user2_name: targetUserName
-            // })
+            const { data, error } = await supabase.rpc('get_or_create_conversation', {
+                p_user1_id: user.id,
+                p_user1_name: user.username,
+                p_user2_id: targetUserId,
+                p_user2_name: targetUserName
+            })
 
-            // if (error) throw error
+            if (error) throw error
 
-            // // 刷新对话列表
-            // await fetchConversations()
+            // 刷新对话列表
+            await fetchConversations()
 
-            // // 查找并选中该对话
-            // const { data: conversationData, error: convError } = await supabase
-            //     .from('conversations')
-            //     .select('*')
-            //     .eq('id', data)
-            //     .single()
+            // 查找并选中该对话
+            const { data: conversationData, error: convError } = await supabase
+                .from('conversations')
+                .select('*')
+                .eq('id', data)
+                .single()
 
-            // if (convError) throw convError
-
-            const mockConversation: Conversation = {
-                id: 'mock-conversation-id',
-                user1_id: user.id,
-                user1_name: user.username,
-                user2_id: targetUserId,
-                user2_name: targetUserName,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                last_message: '',
-                last_message_time: new Date().toISOString()
-            }
+            if (convError) throw convError
 
             setVisible(true)
-            handleSelectConversation(mockConversation)
+            handleSelectConversation(conversationData)
         } catch (error) {
             console.error('创建对话失败:', error)
             message.error('创建对话失败')
@@ -333,7 +307,7 @@ export default function ChatWidget() {
         fetchUnreadCount()
 
         // 未读消息轮询（10秒）
-        // unreadIntervalRef.current = setInterval(fetchUnreadCount, 10000)
+        unreadIntervalRef.current = setInterval(fetchUnreadCount, 10000)
 
         return () => {
             if (unreadIntervalRef.current) {
@@ -355,9 +329,9 @@ export default function ChatWidget() {
     useEffect(() => {
         if (selectedConversation && visible) {
             // 对话消息轮询（5秒，静默刷新）
-            // messageIntervalRef.current = setInterval(() => {
-            //     fetchMessages(selectedConversation.id, 1, true) // 静默刷新
-            // }, 5000)
+            messageIntervalRef.current = setInterval(() => {
+                fetchMessages(selectedConversation.id, 1, true) // 静默刷新
+            }, 5000)
         }
 
         return () => {
