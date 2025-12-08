@@ -372,6 +372,8 @@
             "gmoContract": "GMO合同",
             "otitMaterials": "OTIT资料",
             "centralMaterials": "中央会资料",
+            "instructorLicense": "技能実習指導員講習许可证",
+            "visaApplication": "入国管理局签证申请",
             "actions": "操作"
         },
         "actions": {

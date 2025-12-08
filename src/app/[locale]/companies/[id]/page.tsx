@@ -24,7 +24,8 @@ import {
   ArrowLeftOutlined,
   UploadOutlined,
   FilePdfOutlined,
-  EyeOutlined
+  EyeOutlined,
+  DeleteOutlined
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -48,6 +49,8 @@ interface CompanyDetail {
   gmo_contract?: string[] // GMO合同 (多文件)
   otit_materials?: string[] // OTIT资料 (多文件)
   central_materials?: string[] // 中央会资料 (多文件)
+  instructor_license?: string[] // 技能実習指導員講習许可证 (多文件)
+  visa_application?: string[] // 入国管理局签证申请 (多文件)
 }
 
 // 编辑企业信息表单组件
@@ -265,6 +268,8 @@ export default function CompanyDetailPage() {
     { key: 'gmo_contract', label: t('columns.gmoContract') },
     { key: 'otit_materials', label: t('columns.otitMaterials') },
     { key: 'central_materials', label: t('columns.centralMaterials') },
+    { key: 'instructor_license', label: t('columns.instructorLicense') },
+    { key: 'visa_application', label: t('columns.visaApplication') },
   ]
 
   // 获取企业详情
@@ -319,6 +324,48 @@ export default function CompanyDetailPage() {
     setCurrentViewFiles(urls)
     setCurrentViewField(field)
     setViewModalVisible(true)
+  }
+
+  // 删除单个PDF文件
+  const handleDeleteFile = async (url: string, field: string) => {
+    if (!company) return
+
+    Modal.confirm({
+      title: '确认删除',
+      content: '确定要删除此文件吗？此操作不可撤销。',
+      okText: '确认',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      async onOk() {
+        try {
+          // 从当前字段的文件列表中移除该文件
+          const currentFiles = (company as any)[field] as string[] || []
+          const updatedFiles = currentFiles.filter((f: string) => f !== url)
+
+          // 更新数据库
+          const { error } = await supabase
+            .from('companies')
+            .update({ [field]: updatedFiles.length > 0 ? updatedFiles : null })
+            .eq('id', company.id)
+
+          if (error) throw error
+
+          message.success(t('messages.deleteSuccess'))
+
+          // 更新视图状态
+          setCurrentViewFiles(updatedFiles)
+          if (updatedFiles.length === 0) {
+            setViewModalVisible(false)
+          }
+
+          // 刷新企业数据
+          fetchCompany()
+        } catch (error) {
+          console.error('删除文件失败:', error)
+          message.error(t('messages.deleteError'))
+        }
+      }
+    })
   }
 
   // 上传PDF
@@ -422,27 +469,6 @@ export default function CompanyDetailPage() {
     }
   }
 
-  // 删除文件
-  const handleDeleteFile = async (field: string, urlToDelete: string) => {
-    if (!company) return
-
-    try {
-      const currentFiles = (company[field as keyof CompanyDetail] as string[]) || []
-      const updatedFiles = currentFiles.filter(url => url !== urlToDelete)
-
-      const { error } = await supabase
-        .from('companies')
-        .update({ [field]: updatedFiles })
-        .eq('id', company.id)
-
-      if (error) throw error
-      message.success(t('messages.deleteSuccess'))
-      fetchCompany()
-    } catch (error) {
-      console.error('删除文件失败:', error)
-      message.error(t('messages.deleteError'))
-    }
-  }
 
   return (
     <div>
@@ -626,22 +652,15 @@ export default function CompanyDetailPage() {
       </Modal >
 
       {/* 查看文件 Modal */}
-      < Modal
-        title={`查看${currentViewField === 'teihon' ? '藤本' :
-          currentViewField === 'financial_report' ? '决算报告书' :
-            currentViewField === 'industry_license' ? '行业许可证' :
-              currentViewField === 'gmo_contract' ? 'GMO合同' :
-                currentViewField === 'otit_materials' ? 'OTIT资料' :
-                  currentViewField === 'central_materials' ? '中央会资料' : '文件'}`
-        }
+      <Modal
+        title={`查看${documentFields.find(f => f.key === currentViewField)?.label || '文件'}`}
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
-        footer={
-          [
-            <Button key="close" onClick={() => setViewModalVisible(false)}>
-              关闭
-            </Button>
-          ]}
+        footer={[
+          <Button key="close" onClick={() => setViewModalVisible(false)}>
+            关闭
+          </Button>
+        ]}
         width={600}
       >
         <List
@@ -650,13 +669,25 @@ export default function CompanyDetailPage() {
             <List.Item
               actions={[
                 <Button
+                  key="view"
                   type="link"
                   icon={<EyeOutlined />}
                   onClick={() => window.open(getFileUrl(url), '_blank')}
                 >
                   查看
-                </Button>
-              ]}
+                </Button>,
+                !isReadOnly && (
+                  <Button
+                    key="delete"
+                    type="link"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDeleteFile(url, currentViewField)}
+                  >
+                    删除
+                  </Button>
+                )
+              ].filter(Boolean)}
             >
               <List.Item.Meta
                 avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
@@ -666,7 +697,7 @@ export default function CompanyDetailPage() {
             </List.Item>
           )}
         />
-      </Modal >
+      </Modal>
     </div >
   )
 }

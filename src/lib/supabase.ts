@@ -150,6 +150,8 @@ export interface Company {
   gmo_contract?: string[] // GMO合同
   otit_materials?: string[] // OTIT资料
   central_materials?: string[] // 中央会资料
+  instructor_license?: string[] // 技能実習指導員講習许可证
+  visa_application?: string[] // 入国管理局签证申请
   created_at: string
   updated_at: string
 }
