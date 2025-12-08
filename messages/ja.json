@@ -22,7 +22,9 @@
             "female": "女性",
             "other": "その他"
         },
-        "loading": "読み込み中..."
+        "loading": "読み込み中...",
+        "view": "詳細",
+        "close": "閉じる"
     },
     "Dashboard": {
         "title": "ダッシュボード",
@@ -34,6 +36,7 @@
             "workOrders": "求人票管理",
             "companies": "企業管理",
             "users": "アカウント管理",
+            "feedbackCenter": "フィードバックセンター",
             "logout": "ログアウト"
         },
         "stats": {
@@ -239,6 +242,7 @@
     "WorkOrder": {
         "title": "求人票一覧",
         "uploadTime": "アップロード日時",
+        "fileViewer": "ファイルを見る",
         "create": "求人票作成",
         "search": {
             "companyName": "企業名",
@@ -496,6 +500,91 @@
             "updateSuccess": "更新しました",
             "addSuccess": "追加しました",
             "operationError": "操作に失敗しました"
+        }
+    },
+    "FeedbackCenter": {
+        "title": "フィードバックセンター",
+        "tabs": {
+            "pending": "未処理",
+            "completed": "処理済み",
+            "rejected": "却下済み"
+        },
+        "columns": {
+            "applicantName": "応募者",
+            "fields": "関連フィールド",
+            "content": "フィードバック内容",
+            "submitter": "提出者（日本側）",
+            "handler": "担当者（中国側）",
+            "status": "ステータス",
+            "createdAt": "提出日時",
+            "actions": "操作"
+        },
+        "status": {
+            "pending": "未処理",
+            "completed": "完了",
+            "rejected": "却下"
+        },
+        "actions": {
+            "complete": "完了",
+            "reject": "却下",
+            "feedback": "フィードバック"
+        },
+        "pagination": {
+            "total": "合計",
+            "items": "件"
+        },
+        "messages": {
+            "fetchError": "フィードバック一覧の取得に失敗しました",
+            "completeSuccess": "フィードバックを完了しました",
+            "completeError": "操作に失敗しました",
+            "rejectSuccess": "フィードバックを却下しました",
+            "rejectError": "操作に失敗しました",
+            "rejectReasonRequired": "却下理由を入力してください",
+            "submitSuccess": "フィードバックを提出しました",
+            "submitError": "フィードバックの提出に失敗しました",
+            "selectFieldsRequired": "少なくとも一つのフィールドを選択してください",
+            "contentRequired": "フィードバック内容を入力してください",
+            "noHandler": "この応募者の担当者が見つかりません"
+        },
+        "rejectModal": {
+            "title": "フィードバックを却下",
+            "placeholder": "却下理由を入力してください",
+            "confirm": "却下を確認"
+        },
+        "detailModal": {
+            "title": "フィードバック詳細",
+            "rejectReason": "却下理由"
+        },
+        "submitModal": {
+            "title": "フィードバックを提出",
+            "applicant": "応募者",
+            "selectFields": "関連フィールドを選択",
+            "content": "フィードバック内容",
+            "contentPlaceholder": "修正または補足が必要な内容を詳しく記載してください...",
+            "submit": "フィードバックを提出"
+        },
+        "fieldLabels": {
+            "real_name": "氏名",
+            "gender": "性別",
+            "birth_date": "生年月日",
+            "household_location": "戸籍所在地",
+            "current_residence": "現住所",
+            "contact": "連絡先",
+            "wechat": "WeChat",
+            "emergency_contact": "緊急連絡先",
+            "emergency_phone": "緊急連絡先電話",
+            "resume": "履歴書",
+            "passport": "パスポート",
+            "household_book": "戸籍謄本",
+            "id_card": "身分証明書",
+            "photo_2inch": "2インチ写真",
+            "credit_report": "信用報告書",
+            "no_crime_cert": "無犯罪証明書",
+            "national_cert": "国家試験証明書",
+            "provincial_cert": "省級試験証明書",
+            "employment_contract": "雇用契約書",
+            "japan_agency_contract": "訪日仲介契約書",
+            "immigration_materials": "入管局資料"
         }
     },
     "Login": {

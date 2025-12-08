@@ -21,7 +21,9 @@
             "female": "女",
             "other": "其他"
         },
-        "loading": "加载中..."
+        "loading": "加载中...",
+        "view": "查看",
+        "close": "关闭"
     },
     "Dashboard": {
         "title": "仪表盘",
@@ -33,6 +35,7 @@
             "workOrders": "工单管理",
             "companies": "企业管理",
             "users": "账号管理",
+            "feedbackCenter": "反馈中心",
             "logout": "退出登录"
         },
         "stats": {
@@ -238,6 +241,7 @@
     "WorkOrder": {
         "title": "工单列表",
         "uploadTime": "上传时间",
+        "fileViewer": "查看文件",
         "create": "创建工单",
         "search": {
             "companyName": "企业名称",
@@ -498,6 +502,91 @@
             "updateSuccess": "更新成功",
             "addSuccess": "添加成功",
             "operationError": "操作失败"
+        }
+    },
+    "FeedbackCenter": {
+        "title": "反馈中心",
+        "tabs": {
+            "pending": "待处理",
+            "completed": "已处理",
+            "rejected": "已驳回"
+        },
+        "columns": {
+            "applicantName": "应聘者",
+            "fields": "相关字段",
+            "content": "反馈内容",
+            "submitter": "提交人（日方）",
+            "handler": "处理人（中方）",
+            "status": "状态",
+            "createdAt": "提交时间",
+            "actions": "操作"
+        },
+        "status": {
+            "pending": "待处理",
+            "completed": "已完成",
+            "rejected": "已驳回"
+        },
+        "actions": {
+            "complete": "完成",
+            "reject": "驳回",
+            "feedback": "反馈"
+        },
+        "pagination": {
+            "total": "共",
+            "items": "条"
+        },
+        "messages": {
+            "fetchError": "获取反馈列表失败",
+            "completeSuccess": "反馈已完成",
+            "completeError": "操作失败",
+            "rejectSuccess": "反馈已驳回",
+            "rejectError": "操作失败",
+            "rejectReasonRequired": "请输入驳回原因",
+            "submitSuccess": "反馈提交成功",
+            "submitError": "反馈提交失败",
+            "selectFieldsRequired": "请选择至少一个字段",
+            "contentRequired": "请输入反馈内容",
+            "noHandler": "未找到该应聘者的负责人"
+        },
+        "rejectModal": {
+            "title": "驳回反馈",
+            "placeholder": "请输入驳回原因",
+            "confirm": "确认驳回"
+        },
+        "detailModal": {
+            "title": "反馈详情",
+            "rejectReason": "驳回原因"
+        },
+        "submitModal": {
+            "title": "提交反馈",
+            "applicant": "应聘者",
+            "selectFields": "选择相关字段",
+            "content": "反馈内容",
+            "contentPlaceholder": "请详细描述需要修改或补充的内容...",
+            "submit": "提交反馈"
+        },
+        "fieldLabels": {
+            "real_name": "姓名",
+            "gender": "性别",
+            "birth_date": "出生日期",
+            "household_location": "户籍所在地",
+            "current_residence": "现居住地",
+            "contact": "联系方式",
+            "wechat": "微信",
+            "emergency_contact": "紧急联系人",
+            "emergency_phone": "紧急联系电话",
+            "resume": "简历",
+            "passport": "护照",
+            "household_book": "户口本",
+            "id_card": "身份证",
+            "photo_2inch": "2寸照片",
+            "credit_report": "征信报告",
+            "no_crime_cert": "无犯罪证明",
+            "national_cert": "国检证书",
+            "provincial_cert": "省级考试证书",
+            "employment_contract": "雇佣合同",
+            "japan_agency_contract": "赴日中介合同",
+            "immigration_materials": "入管局资料"
         }
     },
     "Login": {
