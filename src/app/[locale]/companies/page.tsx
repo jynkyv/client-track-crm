@@ -33,17 +33,9 @@ import { useTranslations } from 'next-intl'
 
 const { Option } = Select
 
-interface Company {
-  id: string
-  name: string
-  industry: string
-  teihon?: string[] // 藤本 PDF URLs (多文件)
-  financial_report?: string[] // 决算报告书 PDF URLs (多文件)
-  industry_license?: string[] // 行业许可证 PDF URLs (多文件)
-  gmo_contract?: string[] // GMO合同 PDF URLs (多文件)
-  otit_materials?: string[] // OTIT资料 PDF URLs (多文件)
-  central_materials?: string[] // 中央会资料 PDF URLs (多文件)
-}
+import { type Company, type DocumentFile } from '@/lib/supabase'
+
+// Removed local Company interface definition in favor of imported one
 
 export default function CompaniesPage() {
   const router = useRouter()
@@ -60,7 +52,7 @@ export default function CompaniesPage() {
 
   // 查看文件 Modal 状态
   const [viewModalVisible, setViewModalVisible] = useState(false)
-  const [currentViewFiles, setCurrentViewFiles] = useState<string[]>([])
+  const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
   const [currentViewField, setCurrentViewField] = useState<string>('')
 
   const t = useTranslations('Company')
@@ -183,21 +175,24 @@ export default function CompaniesPage() {
     }
 
     try {
-      // 获取已上传文件的URL列表
-      const uploadedUrls = fileList
+      // 获取已上传文件的URL列表并添加时间戳
+      const newFiles: DocumentFile[] = fileList
         .filter(file => file.status === 'done' && file.url)
-        .map(file => file.url as string)
+        .map(file => ({
+          url: file.url as string,
+          uploadedAt: new Date().toISOString()
+        }))
 
-      if (uploadedUrls.length === 0) {
+      if (newFiles.length === 0) {
         message.warning(t('messages.noUploadedFileWarning'))
         return
       }
 
       // 获取当前字段的现有文件列表
-      const currentFiles = (currentCompany[currentUploadField as keyof Company] as string[]) || []
+      const currentFiles = (currentCompany[currentUploadField as keyof Company] as DocumentFile[]) || []
 
       // 合并新旧文件列表
-      const updatedFiles = [...currentFiles, ...uploadedUrls]
+      const updatedFiles = [...currentFiles, ...newFiles]
 
       // 更新数据库
       const { error } = await supabase
@@ -219,12 +214,12 @@ export default function CompaniesPage() {
   }
 
   // 查看多个PDF
-  const handleViewPdfs = (urls: string[] | undefined, field: string, company: Company) => {
-    if (!urls || urls.length === 0) {
+  const handleViewPdfs = (files: DocumentFile[] | undefined, field: string, company: Company) => {
+    if (!files || files.length === 0) {
       message.warning(t('messages.noFileWarning'))
       return
     }
-    setCurrentViewFiles(urls)
+    setCurrentViewFiles(files)
     setCurrentViewField(field)
     setCurrentCompany(company)
     setViewModalVisible(true)
@@ -240,8 +235,8 @@ export default function CompaniesPage() {
       okButtonProps: { danger: true },
       async onOk() {
         try {
-          const currentFiles = (company[field as keyof Company] as string[]) || []
-          const updatedFiles = currentFiles.filter((f: string) => f !== url)
+          const currentFiles = (company[field as keyof Company] as DocumentFile[]) || []
+          const updatedFiles = currentFiles.filter((f) => f.url !== url)
 
           const { error } = await supabase
             .from('companies')
@@ -270,8 +265,8 @@ export default function CompaniesPage() {
 
   // PDF操作列渲染
   const renderPdfColumn = (field: string, record: Company) => {
-    const urls = record[field as keyof Company] as string[] | undefined
-    const fileCount = urls?.length || 0
+    const files = record[field as keyof Company] as DocumentFile[] | undefined
+    const fileCount = files?.length || 0
     return (
       <Space>
         <Button
@@ -284,7 +279,7 @@ export default function CompaniesPage() {
         <Button
           size="small"
           icon={<FilePdfOutlined />}
-          onClick={() => handleViewPdfs(urls, field, record)}
+          onClick={() => handleViewPdfs(files, field, record)}
           disabled={fileCount === 0}
         >
           {t('actions.view')}{fileCount > 0 ? `(${fileCount})` : ''}
@@ -505,14 +500,14 @@ export default function CompaniesPage() {
       >
         <List
           dataSource={currentViewFiles}
-          renderItem={(url, index) => (
+          renderItem={(file, index) => (
             <List.Item
               actions={[
                 <Button
                   key="view"
                   type="link"
                   icon={<EyeOutlined />}
-                  onClick={() => window.open(getFileUrl(url), '_blank')}
+                  onClick={() => window.open(getFileUrl(file.url), '_blank')}
                 >
                   查看
                 </Button>,
@@ -522,7 +517,7 @@ export default function CompaniesPage() {
                     type="link"
                     danger
                     icon={<DeleteOutlined />}
-                    onClick={() => handleDeleteFile(url, currentViewField, currentCompany)}
+                    onClick={() => handleDeleteFile(file.url, currentViewField, currentCompany)}
                   >
                     删除
                   </Button>
@@ -531,8 +526,15 @@ export default function CompaniesPage() {
             >
               <List.Item.Meta
                 avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
-                title={`文件 ${index + 1}`}
-                description={<div style={{ wordBreak: 'break-all', fontSize: '12px' }}>{url.split('/').pop()}</div>}
+                title={
+                  <Space direction="vertical" size={0}>
+                    <span>{`文件 ${index + 1}`}</span>
+                    <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
+                      {t('uploadTime')}: {new Date(file.uploadedAt).toLocaleString()}
+                    </span>
+                  </Space>
+                }
+                description={<div style={{ wordBreak: 'break-all', fontSize: '12px' }}>{file.url.split('/').pop()}</div>}
               />
             </List.Item>
           )}

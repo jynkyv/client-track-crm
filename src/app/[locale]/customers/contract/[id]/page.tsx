@@ -15,7 +15,8 @@ import {
   Form,
   Input,
   Select,
-  DatePicker
+  DatePicker,
+  List
 } from 'antd'
 import type { UploadFile } from 'antd'
 import {
@@ -25,7 +26,7 @@ import {
   FilePdfOutlined,
   DeleteOutlined
 } from '@ant-design/icons'
-import { supabase } from '@/lib/supabase'
+import { supabase, type DocumentFile } from '@/lib/supabase'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { getFileUrl } from '@/lib/utils'
@@ -42,18 +43,18 @@ interface CustomerDetail {
   wechat?: string // 实名微信号
   emergency_contact?: string // 紧急联系人
   emergency_phone?: string // 紧急联系人电话
-  resume?: string[] // 原始简历
-  passport?: string[] // 护照
-  household_book?: string[] // 户口本
-  id_card?: string[] // 身份证
-  photo_2inch?: string[] // 2寸照片
-  credit_report?: string[] // 征信报告
-  no_crime_cert?: string[] // 无犯罪证明
-  national_cert?: string[] // 国检证书
-  provincial_cert?: string[] // 省级考试证书
-  employment_contract?: string[] // 雇佣合同
-  japan_agency_contract?: string[] // 赴日中介合同
-  immigration_materials?: string[] // 入管局资料
+  resume?: DocumentFile[] // 原始简历
+  passport?: DocumentFile[] // 护照
+  household_book?: DocumentFile[] // 户口本
+  id_card?: DocumentFile[] // 身份证
+  photo_2inch?: DocumentFile[] // 2寸照片
+  credit_report?: DocumentFile[] // 征信报告
+  no_crime_cert?: DocumentFile[] // 无犯罪证明
+  national_cert?: DocumentFile[] // 国检证书
+  provincial_cert?: DocumentFile[] // 省级考试证书
+  employment_contract?: DocumentFile[] // 雇佣合同
+  japan_agency_contract?: DocumentFile[] // 赴日中介合同
+  immigration_materials?: DocumentFile[] // 入管局资料
 }
 
 export default function CustomerDetailPage() {
@@ -68,6 +69,13 @@ export default function CustomerDetailPage() {
   const [currentUploadField, setCurrentUploadField] = useState<string>('')
   const [fileList, setFileList] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
+
+  // 查看文件模态框状态
+  const [viewModalVisible, setViewModalVisible] = useState(false)
+  const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
+  const [currentViewField, setCurrentViewField] = useState<string>('')
+  const [currentViewTitle, setCurrentViewTitle] = useState('')
+
   const [form] = Form.useForm()
   const t = useTranslations('contract')
   const tCommon = useTranslations('Common')
@@ -121,14 +129,16 @@ export default function CustomerDetailPage() {
   }, [customerId, form])
 
   // 查看多个PDF
-  const handleViewPdfs = (urls?: string[]) => {
-    if (!urls || urls.length === 0) {
+  const handleViewPdfs = (files: DocumentFile[], field: string) => {
+    if (!files || files.length === 0) {
       message.warning(t('messages.noFileWarning'))
       return
     }
-    urls.forEach(url => {
-      window.open(getFileUrl(url), '_blank')
-    })
+    const fieldLabel = documentFields.find(f => f.key === field)?.label || ''
+    setCurrentViewFiles(files)
+    setCurrentViewField(field)
+    setCurrentViewTitle(fieldLabel)
+    setViewModalVisible(true)
   }
 
   // 上传PDF
@@ -142,21 +152,37 @@ export default function CustomerDetailPage() {
   const handleDeleteFile = async (field: string, fileUrl: string) => {
     if (!customer) return
 
-    try {
-      const currentFiles = (customer[field as keyof CustomerDetail] as string[]) || []
-      const newFiles = currentFiles.filter(url => url !== fileUrl)
+    Modal.confirm({
+      title: t('messages.confirmDeleteTitle'),
+      content: t('messages.confirmDeleteContent'),
+      okText: t('messages.confirmOk'),
+      cancelText: t('messages.confirmCancel'),
+      onOk: async () => {
+        try {
+          const currentFiles = (customer[field as keyof CustomerDetail] as DocumentFile[]) || []
+          const newFiles = currentFiles.filter(f => f.url !== fileUrl)
 
-      const { error } = await supabase
-        .from('customers')
-        .update({ [field]: newFiles })
-        .eq('id', customer.id)
+          const { error } = await supabase
+            .from('customers')
+            .update({ [field]: newFiles })
+            .eq('id', customer.id)
 
-      if (error) throw error
-      message.success(tCommon('success'))
-      setCustomer({ ...customer, [field]: newFiles } as CustomerDetail)
-    } catch {
-      message.error(tCommon('error'))
-    }
+          if (error) throw error
+          message.success(tCommon('success'))
+          setCustomer({ ...customer, [field]: newFiles } as CustomerDetail)
+
+          // 如果在查看模式下，同时也更新当前查看的文件列表
+          if (viewModalVisible && currentViewField === field) {
+            setCurrentViewFiles(newFiles)
+            if (newFiles.length === 0) {
+              setViewModalVisible(false)
+            }
+          }
+        } catch {
+          message.error(tCommon('error'))
+        }
+      }
+    })
   }
 
   // 处理文件上传
@@ -217,20 +243,23 @@ export default function CustomerDetailPage() {
 
     try {
       // 获取已上传文件的URL列表
-      const uploadedUrls = fileList
+      const newFiles: DocumentFile[] = fileList
         .filter(file => file.status === 'done' && file.url)
-        .map(file => file.url as string)
+        .map(file => ({
+          url: file.url as string,
+          uploadedAt: new Date().toISOString()
+        }))
 
-      if (uploadedUrls.length === 0) {
+      if (newFiles.length === 0) {
         message.warning(t('messages.noUploadedFileWarning'))
         return
       }
 
       // 获取当前字段的现有文件列表
-      const currentFiles = (customer[currentUploadField as keyof CustomerDetail] as string[]) || []
+      const currentFiles = (customer[currentUploadField as keyof CustomerDetail] as DocumentFile[]) || []
 
       // 合并新旧文件列表
-      const updatedFiles = [...currentFiles, ...uploadedUrls]
+      const updatedFiles = [...currentFiles, ...newFiles]
 
       // 更新数据库
       const { error } = await supabase
@@ -515,44 +544,25 @@ export default function CustomerDetailPage() {
                 <Col xs={24} sm={12} md={8} key={field.key}>
                   <Card size="small">
                     <div style={{ marginBottom: 8, fontWeight: 500 }}>{field.label}</div>
-                    {fileCount > 0 && (
-                      <div style={{ marginBottom: 8 }}>
-                        {urls!.map((url, index) => (
-                          <div key={index} style={{ marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Space>
-                              <FilePdfOutlined />
-                              <span style={{ fontSize: '12px' }}>{url.split('/').pop()}</span>
-                            </Space>
-                            <Space>
-                              <Button
-                                type="link"
-                                size="small"
-                                onClick={() => window.open(getFileUrl(url), '_blank')}
-                              >
-                                {t('actions.view')}
-                              </Button>
-                              <Button
-                                type="link"
-                                size="small"
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleDeleteFile(field.key, url)}
-                              >
-                                {t('actions.delete')}
-                              </Button>
-                            </Space>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <Button
-                      size="small"
-                      icon={<UploadOutlined />}
-                      onClick={() => handleUpload(field.key)}
-                      style={{ width: '100%' }}
-                    >
-                      {t('actions.upload')}
-                    </Button>
+                    <Space>
+                      <Button
+                        size="small"
+                        icon={<UploadOutlined />}
+                        onClick={() => handleUpload(field.key)}
+                      >
+                        {t('actions.upload')}
+                      </Button>
+                      <Button
+                        size="small"
+                        icon={<FilePdfOutlined />}
+                        onClick={() => handleViewPdfs(customer?.[field.key as keyof CustomerDetail] as DocumentFile[], field.key)}
+                        disabled={!customer?.[field.key as keyof CustomerDetail] || (customer[field.key as keyof CustomerDetail] as DocumentFile[]).length === 0}
+                      >
+                        {t('actions.view')}
+                        {customer?.[field.key as keyof CustomerDetail] && (customer[field.key as keyof CustomerDetail] as DocumentFile[]).length > 0 ?
+                          `(${(customer[field.key as keyof CustomerDetail] as DocumentFile[]).length})` : ''}
+                      </Button>
+                    </Space>
                   </Card>
                 </Col>
               )
@@ -560,6 +570,65 @@ export default function CustomerDetailPage() {
           </Row>
         </div>
       </Card>
+
+      {/* 查看文件 Modal */}
+      <Modal
+        title={`${t('detail.documents')} - ${currentViewTitle}`}
+        open={viewModalVisible}
+        onCancel={() => {
+          setViewModalVisible(false)
+          setCurrentViewFiles([])
+          setCurrentViewTitle('')
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setViewModalVisible(false)
+            setCurrentViewFiles([])
+            setCurrentViewTitle('')
+          }}>
+            {tCommon('close')}
+          </Button>
+        ]}
+        width={700}
+      >
+        <List
+          dataSource={currentViewFiles}
+          renderItem={(file, index) => (
+            <List.Item
+              actions={[
+                <Button
+                  type="link"
+                  key="view"
+                  onClick={() => window.open(getFileUrl(file.url), '_blank')}
+                >
+                  {t('actions.view')}
+                </Button>,
+                <Button
+                  type="link"
+                  danger
+                  key="delete"
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDeleteFile(currentViewField, file.url)}
+                >
+                  {t('actions.delete')}
+                </Button>
+              ]}
+            >
+              <List.Item.Meta
+                avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
+                title={
+                  <Space direction="vertical" size={0}>
+                    <span>{file.url.split('/').pop()}</span>
+                    <span style={{ fontSize: '12px', color: '#999' }}>
+                      {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '-'}
+                    </span>
+                  </Space>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      </Modal>
 
       {/* 上传PDF Modal */}
       <Modal

@@ -218,8 +218,13 @@
             "saveError": "保存失敗",
             "updateSuccess": "更新成功",
             "updateError": "更新失敗",
-            "customerNotFound": "顧客が見つかりません"
+            "customerNotFound": "顧客が見つかりません",
+            "confirmDeleteTitle": "削除の確認",
+            "confirmDeleteContent": "このファイルを削除してもよろしいですか？この操作は元に戻せません。",
+            "confirmOk": "確認",
+            "confirmCancel": "キャンセル"
         },
+        "uploadTime": "アップロード日時",
         "status": {
             "pending": "面接待ち",
             "interviewNotified": "面接通知済み",
@@ -233,6 +238,7 @@
     },
     "WorkOrder": {
         "title": "求人票一覧",
+        "uploadTime": "アップロード日時",
         "create": "求人票作成",
         "search": {
             "companyName": "企業名",
@@ -435,6 +441,7 @@
             "confirmOk": "確認",
             "confirmCancel": "キャンセル"
         },
+        "uploadTime": "アップロード日時",
         "detail": {
             "title": "企業詳細",
             "workOrderInfo": "求人票情報",

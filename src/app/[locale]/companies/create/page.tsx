@@ -20,7 +20,7 @@ import {
   UploadOutlined,
   FilePdfOutlined
 } from '@ant-design/icons'
-import { supabase } from '@/lib/supabase'
+import { supabase, type DocumentFile } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFileUrl } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
@@ -126,14 +126,17 @@ export default function CreateCompanyPage() {
     setLoading(true)
     try {
       // 收集所有上传的文件URL
-      const documentUrls: Record<string, string[]> = {}
+      const documentUrls: Record<string, DocumentFile[]> = {}
       documentFields.forEach(field => {
         const files = fileLists[field.key] || []
-        const urls = files
+        const currentFiles = files
           .filter(file => file.status === 'done' && file.url)
-          .map(file => file.url as string)
-        if (urls.length > 0) {
-          documentUrls[field.key] = urls
+          .map(file => ({
+            url: file.url as string,
+            uploadedAt: new Date().toISOString()
+          }))
+        if (currentFiles.length > 0) {
+          documentUrls[field.key] = currentFiles
         }
       })
 

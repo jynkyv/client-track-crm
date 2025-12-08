@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from '@/navigation'
-import { supabase, Ticket, Applicant, Company, Customer } from '@/lib/supabase'
+import { supabase, Ticket, Applicant, Company, Customer, type DocumentFile } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import {
     Card,
@@ -49,7 +49,7 @@ export default function WorkOrderDetailPage() {
 
     // 查看文件 Modal 状态
     const [viewModalVisible, setViewModalVisible] = useState(false)
-    const [currentViewFiles, setCurrentViewFiles] = useState<string[]>([])
+    const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
 
     const t = useTranslations('WorkOrder')
     const tCommon = useTranslations('Common')
@@ -226,12 +226,12 @@ export default function WorkOrderDetailPage() {
     }
 
     // 查看文件
-    const handleViewFiles = (urls: string[]) => {
-        if (!urls || urls.length === 0) {
+    const handleViewFiles = (files: DocumentFile[]) => {
+        if (!files || files.length === 0) {
             message.warning(t('messages.noFileWarning'))
             return
         }
-        setCurrentViewFiles(urls)
+        setCurrentViewFiles(files)
         setViewModalVisible(true)
     }
 
@@ -259,8 +259,14 @@ export default function WorkOrderDetailPage() {
             const currentApplicant = applicants.find(a => a.id === applicantId)
             if (!currentApplicant) return
 
-            const currentFiles = (currentApplicant[field as keyof Customer] as string[]) || []
-            const newFiles = [...currentFiles, url]
+            const currentFiles = (currentApplicant[field as keyof Customer] as DocumentFile[]) || []
+
+            const newFile: DocumentFile = {
+                url: url,
+                uploadedAt: new Date().toISOString()
+            }
+
+            const newFiles = [...currentFiles, newFile]
 
             const { error } = await supabase
                 .from('customers')
@@ -466,7 +472,7 @@ export default function WorkOrderDetailPage() {
                                                     { label: tApplicant('documents.immigrationMaterials'), field: 'immigration_materials' },
                                                 ].map(({ label, field }) => {
                                                     // customers表的文档字段是数组类型
-                                                    const fieldValue = applicant[field as keyof Customer] as string[] | undefined
+                                                    const fieldValue = applicant[field as keyof Customer] as DocumentFile[] | undefined
                                                     const hasFile = fieldValue && fieldValue.length > 0
                                                     const isUploading = uploadingFile === `${applicant.id}-${field}`
                                                     return (
@@ -477,13 +483,13 @@ export default function WorkOrderDetailPage() {
                                                                         type="link"
                                                                         icon={<FileTextOutlined />}
                                                                         onClick={() => {
-                                                                            if (hasFile) {
+                                                                            if (hasFile && fieldValue) {
                                                                                 handleViewFiles(fieldValue)
                                                                             }
                                                                         }}
                                                                         disabled={!hasFile}
                                                                     >
-                                                                        {t('actions.view')}{hasFile ? `(${fieldValue.length})` : ''}
+                                                                        {t('actions.view')}{hasFile ? `(${fieldValue!.length})` : ''}
                                                                     </Button>
                                                                     {isAdmin && (
                                                                         <Upload
@@ -642,7 +648,7 @@ export default function WorkOrderDetailPage() {
                 width={800}
             >
                 <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                    {currentViewFiles.map((url, index) => (
+                    {currentViewFiles.map((file, index) => (
                         <div
                             key={index}
                             style={{
@@ -655,15 +661,20 @@ export default function WorkOrderDetailPage() {
                         >
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <FileTextOutlined style={{ marginRight: 8, fontSize: '16px', color: '#1890ff' }} />
-                                <span style={{ wordBreak: 'break-all' }}>
-                                    {url.split('/').pop()}
-                                </span>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ wordBreak: 'break-all' }}>
+                                        {file.url.split('/').pop()}
+                                    </span>
+                                    <span style={{ fontSize: '12px', color: '#999' }}>
+                                        {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '-'}
+                                    </span>
+                                </div>
                             </div>
                             <Button
                                 type="link"
-                                onClick={() => window.open(getFileUrl(url), '_blank')}
+                                onClick={() => window.open(getFileUrl(file.url), '_blank')}
                             >
-                                查看
+                                {tCommon('view')}
                             </Button>
                         </div >
                     ))

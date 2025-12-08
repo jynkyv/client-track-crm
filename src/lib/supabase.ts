@@ -46,19 +46,19 @@ export interface Customer {
   wechat?: string
   emergency_contact?: string
   emergency_phone?: string
-  // 文档字段（多文件，TEXT[]）
-  resume?: string[]
-  passport?: string[]
-  household_book?: string[]
-  id_card?: string[]
-  photo_2inch?: string[]
-  credit_report?: string[]
-  no_crime_cert?: string[]
-  national_cert?: string[]
-  provincial_cert?: string[]
-  employment_contract?: string[]
-  japan_agency_contract?: string[]
-  immigration_materials?: string[]
+  // 文档字段（多文件，DocumentFile[]）
+  resume?: DocumentFile[]
+  passport?: DocumentFile[]
+  household_book?: DocumentFile[]
+  id_card?: DocumentFile[]
+  photo_2inch?: DocumentFile[]
+  credit_report?: DocumentFile[]
+  no_crime_cert?: DocumentFile[]
+  national_cert?: DocumentFile[]
+  provincial_cert?: DocumentFile[]
+  employment_contract?: DocumentFile[]
+  japan_agency_contract?: DocumentFile[]
+  immigration_materials?: DocumentFile[]
   created_at: string
   updated_at: string
 }
@@ -131,6 +131,12 @@ export interface Applicant {
   updated_at?: string
 }
 
+// 文档文件接口
+export interface DocumentFile {
+  url: string
+  uploadedAt: string
+}
+
 // 企业类型定义
 export interface Company {
   id: string
@@ -144,14 +150,14 @@ export interface Company {
   contact?: string // 联系方式
   email?: string // 联系邮箱
   // PDF文档字段
-  teihon?: string[] // 藤本
-  financial_report?: string[] // 决算报告书
-  industry_license?: string[] // 行业许可证
-  gmo_contract?: string[] // GMO合同
-  otit_materials?: string[] // OTIT资料
-  central_materials?: string[] // 中央会资料
-  instructor_license?: string[] // 技能実習指導員講習许可证
-  visa_application?: string[] // 入国管理局签证申请
+  teihon?: DocumentFile[] // 藤本
+  financial_report?: DocumentFile[] // 决算报告书
+  industry_license?: DocumentFile[] // 行业许可证
+  gmo_contract?: DocumentFile[] // GMO合同
+  otit_materials?: DocumentFile[] // OTIT资料
+  central_materials?: DocumentFile[] // 中央会资料
+  instructor_license?: DocumentFile[] // 技能実習指導員講習许可证
+  visa_application?: DocumentFile[] // 入国管理局签证申请
   created_at: string
   updated_at: string
 }

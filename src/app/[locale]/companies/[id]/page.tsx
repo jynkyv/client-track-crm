@@ -32,25 +32,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getFileUrl } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 
-interface CompanyDetail {
-  id: string
-  name: string // 会社名称
-  legal_number: string // 法人番号
-  representative: string // 代表取缔役
-  industry: string // 所属行业
-  employee_count: number // 公司从业人数
-  registered_capital: string // 注册资本金
-  address: string // 公司地址
-  contact: string // 联系方式
-  email: string // 联系邮箱
-  teihon?: string[] // 藤本 (多文件)
-  financial_report?: string[] // 决算报告书 (多文件)
-  industry_license?: string[] // 行业许可证 (多文件)
-  gmo_contract?: string[] // GMO合同 (多文件)
-  otit_materials?: string[] // OTIT资料 (多文件)
-  central_materials?: string[] // 中央会资料 (多文件)
-  instructor_license?: string[] // 技能実習指導員講習许可证 (多文件)
-  visa_application?: string[] // 入国管理局签证申请 (多文件)
+import { type Company, type DocumentFile } from '@/lib/supabase'
+
+interface CompanyDetail extends Omit<Company, 'created_at' | 'updated_at'> {
+  // Add any specific fields for detail view if needed, or just use Company
 }
 
 // 编辑企业信息表单组件
@@ -254,7 +239,7 @@ export default function CompanyDetailPage() {
 
   // 查看文件 Modal 状态
   const [viewModalVisible, setViewModalVisible] = useState(false)
-  const [currentViewFiles, setCurrentViewFiles] = useState<string[]>([])
+  const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
   const [currentViewField, setCurrentViewField] = useState<string>('')
 
   const t = useTranslations('Company')
@@ -316,12 +301,12 @@ export default function CompanyDetailPage() {
   }, [companyId])
 
   // 查看多个PDF
-  const handleViewPdfs = (urls: string[] | undefined, field: string) => {
-    if (!urls || urls.length === 0) {
+  const handleViewPdfs = (files: DocumentFile[] | undefined, field: string) => {
+    if (!files || files.length === 0) {
       message.warning(t('messages.noFileWarning'))
       return
     }
-    setCurrentViewFiles(urls)
+    setCurrentViewFiles(files)
     setCurrentViewField(field)
     setViewModalVisible(true)
   }
@@ -339,8 +324,8 @@ export default function CompanyDetailPage() {
       async onOk() {
         try {
           // 从当前字段的文件列表中移除该文件
-          const currentFiles = (company as any)[field] as string[] || []
-          const updatedFiles = currentFiles.filter((f: string) => f !== url)
+          const currentFiles = (company as any)[field] as DocumentFile[] || []
+          const updatedFiles = currentFiles.filter((f) => f.url !== url)
 
           // 更新数据库
           const { error } = await supabase
@@ -435,20 +420,23 @@ export default function CompanyDetailPage() {
 
     try {
       // 获取已上传文件的URL列表
-      const uploadedUrls = fileList
+      const newFiles: DocumentFile[] = fileList
         .filter(file => file.status === 'done' && file.url)
-        .map(file => file.url as string)
+        .map(file => ({
+          url: file.url as string,
+          uploadedAt: new Date().toISOString()
+        }))
 
-      if (uploadedUrls.length === 0) {
+      if (newFiles.length === 0) {
         message.warning(t('messages.noUploadedFileWarning'))
         return
       }
 
       // 获取当前字段的现有文件列表
-      const currentFiles = (company[currentUploadField as keyof CompanyDetail] as string[]) || []
+      const currentFiles = (company[currentUploadField as keyof CompanyDetail] as DocumentFile[]) || []
 
       // 合并新旧文件列表
-      const updatedFiles = [...currentFiles, ...uploadedUrls]
+      const updatedFiles = [...currentFiles, ...newFiles]
 
       // 更新数据库
       const { error } = await supabase
@@ -547,8 +535,8 @@ export default function CompanyDetailPage() {
             <h3 style={{ marginBottom: 16 }}>{t('form.documents')}</h3>
             <Row gutter={[16, 16]}>
               {documentFields.map((field) => {
-                const urls = company?.[field.key as keyof CompanyDetail] as string[] | undefined
-                const fileCount = urls?.length || 0
+                const files = company?.[field.key as keyof CompanyDetail] as DocumentFile[] | undefined
+                const fileCount = files?.length || 0
                 return (
                   <Col xs={24} sm={12} md={8} key={field.key}>
                     <Card size="small">
@@ -564,10 +552,12 @@ export default function CompanyDetailPage() {
                         <Button
                           size="small"
                           icon={<FilePdfOutlined />}
-                          onClick={() => handleViewPdfs(urls, field.key)}
-                          disabled={fileCount === 0}
+                          onClick={() => handleViewPdfs(company?.[field.key as keyof CompanyDetail] as DocumentFile[], field.key)}
+                          disabled={!company?.[field.key as keyof CompanyDetail] || (company[field.key as keyof CompanyDetail] as DocumentFile[]).length === 0}
                         >
-                          {t('actions.view')}{fileCount > 0 ? `(${fileCount})` : ''}
+                          {t('actions.view')}
+                          {company?.[field.key as keyof CompanyDetail] && (company[field.key as keyof CompanyDetail] as DocumentFile[]).length > 0 ?
+                            `(${(company[field.key as keyof CompanyDetail] as DocumentFile[]).length})` : ''}
                         </Button>
                       </Space>
                     </Card>
@@ -576,7 +566,8 @@ export default function CompanyDetailPage() {
               })}
             </Row>
           </div>
-        )}
+        )
+        }
       </Card>
 
       {/* 编辑Modal */}
@@ -665,14 +656,14 @@ export default function CompanyDetailPage() {
       >
         <List
           dataSource={currentViewFiles}
-          renderItem={(url, index) => (
+          renderItem={(file, index) => (
             <List.Item
               actions={[
                 <Button
                   key="view"
                   type="link"
                   icon={<EyeOutlined />}
-                  onClick={() => window.open(getFileUrl(url), '_blank')}
+                  onClick={() => window.open(getFileUrl(file.url), '_blank')}
                 >
                   查看
                 </Button>,
@@ -682,7 +673,7 @@ export default function CompanyDetailPage() {
                     type="link"
                     danger
                     icon={<DeleteOutlined />}
-                    onClick={() => handleDeleteFile(url, currentViewField)}
+                    onClick={() => handleDeleteFile(file.url, currentViewField)}
                   >
                     删除
                   </Button>
@@ -691,8 +682,15 @@ export default function CompanyDetailPage() {
             >
               <List.Item.Meta
                 avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
-                title={`文件 ${index + 1}`}
-                description={<div style={{ wordBreak: 'break-all', fontSize: '12px' }}>{url.split('/').pop()}</div>}
+                title={
+                  <Space direction="vertical" size={0}>
+                    <span>{`文件 ${index + 1}`}</span>
+                    <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
+                      {t('uploadTime')}: {new Date(file.uploadedAt).toLocaleString()}
+                    </span>
+                  </Space>
+                }
+                description={<div style={{ wordBreak: 'break-all', fontSize: '12px' }}>{file.url.split('/').pop()}</div>}
               />
             </List.Item>
           )}

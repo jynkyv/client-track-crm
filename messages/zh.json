@@ -217,8 +217,13 @@
             "saveError": "保存失败",
             "updateSuccess": "更新成功",
             "updateError": "更新失败",
-            "customerNotFound": "客户不存在"
+            "customerNotFound": "客户不存在",
+            "confirmDeleteTitle": "确认删除",
+            "confirmDeleteContent": "确定要删除此文件吗？此操作不可撤销。",
+            "confirmOk": "确认",
+            "confirmCancel": "取消"
         },
+        "uploadTime": "上传时间",
         "status": {
             "pending": "待面试",
             "interviewNotified": "已通知面试",
@@ -232,6 +237,7 @@
     },
     "WorkOrder": {
         "title": "工单列表",
+        "uploadTime": "上传时间",
         "create": "创建工单",
         "search": {
             "companyName": "企业名称",
@@ -434,9 +440,10 @@
             "updateError": "更新企业信息失败",
             "confirmDeleteTitle": "确认删除",
             "confirmDeleteContent": "确定要删除此文件吗？此操作不可撤销。",
-            "confirmOk": "确认",
-            "confirmCancel": "取消"
+            "confirmOk": "確認",
+            "confirmCancel": "キャンセル"
         },
+        "uploadTime": "アップロード日時",
         "detail": {
             "title": "企业详情",
             "workOrderInfo": "工单信息",
