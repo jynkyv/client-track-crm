@@ -29,7 +29,7 @@ import { useRouter } from '@/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFileUrl } from '@/lib/utils'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 const { Option } = Select
 
@@ -57,6 +57,7 @@ export default function CompaniesPage() {
 
   const t = useTranslations('Company')
   const tCommon = useTranslations('Common')
+  const locale = useLocale()
 
   // 搜索状态
   const [searchName, setSearchName] = useState('')
@@ -528,13 +529,12 @@ export default function CompaniesPage() {
                 avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
                 title={
                   <Space direction="vertical" size={0}>
-                    <span>{`文件 ${index + 1}`}</span>
-                    <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
-                      {t('uploadTime')}: {new Date(file.uploadedAt).toLocaleString()}
+                    <span>{file.url.split('/').pop()}</span>
+                    <span style={{ fontSize: '12px', color: '#999' }}>
+                      {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString(locale) : '-'}
                     </span>
                   </Space>
                 }
-                description={<div style={{ wordBreak: 'break-all', fontSize: '12px' }}>{file.url.split('/').pop()}</div>}
               />
             </List.Item>
           )}

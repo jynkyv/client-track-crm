@@ -26,7 +26,7 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
 import dayjs from 'dayjs'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -54,6 +54,7 @@ export default function WorkOrderDetailPage() {
     const t = useTranslations('WorkOrder')
     const tCommon = useTranslations('Common')
     const tApplicant = useTranslations('Applicant')
+    const locale = useLocale()
 
     // 获取工单详情
     const fetchTicketDetail = async () => {
@@ -666,7 +667,7 @@ export default function WorkOrderDetailPage() {
                                         {file.url.split('/').pop()}
                                     </span>
                                     <span style={{ fontSize: '12px', color: '#999' }}>
-                                        {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '-'}
+                                        {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString(locale) : '-'}
                                     </span>
                                 </div>
                             </div>

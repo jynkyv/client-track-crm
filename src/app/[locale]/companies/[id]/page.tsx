@@ -30,7 +30,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFileUrl } from '@/lib/utils'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 import { type Company, type DocumentFile } from '@/lib/supabase'
 
@@ -244,6 +244,7 @@ export default function CompanyDetailPage() {
 
   const t = useTranslations('Company')
   const tCommon = useTranslations('Common')
+  const locale = useLocale()
   const tWorkOrder = useTranslations('WorkOrder')
 
   const documentFields = [
@@ -684,9 +685,9 @@ export default function CompanyDetailPage() {
                 avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
                 title={
                   <Space direction="vertical" size={0}>
-                    <span>{`文件 ${index + 1}`}</span>
-                    <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
-                      {t('uploadTime')}: {new Date(file.uploadedAt).toLocaleString()}
+                    <span>{file.url.split('/').pop()}</span>
+                    <span style={{ fontSize: '12px', color: '#999' }}>
+                      {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString(locale) : '-'}
                     </span>
                   </Space>
                 }

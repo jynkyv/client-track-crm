@@ -27,10 +27,11 @@ import {
   DeleteOutlined
 } from '@ant-design/icons'
 import { supabase, type DocumentFile } from '@/lib/supabase'
+import { useTranslations, useLocale } from 'next-intl'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { getFileUrl } from '@/lib/utils'
-import { useTranslations } from 'next-intl'
+
 
 interface CustomerDetail {
   id: string
@@ -79,6 +80,7 @@ export default function CustomerDetailPage() {
   const [form] = Form.useForm()
   const t = useTranslations('contract')
   const tCommon = useTranslations('Common')
+  const locale = useLocale()
 
   // 检查URL参数，如果包含edit=true，自动进入编辑模式
   useEffect(() => {
@@ -620,7 +622,7 @@ export default function CustomerDetailPage() {
                   <Space direction="vertical" size={0}>
                     <span>{file.url.split('/').pop()}</span>
                     <span style={{ fontSize: '12px', color: '#999' }}>
-                      {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '-'}
+                      {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString(locale) : '-'}
                     </span>
                   </Space>
                 }
