@@ -318,20 +318,20 @@ export default function CompaniesPage() {
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('financial_report', record)
     },
-    {
-      title: t('columns.otitMaterials'),
-      key: 'otit_materials',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: Company) => renderPdfColumn('otit_materials', record)
-    },
-    {
-      title: t('columns.centralMaterials'),
-      key: 'central_materials',
-      width: 150,
-      align: 'center' as const,
-      render: (_: any, record: Company) => renderPdfColumn('central_materials', record)
-    },
+    // {
+    //   title: t('columns.otitMaterials'),
+    //   key: 'otit_materials',
+    //   width: 150,
+    //   align: 'center' as const,
+    //   render: (_: any, record: Company) => renderPdfColumn('otit_materials', record)
+    // },
+    // {
+    //   title: t('columns.centralMaterials'),
+    //   key: 'central_materials',
+    //   width: 150,
+    //   align: 'center' as const,
+    //   render: (_: any, record: Company) => renderPdfColumn('central_materials', record)
+    // },
     {
       title: t('columns.actions'),
       key: 'action',
