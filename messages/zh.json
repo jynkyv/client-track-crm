@@ -245,6 +245,7 @@
             "createdAt": "创建时间",
             "companyName": "企业名称",
             "ticketName": "工单名称",
+            "name": "工单名称",
             "position": "岗位名称",
             "recruitCount": "招聘人数",
             "owner": "负责人",
@@ -379,7 +380,9 @@
         "actions": {
             "upload": "上传",
             "view": "查看",
-            "viewDetail": "查看详情"
+            "viewDetail": "查看详情",
+            "edit": "编辑",
+            "delete": "删除"
         },
         "upload": {
             "title": "上传",
@@ -428,7 +431,11 @@
             "noUploadedFileWarning": "没有成功上传的文件",
             "noFileWarning": "暂无文件",
             "updateSuccess": "更新企业信息成功",
-            "updateError": "更新企业信息失败"
+            "updateError": "更新企业信息失败",
+            "confirmDeleteTitle": "确认删除",
+            "confirmDeleteContent": "确定要删除此文件吗？此操作不可撤销。",
+            "confirmOk": "确认",
+            "confirmCancel": "取消"
         },
         "detail": {
             "title": "企业详情",

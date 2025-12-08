@@ -21,7 +21,8 @@ import {
   EyeOutlined,
   UploadOutlined,
   FilePdfOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  DeleteOutlined
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useRouter } from '@/navigation'
@@ -218,14 +219,53 @@ export default function CompaniesPage() {
   }
 
   // 查看多个PDF
-  const handleViewPdfs = (urls: string[] | undefined, field: string) => {
+  const handleViewPdfs = (urls: string[] | undefined, field: string, company: Company) => {
     if (!urls || urls.length === 0) {
       message.warning(t('messages.noFileWarning'))
       return
     }
     setCurrentViewFiles(urls)
     setCurrentViewField(field)
+    setCurrentCompany(company)
     setViewModalVisible(true)
+  }
+
+  // 删除单个PDF文件
+  const handleDeleteFile = async (url: string, field: string, company: Company) => {
+    Modal.confirm({
+      title: t('messages.confirmDeleteTitle'),
+      content: t('messages.confirmDeleteContent'),
+      okText: t('messages.confirmOk'),
+      cancelText: t('messages.confirmCancel'),
+      okButtonProps: { danger: true },
+      async onOk() {
+        try {
+          const currentFiles = (company[field as keyof Company] as string[]) || []
+          const updatedFiles = currentFiles.filter((f: string) => f !== url)
+
+          const { error } = await supabase
+            .from('companies')
+            .update({ [field]: updatedFiles.length > 0 ? updatedFiles : null })
+            .eq('id', company.id)
+
+          if (error) throw error
+
+          message.success(t('messages.deleteSuccess'))
+
+          // 更新视图状态
+          setCurrentViewFiles(updatedFiles)
+          if (updatedFiles.length === 0) {
+            setViewModalVisible(false)
+          }
+
+          // 刷新企业数据
+          fetchCompanies()
+        } catch (error) {
+          console.error('删除文件失败:', error)
+          message.error(t('messages.deleteError'))
+        }
+      }
+    })
   }
 
   // PDF操作列渲染
@@ -244,7 +284,7 @@ export default function CompaniesPage() {
         <Button
           size="small"
           icon={<FilePdfOutlined />}
-          onClick={() => handleViewPdfs(urls, field)}
+          onClick={() => handleViewPdfs(urls, field, record)}
           disabled={fileCount === 0}
         >
           {t('actions.view')}{fileCount > 0 ? `(${fileCount})` : ''}
@@ -446,7 +486,7 @@ export default function CompaniesPage() {
 
 
       {/* 查看文件 Modal */}
-      < Modal
+      <Modal
         title={`查看${currentViewField === 'teihon' ? '藤本' :
           currentViewField === 'financial_report' ? '决算报告书' :
             currentViewField === 'industry_license' ? '行业许可证' :
@@ -456,12 +496,11 @@ export default function CompaniesPage() {
         }
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
-        footer={
-          [
-            <Button key="close" onClick={() => setViewModalVisible(false)}>
-              关闭
-            </Button>
-          ]}
+        footer={[
+          <Button key="close" onClick={() => setViewModalVisible(false)}>
+            关闭
+          </Button>
+        ]}
         width={600}
       >
         <List
@@ -470,13 +509,25 @@ export default function CompaniesPage() {
             <List.Item
               actions={[
                 <Button
+                  key="view"
                   type="link"
                   icon={<EyeOutlined />}
                   onClick={() => window.open(getFileUrl(url), '_blank')}
                 >
                   查看
-                </Button>
-              ]}
+                </Button>,
+                currentCompany && (
+                  <Button
+                    key="delete"
+                    type="link"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDeleteFile(url, currentViewField, currentCompany)}
+                  >
+                    删除
+                  </Button>
+                )
+              ].filter(Boolean)}
             >
               <List.Item.Meta
                 avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
@@ -486,7 +537,7 @@ export default function CompaniesPage() {
             </List.Item>
           )}
         />
-      </Modal >
+      </Modal>
     </div >
   )
 }

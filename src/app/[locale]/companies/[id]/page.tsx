@@ -331,10 +331,10 @@ export default function CompanyDetailPage() {
     if (!company) return
 
     Modal.confirm({
-      title: '确认删除',
-      content: '确定要删除此文件吗？此操作不可撤销。',
-      okText: '确认',
-      cancelText: '取消',
+      title: t('messages.confirmDeleteTitle'),
+      content: t('messages.confirmDeleteContent'),
+      okText: t('messages.confirmOk'),
+      cancelText: t('messages.confirmCancel'),
       okButtonProps: { danger: true },
       async onOk() {
         try {
