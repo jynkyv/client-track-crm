@@ -87,6 +87,9 @@
             "notes": "備考",
             "owner": "担当者",
             "followUps": "フォロー回数",
+            "source": "顧客ソース",
+            "createdAt": "作成日時",
+            "lastFollowUp": "最終フォロー",
             "actions": "操作"
         },
         "status": {
@@ -120,7 +123,8 @@
         "actions": {
             "followUp": "フォロー",
             "complete": "完了",
-            "changeStatus": "ステータス変更"
+            "changeStatus": "ステータス変更",
+            "view": "詳細を見る"
         },
         "messages": {
             "noFollowUp": "フォローなし",

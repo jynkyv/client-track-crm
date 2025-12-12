@@ -86,6 +86,9 @@
             "notes": "备注",
             "owner": "所属人",
             "followUps": "跟进次数",
+            "source": "客户来源",
+            "createdAt": "创建时间",
+            "lastFollowUp": "最近跟进",
             "actions": "操作"
         },
         "status": {
@@ -119,7 +122,8 @@
         "actions": {
             "followUp": "跟进",
             "complete": "已完成",
-            "changeStatus": "状态切换"
+            "changeStatus": "状态切换",
+            "view": "查看详情"
         },
         "messages": {
             "noFollowUp": "暂无跟进",

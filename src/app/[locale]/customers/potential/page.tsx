@@ -25,7 +25,7 @@ import {
   Descriptions
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FilePdfOutlined } from '@ant-design/icons'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/navigation'
 import { supabase, Customer, FollowUp } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import dayjs from 'dayjs'
@@ -595,15 +595,71 @@ export default function CustomersPage() {
       title: t('columns.actions'),
       key: 'action',
       fixed: 'right' as const,
-      width: 120,
+      width: 150,
       align: 'center' as const,
-      render: (_: any, record: Customer) => (
-        <Space size="middle">
-          <Button type="link" onClick={() => router.push(`/customers/potential/${record.id}`)}>
-            {t('actions.view')}
-          </Button>
-        </Space>
-      ),
+      render: (_: any, record: Customer) => {
+        const menuItems = [
+          {
+            key: 'view',
+            label: t('actions.view'),
+            onClick: () => router.push(`/customers/potential/${record.id}`),
+          },
+          {
+            key: 'edit',
+            label: tCommon('edit'),
+            onClick: () => handleEdit(record),
+          },
+          {
+            key: 'followUp',
+            label: t('actions.followUp'),
+            onClick: () => {
+              setSelectedCustomer(record)
+              setFollowUpDrawerVisible(true)
+            },
+          },
+          {
+            key: 'complete',
+            label: t('actions.complete'),
+            onClick: () => {
+              setCompletingCustomer(record)
+              setCompleteDrawerVisible(true)
+            },
+          },
+          {
+            type: 'divider' as const,
+          },
+          {
+            key: 'changeStatus',
+            label: t('actions.changeStatus'),
+            children: [
+              {
+                key: 'communicating',
+                label: t('status.communicating'),
+                onClick: () => handleStatusChange(record.id, 'communicating'),
+              },
+              {
+                key: 'rejected',
+                label: t('status.rejected'),
+                onClick: () => handleStatusChange(record.id, 'rejected'),
+              },
+            ],
+          },
+          {
+            type: 'divider' as const,
+          },
+          {
+            key: 'delete',
+            label: tCommon('delete'),
+            danger: true,
+            onClick: () => handleDelete(record.id),
+          },
+        ]
+        return (
+          <Dropdown menu={{ items: menuItems }} trigger={['click']}>
+            <Button type="link" icon={<MoreOutlined />} />
+          </Dropdown>
+        )
+      },
     },
   ]
 
