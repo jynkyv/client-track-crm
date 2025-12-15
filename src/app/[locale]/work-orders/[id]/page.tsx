@@ -24,7 +24,7 @@ import {
     Tag,
     Checkbox
 } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined, PictureOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
 import dayjs from 'dayjs'
 import { useTranslations, useLocale } from 'next-intl'
@@ -47,6 +47,8 @@ export default function WorkOrderDetailPage() {
     const [applicantForm] = Form.useForm()
     const [ownerUserMap, setOwnerUserMap] = useState<Record<string, string>>({})
     const [uploadingFile, setUploadingFile] = useState<string | null>(null)
+    const [uploadingWorkEnvImage, setUploadingWorkEnvImage] = useState(false)
+    const [workEnvImageModalVisible, setWorkEnvImageModalVisible] = useState(false)
 
     // 查看文件 Modal 状态
     const [viewModalVisible, setViewModalVisible] = useState(false)
@@ -325,6 +327,12 @@ export default function WorkOrderDetailPage() {
 
     // 上传文件
     const handleUploadFile = async (file: File, field: string, applicantId: string) => {
+        const maxSize = 4.5 * 1024 * 1024 // 4.5MB
+        if (file.size > maxSize) {
+            message.error(t('upload.fileSizeLimit'))
+            return
+        }
+
         const uploadKey = `${applicantId}-${field}`
         setUploadingFile(uploadKey)
         const formData = new FormData()
@@ -390,6 +398,85 @@ export default function WorkOrderDetailPage() {
         return <Tag color={config.color}>{config.text}</Tag>
     }
 
+    // 上传工作环境图片
+    const handleUploadWorkEnvImage = async (file: File) => {
+        const maxSize = 4.5 * 1024 * 1024 // 4.5MB
+        if (file.size > maxSize) {
+            message.error(t('upload.fileSizeLimit'))
+            return false
+        }
+
+        setUploadingWorkEnvImage(true)
+        const formData = new FormData()
+        formData.append('file', file)
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+
+            if (!response.ok) {
+                throw new Error('上传失败')
+            }
+
+            const { url } = await response.json()
+
+            // 更新数据库
+            const currentImages = ticket?.work_environment_images || []
+            const newImage: DocumentFile = {
+                url: url,
+                uploadedAt: new Date().toISOString()
+            }
+
+            const { error } = await supabase
+                .from('work_orders')
+                .update({ work_environment_images: [...currentImages, newImage] })
+                .eq('id', ticketId)
+
+            if (error) throw error
+
+            message.success(t('messages.uploadSuccess'))
+            fetchTicketDetail()
+        } catch (error) {
+            console.error('上传失败:', error)
+            message.error(t('messages.uploadError'))
+        } finally {
+            setUploadingWorkEnvImage(false)
+        }
+        return false
+    }
+
+    // 删除工作环境图片
+    const handleDeleteWorkEnvImage = async (imageUrl: string) => {
+        Modal.confirm({
+            title: t('messages.confirmDeleteTitle'),
+            content: t('messages.confirmDeleteContent'),
+            okText: tCommon('confirm'),
+            cancelText: tCommon('cancel'),
+            okButtonProps: { danger: true },
+            async onOk() {
+                try {
+                    const currentImages = ticket?.work_environment_images || []
+                    const updatedImages = currentImages.filter(img => img.url !== imageUrl)
+
+                    const { error } = await supabase
+                        .from('work_orders')
+                        .update({ work_environment_images: updatedImages.length > 0 ? updatedImages : null })
+                        .eq('id', ticketId)
+
+                    if (error) throw error
+
+                    message.success(t('messages.deleteSuccess'))
+                    fetchTicketDetail()
+                } catch (error) {
+                    console.error('删除图片失败:', error)
+                    message.error(t('messages.deleteError'))
+                }
+            }
+        })
+    }
+
     if (!canAccessTickets) {
         return (
             <Card>
@@ -421,6 +508,11 @@ export default function WorkOrderDetailPage() {
                     <Descriptions.Item label={t('form.salary')}>{ticket?.salary}</Descriptions.Item>
                     <Descriptions.Item label={t('form.workTime')}>{ticket?.work_time}</Descriptions.Item>
                     <Descriptions.Item label={t('form.restDays')}>{ticket?.rest_days}</Descriptions.Item>
+                    <Descriptions.Item label={t('form.accommodationType')}>
+                        {ticket?.accommodation_type === 'free' ? t('form.accommodationFree') :
+                            ticket?.accommodation_type === 'paid' ? t('form.accommodationPaid') : '-'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label={t('form.accommodationAddress')}>{ticket?.accommodation_address || '-'}</Descriptions.Item>
                     <Descriptions.Item label={t('columns.owner')}>
                         <Space>
                             <span>{ticket?.owner_name || '-'}</span>
@@ -442,6 +534,75 @@ export default function WorkOrderDetailPage() {
                     </Descriptions.Item>
                     <Descriptions.Item label={t('form.benefits')} span={2}>{ticket?.benefits}</Descriptions.Item>
                 </Descriptions>
+
+                {/* 工作环境图片区域 */}
+                <div style={{ marginTop: 24 }}>
+                    <h4 style={{ marginBottom: 16 }}>
+                        <PictureOutlined style={{ marginRight: 8 }} />
+                        {t('form.workEnvironmentImages')}
+                    </h4>
+                    <Row gutter={[16, 16]}>
+                        {(ticket?.work_environment_images || []).map((img, index) => (
+                            <Col xs={12} sm={8} md={6} key={index}>
+                                <div style={{ position: 'relative', paddingBottom: '75%', border: '1px solid #d9d9d9', borderRadius: 8, overflow: 'hidden' }}>
+                                    <img
+                                        src={getFileUrl(img.url)}
+                                        alt={`工作环境 ${index + 1}`}
+                                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+                                        onClick={() => window.open(getFileUrl(img.url), '_blank')}
+                                    />
+                                    {isAdmin && (
+                                        <Button
+                                            type="primary"
+                                            danger
+                                            size="small"
+                                            icon={<DeleteOutlined />}
+                                            style={{ position: 'absolute', top: 4, right: 4 }}
+                                            onClick={() => handleDeleteWorkEnvImage(img.url)}
+                                        />
+                                    )}
+                                </div>
+                            </Col>
+                        ))}
+                        {isAdmin && (
+                            <Col xs={12} sm={8} md={6}>
+                                <Upload
+                                    showUploadList={false}
+                                    accept="image/*"
+                                    beforeUpload={(file) => handleUploadWorkEnvImage(file)}
+                                    disabled={uploadingWorkEnvImage}
+                                >
+                                    <div style={{
+                                        paddingBottom: '75%',
+                                        border: '1px dashed #d9d9d9',
+                                        borderRadius: 8,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        position: 'relative'
+                                    }}>
+                                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                                            {uploadingWorkEnvImage ? (
+                                                <span>{t('actions.uploading')}</span>
+                                            ) : (
+                                                <>
+                                                    <PlusOutlined style={{ fontSize: 24 }} />
+                                                    <div style={{ marginTop: 8 }}>{t('actions.upload')}</div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Upload>
+                            </Col>
+                        )}
+                    </Row>
+                    {(!ticket?.work_environment_images || ticket.work_environment_images.length === 0) && !isAdmin && (
+                        <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+                            {t('messages.noFileWarning')}
+                        </div>
+                    )}
+                </div>
             </Card>
 
             {/* 应聘者列表 - 仅日方员工可见 */}
