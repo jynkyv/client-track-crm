@@ -176,7 +176,8 @@
             "provincialCert": "省級試験証書",
             "employmentContract": "雇用契約書",
             "japanAgencyContract": "訪日仲介契約書",
-            "immigrationMaterials": "入管提出資料"
+            "immigrationMaterials": "入管提出資料",
+            "graduationCert": "卒業証明書"
         },
         "upload": {
             "title": "アップロード",
@@ -263,13 +264,16 @@
             "name": "求人票名",
             "position": "職種",
             "recruitCount": "募集人数",
+            "applicantCount": "応募者数",
             "owner": "担当者",
             "actions": "操作"
         },
         "actions": {
             "chat": "チャット",
             "view": "詳細",
-            "viewDetail": "詳細を見る"
+            "viewDetail": "詳細を見る",
+            "upload": "アップロード",
+            "uploading": "アップロード中..."
         },
         "form": {
             "selectCompany": "企業を選択",
@@ -288,6 +292,13 @@
             "restDaysPlaceholder": "休日を入力してください",
             "benefits": "待遇・福利厚生",
             "benefitsPlaceholder": "待遇・福利厚生を入力してください",
+            "accommodationType": "宿泊タイプ",
+            "accommodationTypePlaceholder": "宿泊タイプを選択",
+            "accommodationFree": "無料",
+            "accommodationPaid": "有料",
+            "accommodationAddress": "宿泊先住所",
+            "accommodationAddressPlaceholder": "宿泊先住所を入力",
+            "workEnvironmentImages": "職場環境写真",
             "create": "作成",
             "cancel": "キャンセル"
         },
@@ -296,7 +307,17 @@
             "fetchDetailError": "求人票詳細の取得に失敗しました",
             "createSuccess": "求人票の作成に成功しました",
             "createError": "求人票の作成に失敗しました",
-            "fetchCompaniesError": "企業一覧の取得に失敗しました"
+            "fetchCompaniesError": "企業一覧の取得に失敗しました",
+            "uploadSuccess": "アップロード成功",
+            "uploadError": "アップロード失敗",
+            "deleteSuccess": "削除しました",
+            "deleteError": "削除に失敗しました",
+            "noFileWarning": "ファイルがありません",
+            "confirmDeleteTitle": "削除の確認",
+            "confirmDeleteContent": "この画像を削除してもよろしいですか？この操作は元に戻せません。"
+        },
+        "upload": {
+            "fileSizeLimit": "ファイルサイズは4.5MB以下にしてください"
         },
         "detail": {
             "title": "求人票情報",
@@ -390,6 +411,7 @@
             "centralMaterials": "中央会資料",
             "instructorLicense": "技能実習指導員講習修了証",
             "visaApplication": "入管申請資料",
+            "employmentContract": "雇用契約書",
             "actions": "操作"
         },
         "actions": {
@@ -402,7 +424,8 @@
         "upload": {
             "title": "アップロード",
             "selectFiles": "ファイル選択（複数可）",
-            "hint": "複数のPDFファイルを一度にアップロードできます"
+            "hint": "複数のPDFファイルを一度にアップロードできます",
+            "fileSizeLimit": "ファイルサイズは4.5MB以下にしてください"
         },
         "form": {
             "name": "企業名",

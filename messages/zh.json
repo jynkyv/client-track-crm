@@ -23,7 +23,8 @@
         },
         "loading": "加载中...",
         "view": "查看",
-        "close": "关闭"
+        "close": "关闭",
+        "submit": "提交"
     },
     "Dashboard": {
         "title": "仪表盘",
@@ -175,7 +176,8 @@
             "provincialCert": "省级考试证书",
             "employmentContract": "雇佣合同",
             "japanAgencyContract": "赴日中介合同",
-            "immigrationMaterials": "入管局资料"
+            "immigrationMaterials": "入管局资料",
+            "graduationCert": "毕业证"
         },
         "upload": {
             "title": "上传",
@@ -262,13 +264,16 @@
             "name": "工单名称",
             "position": "岗位名称",
             "recruitCount": "招聘人数",
+            "applicantCount": "已投递人数",
             "owner": "负责人",
             "actions": "操作"
         },
         "actions": {
             "chat": "聊天",
             "view": "查看",
-            "viewDetail": "查看详情"
+            "viewDetail": "查看详情",
+            "upload": "上传",
+            "uploading": "上传中..."
         },
         "form": {
             "selectCompany": "选择企业",
@@ -287,6 +292,13 @@
             "restDaysPlaceholder": "请输入休息天数",
             "benefits": "工作待遇",
             "benefitsPlaceholder": "请输入工作待遇",
+            "accommodationType": "住宿类型",
+            "accommodationTypePlaceholder": "请选择住宿类型",
+            "accommodationFree": "无料",
+            "accommodationPaid": "有料",
+            "accommodationAddress": "住宿地址",
+            "accommodationAddressPlaceholder": "请输入住宿地址",
+            "workEnvironmentImages": "工作环境图片",
             "create": "创建",
             "cancel": "取消"
         },
@@ -295,7 +307,17 @@
             "fetchDetailError": "获取工单详情失败",
             "createSuccess": "创建工单成功",
             "createError": "创建工单失败",
-            "fetchCompaniesError": "获取企业列表失败"
+            "fetchCompaniesError": "获取企业列表失败",
+            "uploadSuccess": "上传成功",
+            "uploadError": "上传失败",
+            "deleteSuccess": "删除成功",
+            "deleteError": "删除失败",
+            "noFileWarning": "暂无文件",
+            "confirmDeleteTitle": "确认删除",
+            "confirmDeleteContent": "确定要删除这张图片吗？此操作不可撤销。"
+        },
+        "upload": {
+            "fileSizeLimit": "文件大小不能超过4.5MB"
         },
         "detail": {
             "title": "工单信息",
@@ -389,6 +411,7 @@
             "centralMaterials": "中央会资料",
             "instructorLicense": "技能実習指導員講習许可证",
             "visaApplication": "入国管理局签证申请",
+            "employmentContract": "雇佣合同",
             "actions": "操作"
         },
         "actions": {
@@ -404,7 +427,8 @@
             "hint": "支持一次选择多个PDF文件上传",
             "selected": "已选择文件：",
             "confirm": "确认上传",
-            "cancel": "取消"
+            "cancel": "取消",
+            "fileSizeLimit": "文件大小不能超过4.5MB"
         },
         "form": {
             "name": "企业名称",
