@@ -272,8 +272,17 @@ export default function CustomersPage() {
     try {
       // 自动设置所属人为当前用户
       const submitValues = {
-        ...values,
-        owner: user?.username || 'employee'
+        nickname: values.nickname,
+        contact: values.contact,
+        intention: values.intention,
+        status: values.status,
+        age: values.age || null,
+        gender: values.gender || null,
+        work_experience: values.work_experience || null,
+        notes: values.notes || null,
+        source: values.source || '',
+        owner: user?.username || 'employee',
+        follow_ups: values.follow_ups || []
       }
 
       if (editingCustomer) {
@@ -294,8 +303,9 @@ export default function CustomersPage() {
       }
       setDrawerVisible(false)
       fetchCustomers()
-    } catch {
-      message.error(tCommon('error'))
+    } catch (error: any) {
+      console.error('提交错误:', error)
+      message.error(`${tCommon('error')}: ${error?.message || '未知错误'}`)
     }
   }
 
