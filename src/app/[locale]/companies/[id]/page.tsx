@@ -256,6 +256,7 @@ export default function CompanyDetailPage() {
     { key: 'central_materials', label: t('columns.centralMaterials') },
     { key: 'instructor_license', label: t('columns.instructorLicense') },
     { key: 'visa_application', label: t('columns.visaApplication') },
+    { key: 'employment_contract', label: t('columns.employmentContract') },
   ]
 
   // 获取企业详情
@@ -612,6 +613,14 @@ export default function CompanyDetailPage() {
           fileList={fileList}
           customRequest={handleUploadRequest}
           onRemove={handleRemove}
+          beforeUpload={(file) => {
+            const isLt4_5M = file.size / 1024 / 1024 < 4.5;
+            if (!isLt4_5M) {
+              message.error(t('upload.fileSizeLimit'));
+              return false;
+            }
+            return true;
+          }}
         >
           <Button icon={<UploadOutlined />} loading={activeUploads > 0}>{t('upload.selectFiles')}</Button>
         </Upload >
