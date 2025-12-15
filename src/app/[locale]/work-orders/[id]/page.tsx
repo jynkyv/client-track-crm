@@ -398,6 +398,54 @@ export default function WorkOrderDetailPage() {
         return <Tag color={config.color}>{config.text}</Tag>
     }
 
+    // 切换签证状态
+    const handleToggleVisaStatus = async (applicant: Customer) => {
+        if (applicant.stage2_status !== '培训中') {
+            message.warning(t('messages.visaStatusDisabled'))
+            return
+        }
+
+        const newStatus = applicant.visa_status === 'completed' ? 'pending' : 'completed'
+
+        try {
+            const { error } = await supabase
+                .from('customers')
+                .update({ visa_status: newStatus })
+                .eq('id', applicant.id)
+
+            if (error) throw error
+            message.success(t('messages.visaStatusUpdated'))
+            fetchApplicants() // 刷新列表
+        } catch (error) {
+            console.error('更新签证状态失败:', error)
+            message.error(tCommon('error'))
+        }
+    }
+
+    // 获取签证状态标签
+    const getVisaStatusTag = (applicant: Customer) => {
+        const isTraining = applicant.stage2_status === '培训中'
+        const status = applicant.visa_status || 'pending'
+        const isPending = status === 'pending'
+
+        return (
+            <Tag
+                color={isTraining ? (isPending ? 'orange' : 'green') : 'default'}
+                style={{
+                    cursor: isTraining && isJapaneseEmployee ? 'pointer' : 'not-allowed',
+                    opacity: isTraining ? 1 : 0.5
+                }}
+                onClick={() => {
+                    if (isTraining && isJapaneseEmployee) {
+                        handleToggleVisaStatus(applicant)
+                    }
+                }}
+            >
+                {isPending ? t('visa.pending') : t('visa.completed')}
+            </Tag>
+        )
+    }
+
     // 上传工作环境图片
     const handleUploadWorkEnvImage = async (file: File) => {
         const maxSize = 4.5 * 1024 * 1024 // 4.5MB
@@ -666,8 +714,8 @@ export default function WorkOrderDetailPage() {
                                                 <div><strong>{tApplicant('form.name')}：</strong>{applicant.real_name || applicant.nickname}</div>
                                             </Col>
                                             <Col xs={24} sm={12} md={8}>
-
-                                            </Col >
+                                                <div><strong>{t('visa.status')}：</strong>{getVisaStatusTag(applicant)}</div>
+                                            </Col>
                                             <Col xs={24} sm={12} md={8}>
                                                 <div><strong>{tApplicant('form.gender')}：</strong>{applicant.gender === 'male' ? tApplicant('gender.male') : applicant.gender === 'female' ? tApplicant('gender.female') : applicant.gender || '-'}</div>
                                             </Col>
