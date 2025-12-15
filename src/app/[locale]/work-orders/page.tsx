@@ -12,7 +12,8 @@ import {
     message,
     Drawer,
     InputNumber,
-    Space
+    Space,
+    Radio
 } from 'antd'
 import {
     SearchOutlined,
@@ -36,6 +37,7 @@ export default function WorkOrdersPage() {
     const [createForm] = Form.useForm()
     const [loading, setLoading] = useState(false)
     const [tickets, setTickets] = useState<Ticket[]>([])
+    const [applicantCounts, setApplicantCounts] = useState<Record<string, number>>({})
     const [companies, setCompanies] = useState<Company[]>([])
     const [createDrawerVisible, setCreateDrawerVisible] = useState(false)
     const t = useTranslations('WorkOrder')
@@ -91,6 +93,23 @@ export default function WorkOrdersPage() {
 
             if (error) throw error
             setTickets(data || [])
+
+            // 获取每个工单的已投递人数
+            if (data && data.length > 0) {
+                const workOrderIds = data.map((t: Ticket) => t.id)
+                const { data: customers, error: countError } = await supabase
+                    .from('customers')
+                    .select('work_order_id')
+                    .in('work_order_id', workOrderIds)
+
+                if (!countError && customers) {
+                    const counts: Record<string, number> = {}
+                    customers.forEach((c: { work_order_id: string }) => {
+                        counts[c.work_order_id] = (counts[c.work_order_id] || 0) + 1
+                    })
+                    setApplicantCounts(counts)
+                }
+            }
         } catch (error) {
             console.error('获取工单列表失败:', error)
             message.error(t('messages.fetchError'))
@@ -145,6 +164,8 @@ export default function WorkOrdersPage() {
                     work_time: values.work_time,
                     rest_days: values.rest_days,
                     benefits: values.benefits,
+                    accommodation_type: values.accommodation_type,
+                    accommodation_address: values.accommodation_address,
                     owner_id: user?.id,
                     owner_name: user?.username
                 }])
@@ -196,6 +217,14 @@ export default function WorkOrdersPage() {
             width: 100,
             align: 'center' as const,
             render: (count: number) => `${count}人`
+        },
+        {
+            title: t('columns.applicantCount'),
+            dataIndex: 'id',
+            key: 'applicant_count',
+            width: 100,
+            align: 'center' as const,
+            render: (id: string) => `${applicantCounts[id] || 0}人`
         },
         {
             title: t('columns.owner'),
@@ -411,6 +440,23 @@ export default function WorkOrdersPage() {
                         rules={[{ required: true, message: t('form.benefitsPlaceholder') }]}
                     >
                         <TextArea rows={4} placeholder={t('form.benefitsPlaceholder')} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="accommodation_type"
+                        label={t('form.accommodationType')}
+                    >
+                        <Radio.Group>
+                            <Radio value="free">{t('form.accommodationFree')}</Radio>
+                            <Radio value="paid">{t('form.accommodationPaid')}</Radio>
+                        </Radio.Group>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="accommodation_address"
+                        label={t('form.accommodationAddress')}
+                    >
+                        <Input placeholder={t('form.accommodationAddressPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item>
