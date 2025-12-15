@@ -56,6 +56,7 @@ interface CustomerDetail {
   employment_contract?: DocumentFile[] // 雇佣合同
   japan_agency_contract?: DocumentFile[] // 赴日中介合同
   immigration_materials?: DocumentFile[] // 入管局资料
+  graduation_cert?: DocumentFile[] // 毕业证
 }
 
 export default function CustomerDetailPage() {
@@ -131,13 +132,39 @@ export default function CustomerDetailPage() {
   }, [customerId, form])
 
   // 查看多个PDF
-  const handleViewPdfs = (files: DocumentFile[], field: string) => {
+  const handleViewPdfs = (files: DocumentFile[] | string[] | undefined, field: string) => {
     if (!files || files.length === 0) {
       message.warning(t('messages.noFileWarning'))
       return
     }
+    // 兼容旧格式：处理各种数据格式
+    const normalizedFiles: DocumentFile[] = files.map((file: DocumentFile | string) => {
+      if (typeof file === 'string') {
+        // 尝试解析JSON字符串格式
+        try {
+          const decoded = decodeURIComponent(file)
+          if (decoded.startsWith('{') && decoded.includes('"url"')) {
+            const parsed = JSON.parse(decoded)
+            return { url: parsed.url || file, uploadedAt: parsed.uploadedAt || '' }
+          }
+        } catch {
+          // 解析失败
+        }
+        return { url: file, uploadedAt: '' }
+      }
+      // 如果 url 字段包含 JSON 格式，解析它
+      if (file.url && file.url.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(file.url)
+          return { url: parsed.url || file.url, uploadedAt: parsed.uploadedAt || file.uploadedAt || '' }
+        } catch {
+          // 解析失败
+        }
+      }
+      return file
+    })
     const fieldLabel = documentFields.find(f => f.key === field)?.label || ''
-    setCurrentViewFiles(files)
+    setCurrentViewFiles(normalizedFiles)
     setCurrentViewField(field)
     setCurrentViewTitle(fieldLabel)
     setViewModalVisible(true)
@@ -371,6 +398,7 @@ export default function CustomerDetailPage() {
     { key: 'employment_contract', label: t('documents.employmentContract') },
     { key: 'japan_agency_contract', label: t('documents.japanAgencyContract') },
     { key: 'immigration_materials', label: t('documents.immigrationMaterials') },
+    { key: 'graduation_cert', label: t('documents.graduationCert') },
   ]
 
   if (loading) {
@@ -419,19 +447,17 @@ export default function CustomerDetailPage() {
       >
         {!isEditing ? (
           <Descriptions bordered column={2}>
-            <Descriptions bordered column={2}>
-              <Descriptions.Item label={t('form.realName')}>{customer.real_name || '-'}</Descriptions.Item>
-              <Descriptions.Item label={t('form.gender')}>
-                {customer.gender === 'male' ? tCommon('gender.male') : customer.gender === 'female' ? tCommon('gender.female') : customer.gender || '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label={t('form.birthDate')}>{customer.birth_date || '-'}</Descriptions.Item>
-              <Descriptions.Item label={t('form.householdLocation')}>{customer.household_location || '-'}</Descriptions.Item>
-              <Descriptions.Item label={t('form.currentResidence')}>{customer.current_residence || '-'}</Descriptions.Item>
-              <Descriptions.Item label={t('form.contact')}>{customer.contact || '-'}</Descriptions.Item>
-              <Descriptions.Item label={t('form.wechat')}>{customer.wechat || '-'}</Descriptions.Item>
-              <Descriptions.Item label={t('form.emergencyContact')}>{customer.emergency_contact || '-'}</Descriptions.Item>
-              <Descriptions.Item label={t('form.emergencyPhone')} span={2}>{customer.emergency_phone || '-'}</Descriptions.Item>
-            </Descriptions>
+            <Descriptions.Item label={t('form.realName')}>{customer.real_name || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('form.gender')}>
+              {customer.gender === 'male' ? tCommon('gender.male') : customer.gender === 'female' ? tCommon('gender.female') : customer.gender || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('form.birthDate')}>{customer.birth_date || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('form.householdLocation')}>{customer.household_location || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('form.currentResidence')}>{customer.current_residence || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('form.contact')}>{customer.contact || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('form.wechat')}>{customer.wechat || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('form.emergencyContact')}>{customer.emergency_contact || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('form.emergencyPhone')} span={2}>{customer.emergency_phone || '-'}</Descriptions.Item>
           </Descriptions>
         ) : (
           <Form
@@ -601,7 +627,8 @@ export default function CustomerDetailPage() {
                 <Button
                   type="link"
                   key="view"
-                  onClick={() => window.open(getFileUrl(file.url), '_blank')}
+                  onClick={() => file?.url && window.open(getFileUrl(file.url), '_blank')}
+                  disabled={!file?.url}
                 >
                   {t('actions.view')}
                 </Button>,
@@ -610,7 +637,8 @@ export default function CustomerDetailPage() {
                   danger
                   key="delete"
                   icon={<DeleteOutlined />}
-                  onClick={() => handleDeleteFile(currentViewField, file.url)}
+                  onClick={() => file?.url && handleDeleteFile(currentViewField, file.url)}
+                  disabled={!file?.url}
                 >
                   {t('actions.delete')}
                 </Button>
@@ -620,9 +648,9 @@ export default function CustomerDetailPage() {
                 avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
                 title={
                   <Space direction="vertical" size={0}>
-                    <span>{file.url.split('/').pop()}</span>
+                    <span>{file?.url ? decodeURIComponent(file.url.split('/').pop()?.split('"')[0] || '') : `文件 ${index + 1}`}</span>
                     <span style={{ fontSize: '12px', color: '#999' }}>
-                      {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString(locale) : '-'}
+                      {t('uploadTime')}: {file?.uploadedAt ? new Date(file.uploadedAt).toLocaleString(locale) : '-'}
                     </span>
                   </Space>
                 }
