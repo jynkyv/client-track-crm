@@ -59,6 +59,7 @@ export interface Customer {
   employment_contract?: DocumentFile[]
   japan_agency_contract?: DocumentFile[]
   immigration_materials?: DocumentFile[]
+  graduation_cert?: DocumentFile[] // 毕业证
   created_at: string
   updated_at: string
 }
@@ -91,6 +92,9 @@ export interface Ticket {
   work_time: string // 工作时间
   rest_days: string // 休息天数
   benefits: string // 工作待遇
+  accommodation_type?: 'free' | 'paid' // 住宿类型（无料/有料）
+  accommodation_address?: string // 住宿地址
+  work_environment_images?: DocumentFile[] // 工作环境图片
   owner_id: string // 负责人ID（创建者）
   owner_name: string // 负责人姓名
   created_at: string
@@ -158,6 +162,7 @@ export interface Company {
   central_materials?: DocumentFile[] // 中央会资料
   instructor_license?: DocumentFile[] // 技能実習指導員講習许可证
   visa_application?: DocumentFile[] // 入国管理局签证申请
+  employment_contract?: DocumentFile[] // 雇佣合同
   created_at: string
   updated_at: string
 }
