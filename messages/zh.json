@@ -265,6 +265,7 @@
             "position": "岗位名称",
             "recruitCount": "招聘人数",
             "applicantCount": "已投递人数",
+            "visaStatus": "签证状态",
             "owner": "负责人",
             "actions": "操作"
         },
@@ -314,7 +315,9 @@
             "deleteError": "删除失败",
             "noFileWarning": "暂无文件",
             "confirmDeleteTitle": "确认删除",
-            "confirmDeleteContent": "确定要删除这张图片吗？此操作不可撤销。"
+            "confirmDeleteContent": "确定要删除这张图片吗？此操作不可撤销。",
+            "visaStatusDisabled": "只有培训中的客户可以切换签证状态",
+            "visaStatusUpdated": "签证状态已更新"
         },
         "upload": {
             "fileSizeLimit": "文件大小不能超过4.5MB"
@@ -332,6 +335,13 @@
             "rejected": "已拒绝",
             "training": "培训中",
             "completed": "已完成"
+        },
+        "visa": {
+            "status": "签证状态",
+            "pending": "待办签证",
+            "completed": "已完成",
+            "pendingUnit": "人待办",
+            "completedUnit": "人完成"
         }
     },
     "Applicant": {

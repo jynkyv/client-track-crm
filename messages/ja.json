@@ -265,6 +265,7 @@
             "position": "職種",
             "recruitCount": "募集人数",
             "applicantCount": "応募者数",
+            "visaStatus": "ビザ状況",
             "owner": "担当者",
             "actions": "操作"
         },
@@ -314,7 +315,9 @@
             "deleteError": "削除に失敗しました",
             "noFileWarning": "ファイルがありません",
             "confirmDeleteTitle": "削除の確認",
-            "confirmDeleteContent": "この画像を削除してもよろしいですか？この操作は元に戻せません。"
+            "confirmDeleteContent": "この画像を削除してもよろしいですか？この操作は元に戻せません。",
+            "visaStatusDisabled": "研修中の応募者のみビザ状況を切り替えることができます",
+            "visaStatusUpdated": "ビザ状況を更新しました"
         },
         "upload": {
             "fileSizeLimit": "ファイルサイズは4.5MB以下にしてください"
@@ -332,6 +335,13 @@
             "rejected": "不合格",
             "training": "研修中",
             "completed": "完了"
+        },
+        "visa": {
+            "status": "ビザ状況",
+            "pending": "ビザ申請中",
+            "completed": "完了",
+            "pendingUnit": "人申請中",
+            "completedUnit": "人完了"
         }
     },
     "Applicant": {
