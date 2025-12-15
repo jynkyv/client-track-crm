@@ -47,6 +47,8 @@ export default function WorkOrdersPage() {
     const [searchCompanyName, setSearchCompanyName] = useState('')
     const [searchTicketName, setSearchTicketName] = useState('')
     const [searchOwnerName, setSearchOwnerName] = useState('')
+    // 签证状态统计
+    const [visaStats, setVisaStats] = useState<Record<string, { pending: number, completed: number }>>({})
 
     // 获取企业列表
     const fetchCompanies = async () => {
@@ -92,23 +94,47 @@ export default function WorkOrdersPage() {
             const { data, error } = await query
 
             if (error) throw error
-            setTickets(data || [])
 
-            // 获取每个工单的已投递人数
+            // 获取每个工单的已投递人数和签证状态统计
             if (data && data.length > 0) {
                 const workOrderIds = data.map((t: Ticket) => t.id)
                 const { data: customers, error: countError } = await supabase
                     .from('customers')
-                    .select('work_order_id')
+                    .select('work_order_id, stage2_status, visa_status')
                     .in('work_order_id', workOrderIds)
 
+                const counts: Record<string, number> = {}
+                const stats: Record<string, { pending: number, completed: number }> = {}
+
                 if (!countError && customers) {
-                    const counts: Record<string, number> = {}
-                    customers.forEach((c: { work_order_id: string }) => {
+                    customers.forEach((c: { work_order_id: string, stage2_status?: string, visa_status?: string }) => {
                         counts[c.work_order_id] = (counts[c.work_order_id] || 0) + 1
+
+                        // 只统计培训中状态的客户签证状态
+                        if (c.stage2_status === '培训中') {
+                            if (!stats[c.work_order_id]) {
+                                stats[c.work_order_id] = { pending: 0, completed: 0 }
+                            }
+                            if (c.visa_status === 'completed') {
+                                stats[c.work_order_id].completed++
+                            } else {
+                                stats[c.work_order_id].pending++
+                            }
+                        }
                     })
                     setApplicantCounts(counts)
+                    setVisaStats(stats)
                 }
+
+                // 按待办签证数量降序排序
+                const sortedData = [...data].sort((a: Ticket, b: Ticket) => {
+                    const aPending = stats[a.id]?.pending || 0
+                    const bPending = stats[b.id]?.pending || 0
+                    return bPending - aPending
+                })
+                setTickets(sortedData)
+            } else {
+                setTickets(data || [])
             }
         } catch (error) {
             console.error('获取工单列表失败:', error)
@@ -225,6 +251,25 @@ export default function WorkOrdersPage() {
             width: 100,
             align: 'center' as const,
             render: (id: string) => `${applicantCounts[id] || 0}人`
+        },
+        {
+            title: t('columns.visaStatus'),
+            dataIndex: 'id',
+            key: 'visa_status',
+            width: 150,
+            align: 'center' as const,
+            render: (id: string) => {
+                const stat = visaStats[id]
+                if (!stat || (stat.pending === 0 && stat.completed === 0)) {
+                    return <span style={{ color: '#999' }}>-</span>
+                }
+                return (
+                    <Space>
+                        {stat.pending > 0 && <Tag color="orange">{stat.pending}{t('visa.pendingUnit')}</Tag>}
+                        {stat.completed > 0 && <Tag color="green">{stat.completed}{t('visa.completedUnit')}</Tag>}
+                    </Space>
+                )
+            }
         },
         {
             title: t('columns.owner'),
