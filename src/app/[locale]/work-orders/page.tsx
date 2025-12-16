@@ -252,7 +252,8 @@ export default function WorkOrdersPage() {
             align: 'center' as const,
             render: (id: string) => `${applicantCounts[id] || 0}人`
         },
-        {
+        // 签证状态列 - 仅日方员工和管理员可见
+        ...(!isChineseEmployee ? [{
             title: t('columns.visaStatus'),
             dataIndex: 'id',
             key: 'visa_status',
@@ -270,7 +271,7 @@ export default function WorkOrdersPage() {
                     </Space>
                 )
             }
-        },
+        }] : []),
         {
             title: t('columns.owner'),
             dataIndex: 'owner_name',
