@@ -483,7 +483,6 @@ export default function CustomerDetailPage() {
                   <Select placeholder={t('form.genderPlaceholder')}>
                     <Select.Option value="male">{tCommon('gender.male')}</Select.Option>
                     <Select.Option value="female">{tCommon('gender.female')}</Select.Option>
-                    <Select.Option value="other">{tCommon('gender.other')}</Select.Option>
                   </Select>
                 </Form.Item>
               </Col>

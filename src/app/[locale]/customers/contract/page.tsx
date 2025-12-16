@@ -520,8 +520,7 @@ export default function ContractCustomersPage() {
         if (!gender) return '-'
         const genderText = {
           male: tCommon('gender.male'),
-          female: tCommon('gender.female'),
-          other: tCommon('gender.other')
+          female: tCommon('gender.female')
         }
         return genderText[gender as keyof typeof genderText] || gender
       },

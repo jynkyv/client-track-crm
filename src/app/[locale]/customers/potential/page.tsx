@@ -509,8 +509,7 @@ export default function CustomersPage() {
         if (!gender) return '-'
         const genderText = {
           male: t('gender.male'),
-          female: t('gender.female'),
-          other: t('gender.other')
+          female: t('gender.female')
         }
         return genderText[gender as keyof typeof genderText] || gender
       },
@@ -919,7 +918,6 @@ export default function CustomersPage() {
                 <Select placeholder={t('form.gender')}>
                   <Option value="male">{t('gender.male')}</Option>
                   <Option value="female">{t('gender.female')}</Option>
-                  <Option value="other">{t('gender.other')}</Option>
                 </Select>
               </Form.Item>
             </Col>

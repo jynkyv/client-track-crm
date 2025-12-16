@@ -24,7 +24,7 @@ export interface Customer {
   status: 'communicating' | 'closed' | 'rejected'
   work_experience: string
   age: number
-  gender: 'male' | 'female' | 'other'
+  gender: 'male' | 'female'
   notes: string
   owner: string
   follow_ups: FollowUp[]
