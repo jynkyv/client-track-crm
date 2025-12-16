@@ -80,13 +80,11 @@ export default function WorkOrdersPage() {
         `)
                 .order('created_at', { ascending: false })
 
-            // 应用搜索条件
-            if (searchCompanyName) {
-                query = query.ilike('companies.name', `%${searchCompanyName}%`)
-            }
+            // 工单名称搜索（数据库层面）
             if (searchTicketName) {
                 query = query.ilike('name', `%${searchTicketName}%`)
             }
+            // 负责人搜索（数据库层面）
             if (searchOwnerName) {
                 query = query.ilike('owner_name', `%${searchOwnerName}%`)
             }
@@ -95,9 +93,18 @@ export default function WorkOrdersPage() {
 
             if (error) throw error
 
+            // 前端过滤：企业名称搜索（因为 Supabase 关联查询不支持 ilike 过滤关联表字段）
+            let filteredData = data || []
+            if (searchCompanyName && filteredData.length > 0) {
+                filteredData = filteredData.filter((ticket: any) => {
+                    const companyName = ticket.companies?.name || ''
+                    return companyName.toLowerCase().includes(searchCompanyName.toLowerCase())
+                })
+            }
+
             // 获取每个工单的已投递人数和签证状态统计
-            if (data && data.length > 0) {
-                const workOrderIds = data.map((t: Ticket) => t.id)
+            if (filteredData && filteredData.length > 0) {
+                const workOrderIds = filteredData.map((t: Ticket) => t.id)
                 const { data: customers, error: countError } = await supabase
                     .from('customers')
                     .select('work_order_id, stage2_status, visa_status')
@@ -127,14 +134,14 @@ export default function WorkOrdersPage() {
                 }
 
                 // 按待办签证数量降序排序
-                const sortedData = [...data].sort((a: Ticket, b: Ticket) => {
+                const sortedData = [...filteredData].sort((a: Ticket, b: Ticket) => {
                     const aPending = stats[a.id]?.pending || 0
                     const bPending = stats[b.id]?.pending || 0
                     return bPending - aPending
                 })
                 setTickets(sortedData)
             } else {
-                setTickets(data || [])
+                setTickets(filteredData || [])
             }
         } catch (error) {
             console.error('获取工单列表失败:', error)
