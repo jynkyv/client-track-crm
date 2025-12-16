@@ -317,7 +317,9 @@
             "confirmDeleteTitle": "削除の確認",
             "confirmDeleteContent": "この画像を削除してもよろしいですか？この操作は元に戻せません。",
             "visaStatusDisabled": "研修中の応募者のみビザ状況を切り替えることができます",
-            "visaStatusUpdated": "ビザ状況を更新しました"
+            "visaStatusUpdated": "ビザ状況を更新しました",
+            "updateSuccess": "求人票を更新しました",
+            "updateError": "求人票の更新に失敗しました"
         },
         "upload": {
             "fileSizeLimit": "ファイルサイズは4.5MB以下にしてください"
@@ -327,6 +329,9 @@
             "applicantList": "応募者一覧",
             "noApplicant": "応募者情報はありません。追加してください",
             "documents": "書類資料"
+        },
+        "edit": {
+            "title": "求人票を編集"
         },
         "status": {
             "pending": "面接待ち",
@@ -341,7 +346,9 @@
             "pending": "ビザ申請中",
             "completed": "完了",
             "pendingUnit": "人申請中",
-            "completedUnit": "人完了"
+            "completedUnit": "人完了",
+            "markCompleted": "完了にする",
+            "markPending": "申請中に戻す"
         }
     },
     "Applicant": {

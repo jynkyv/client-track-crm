@@ -317,7 +317,9 @@
             "confirmDeleteTitle": "确认删除",
             "confirmDeleteContent": "确定要删除这张图片吗？此操作不可撤销。",
             "visaStatusDisabled": "只有培训中的客户可以切换签证状态",
-            "visaStatusUpdated": "签证状态已更新"
+            "visaStatusUpdated": "签证状态已更新",
+            "updateSuccess": "工单更新成功",
+            "updateError": "工单更新失败"
         },
         "upload": {
             "fileSizeLimit": "文件大小不能超过4.5MB"
@@ -327,6 +329,9 @@
             "applicantList": "应聘者列表",
             "noApplicant": "暂无应聘者信息，请添加应聘者",
             "documents": "文档资料"
+        },
+        "edit": {
+            "title": "编辑工单"
         },
         "status": {
             "pending": "待面试",
@@ -341,7 +346,9 @@
             "pending": "待办签证",
             "completed": "已完成",
             "pendingUnit": "人待办",
-            "completedUnit": "人完成"
+            "completedUnit": "人完成",
+            "markCompleted": "标记完成",
+            "markPending": "标记待办"
         }
     },
     "Applicant": {
