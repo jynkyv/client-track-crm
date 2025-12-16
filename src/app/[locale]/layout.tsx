@@ -8,6 +8,12 @@ import jaJP from 'antd/locale/ja_JP'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn'
+import 'dayjs/locale/ja'
+
+// 设置 dayjs 默认语言为中文
+dayjs.locale('zh-cn')
 
 const inter = Inter({ subsets: ['latin'] })
 
