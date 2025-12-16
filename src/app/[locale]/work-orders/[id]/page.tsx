@@ -50,6 +50,14 @@ export default function WorkOrderDetailPage() {
     const [uploadingWorkEnvImage, setUploadingWorkEnvImage] = useState(false)
     const [workEnvImageModalVisible, setWorkEnvImageModalVisible] = useState(false)
 
+    // 编辑工单状态
+    const [editTicketDrawerVisible, setEditTicketDrawerVisible] = useState(false)
+    const [editTicketForm] = Form.useForm()
+
+    // 判断当前用户是否为工单负责人
+    const isTicketOwner = ticket?.owner_id === user?.id
+    const canEditTicket = isAdmin || isTicketOwner
+
     // 查看文件 Modal 状态
     const [viewModalVisible, setViewModalVisible] = useState(false)
     const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
@@ -422,27 +430,27 @@ export default function WorkOrderDetailPage() {
         }
     }
 
-    // 获取签证状态标签
+    // 获取签证状态显示和切换组件
     const getVisaStatusTag = (applicant: Customer) => {
         const isTraining = applicant.stage2_status === '培训中'
         const status = applicant.visa_status || 'pending'
         const isPending = status === 'pending'
 
         return (
-            <Tag
-                color={isTraining ? (isPending ? 'orange' : 'green') : 'default'}
-                style={{
-                    cursor: isTraining && isJapaneseEmployee ? 'pointer' : 'not-allowed',
-                    opacity: isTraining ? 1 : 0.5
-                }}
-                onClick={() => {
-                    if (isTraining && isJapaneseEmployee) {
-                        handleToggleVisaStatus(applicant)
-                    }
-                }}
-            >
-                {isPending ? t('visa.pending') : t('visa.completed')}
-            </Tag>
+            <Space>
+                <Tag color={isTraining ? (isPending ? 'orange' : 'green') : 'default'} style={{ opacity: isTraining ? 1 : 0.5 }}>
+                    {isPending ? t('visa.pending') : t('visa.completed')}
+                </Tag>
+                {isTraining && isJapaneseEmployee && (
+                    <Button
+                        type="link"
+                        size="small"
+                        onClick={() => handleToggleVisaStatus(applicant)}
+                    >
+                        {isPending ? t('visa.markCompleted') : t('visa.markPending')}
+                    </Button>
+                )}
+            </Space>
         )
     }
 
@@ -525,6 +533,50 @@ export default function WorkOrderDetailPage() {
         })
     }
 
+    // 打开编辑工单Drawer
+    const handleEditTicket = () => {
+        editTicketForm.setFieldsValue({
+            name: ticket?.name,
+            position: ticket?.position,
+            recruit_count: ticket?.recruit_count,
+            salary: ticket?.salary,
+            work_time: ticket?.work_time,
+            rest_days: ticket?.rest_days,
+            benefits: ticket?.benefits,
+            accommodation_type: ticket?.accommodation_type,
+            accommodation_address: ticket?.accommodation_address
+        })
+        setEditTicketDrawerVisible(true)
+    }
+
+    // 提交编辑工单
+    const handleEditTicketSubmit = async (values: any) => {
+        try {
+            const { error } = await supabase
+                .from('work_orders')
+                .update({
+                    name: values.name,
+                    position: values.position,
+                    recruit_count: values.recruit_count,
+                    salary: values.salary,
+                    work_time: values.work_time,
+                    rest_days: values.rest_days,
+                    benefits: values.benefits,
+                    accommodation_type: values.accommodation_type,
+                    accommodation_address: values.accommodation_address
+                })
+                .eq('id', ticketId)
+
+            if (error) throw error
+            message.success(t('messages.updateSuccess'))
+            setEditTicketDrawerVisible(false)
+            fetchTicketDetail()
+        } catch (error) {
+            console.error('更新工单失败:', error)
+            message.error(t('messages.updateError'))
+        }
+    }
+
     if (!canAccessTickets) {
         return (
             <Card>
@@ -547,7 +599,15 @@ export default function WorkOrderDetailPage() {
             </Button>
 
             {/* 工单信息卡片 */}
-            <Card title={t('detail.title')} style={{ marginBottom: 16 }}>
+            <Card
+                title={t('detail.title')}
+                style={{ marginBottom: 16 }}
+                extra={canEditTicket && (
+                    <Button type="primary" icon={<EditOutlined />} onClick={handleEditTicket}>
+                        {tCommon('edit')}
+                    </Button>
+                )}
+            >
                 <Descriptions bordered column={2}>
                     <Descriptions.Item label={t('columns.name')}>{ticket?.name}</Descriptions.Item>
                     <Descriptions.Item label={t('columns.companyName')}>{company?.name}</Descriptions.Item>
@@ -589,62 +649,60 @@ export default function WorkOrderDetailPage() {
                         <PictureOutlined style={{ marginRight: 8 }} />
                         {t('form.workEnvironmentImages')}
                     </h4>
-                    <Row gutter={[16, 16]}>
-                        {(ticket?.work_environment_images || []).map((img, index) => (
-                            <Col xs={12} sm={8} md={6} key={index}>
-                                <div style={{ position: 'relative', paddingBottom: '75%', border: '1px solid #d9d9d9', borderRadius: 8, overflow: 'hidden' }}>
-                                    <img
-                                        src={getFileUrl(img.url)}
-                                        alt={`工作环境 ${index + 1}`}
-                                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-                                        onClick={() => window.open(getFileUrl(img.url), '_blank')}
-                                    />
-                                    {isAdmin && (
-                                        <Button
-                                            type="primary"
-                                            danger
-                                            size="small"
-                                            icon={<DeleteOutlined />}
-                                            style={{ position: 'absolute', top: 4, right: 4 }}
-                                            onClick={() => handleDeleteWorkEnvImage(img.url)}
-                                        />
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        {/* 上传按钮在左边 - 管理员或工单负责人可上传 */}
+                        {canEditTicket && (
+                            <Upload
+                                showUploadList={false}
+                                accept="image/*"
+                                beforeUpload={(file) => handleUploadWorkEnvImage(file)}
+                                disabled={uploadingWorkEnvImage}
+                            >
+                                <div style={{
+                                    width: 120,
+                                    height: 120,
+                                    border: '1px dashed #d9d9d9',
+                                    borderRadius: 8,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    flexDirection: 'column',
+                                    backgroundColor: '#fafafa'
+                                }}>
+                                    {uploadingWorkEnvImage ? (
+                                        <span>{t('actions.uploading')}</span>
+                                    ) : (
+                                        <>
+                                            <PlusOutlined style={{ fontSize: 24 }} />
+                                            <div style={{ marginTop: 8 }}>{t('actions.upload')}</div>
+                                        </>
                                     )}
                                 </div>
-                            </Col>
-                        ))}
-                        {isAdmin && (
-                            <Col xs={12} sm={8} md={6}>
-                                <Upload
-                                    showUploadList={false}
-                                    accept="image/*"
-                                    beforeUpload={(file) => handleUploadWorkEnvImage(file)}
-                                    disabled={uploadingWorkEnvImage}
-                                >
-                                    <div style={{
-                                        paddingBottom: '75%',
-                                        border: '1px dashed #d9d9d9',
-                                        borderRadius: 8,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        position: 'relative'
-                                    }}>
-                                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                                            {uploadingWorkEnvImage ? (
-                                                <span>{t('actions.uploading')}</span>
-                                            ) : (
-                                                <>
-                                                    <PlusOutlined style={{ fontSize: 24 }} />
-                                                    <div style={{ marginTop: 8 }}>{t('actions.upload')}</div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </Upload>
-                            </Col>
+                            </Upload>
                         )}
-                    </Row>
+                        {/* 图片展示在右边 */}
+                        {(ticket?.work_environment_images || []).map((img, index) => (
+                            <div key={index} style={{ position: 'relative', width: 120, height: 120, border: '1px solid #d9d9d9', borderRadius: 8, overflow: 'hidden' }}>
+                                <img
+                                    src={getFileUrl(img.url)}
+                                    alt={`工作环境 ${index + 1}`}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+                                    onClick={() => window.open(getFileUrl(img.url), '_blank')}
+                                />
+                                {isAdmin && (
+                                    <Button
+                                        type="primary"
+                                        danger
+                                        size="small"
+                                        icon={<DeleteOutlined />}
+                                        style={{ position: 'absolute', top: 4, right: 4 }}
+                                        onClick={() => handleDeleteWorkEnvImage(img.url)}
+                                    />
+                                )}
+                            </div>
+                        ))}
+                    </div>
                     {(!ticket?.work_environment_images || ticket.work_environment_images.length === 0) && !isAdmin && (
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
                             {t('messages.noFileWarning')}
@@ -1030,6 +1088,111 @@ export default function WorkOrderDetailPage() {
                     />
                 </div>
             </Modal>
+
+            {/* 编辑工单 Drawer */}
+            <Drawer
+                title={t('edit.title')}
+                width={720}
+                onClose={() => setEditTicketDrawerVisible(false)}
+                open={editTicketDrawerVisible}
+            >
+                <Form
+                    form={editTicketForm}
+                    layout="vertical"
+                    onFinish={handleEditTicketSubmit}
+                >
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="name"
+                                label={t('form.ticketName')}
+                                rules={[{ required: true, message: t('form.ticketNamePlaceholder') }]}
+                            >
+                                <Input placeholder={t('form.ticketNamePlaceholder')} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="position"
+                                label={t('form.position')}
+                                rules={[{ required: true, message: t('form.positionPlaceholder') }]}
+                            >
+                                <Input placeholder={t('form.positionPlaceholder')} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="recruit_count"
+                                label={t('form.recruitCount')}
+                                rules={[{ required: true, message: t('form.recruitCountPlaceholder') }]}
+                            >
+                                <Input type="number" placeholder={t('form.recruitCountPlaceholder')} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="salary"
+                                label={t('form.salary')}
+                            >
+                                <Input placeholder={t('form.salaryPlaceholder')} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="work_time"
+                                label={t('form.workTime')}
+                            >
+                                <Input placeholder={t('form.workTimePlaceholder')} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="rest_days"
+                                label={t('form.restDays')}
+                            >
+                                <Input placeholder={t('form.restDaysPlaceholder')} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="accommodation_type"
+                                label={t('form.accommodationType')}
+                            >
+                                <Select placeholder={t('form.accommodationTypePlaceholder')} allowClear>
+                                    <Option value="free">{t('form.accommodationFree')}</Option>
+                                    <Option value="paid">{t('form.accommodationPaid')}</Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="accommodation_address"
+                                label={t('form.accommodationAddress')}
+                            >
+                                <Input placeholder={t('form.accommodationAddressPlaceholder')} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Form.Item
+                        name="benefits"
+                        label={t('form.benefits')}
+                    >
+                        <TextArea rows={4} placeholder={t('form.benefitsPlaceholder')} />
+                    </Form.Item>
+                    <Form.Item>
+                        <Space>
+                            <Button onClick={() => setEditTicketDrawerVisible(false)}>{tCommon('cancel')}</Button>
+                            <Button type="primary" htmlType="submit">{tCommon('save')}</Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Drawer>
         </div >
     )
 }
