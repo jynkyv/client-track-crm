@@ -232,9 +232,7 @@ export default function CustomersPage() {
   }
 
   const handleEdit = (record: Customer) => {
-    setEditingCustomer(record)
-    form.setFieldsValue(record)
-    setDrawerVisible(true)
+    router.push(`/customers/potential/${record.id}?edit=true`)
   }
 
   const handleDelete = async (id: string) => {
