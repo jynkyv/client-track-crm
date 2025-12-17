@@ -115,6 +115,7 @@
             "gender": "性別",
             "workExperience": "職務経歴",
             "notes": "備考",
+            "source": "顧客ソース",
             "min": "最小",
             "max": "最大",
             "to": "〜",

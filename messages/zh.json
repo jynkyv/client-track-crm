@@ -115,6 +115,7 @@
             "gender": "性别",
             "workExperience": "工作经验",
             "notes": "备注",
+            "source": "客户来源",
             "min": "最小",
             "max": "最大",
             "to": "至",
