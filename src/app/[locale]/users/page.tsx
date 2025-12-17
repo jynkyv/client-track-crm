@@ -83,12 +83,38 @@ export default function UsersPage() {
   const handleSubmit = async (values: any) => {
     try {
       if (editingUser) {
+        const oldUsername = editingUser.username
+        const newUsername = values.username
+
+        // 更新用户信息
         const { error } = await supabase
           .from('users')
           .update(values)
           .eq('id', editingUser.id)
 
         if (error) throw error
+
+        // 如果用户名发生变化，同步更新所有相关表的 owner 字段
+        if (oldUsername !== newUsername) {
+          // 更新 customers 表的 owner 字段
+          await supabase
+            .from('customers')
+            .update({ owner: newUsername })
+            .eq('owner', oldUsername)
+
+          // 更新 work_orders 表的 owner_name 字段
+          await supabase
+            .from('work_orders')
+            .update({ owner_name: newUsername })
+            .eq('owner_name', oldUsername)
+
+          // 更新 applicants 表的 owner 字段
+          await supabase
+            .from('applicants')
+            .update({ owner: newUsername })
+            .eq('owner', oldUsername)
+        }
+
         message.success(t('messages.updateSuccess'))
       } else {
         const { error } = await supabase
