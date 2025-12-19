@@ -113,6 +113,24 @@ export default function UsersPage() {
             .from('applicants')
             .update({ owner: newUsername })
             .eq('owner', oldUsername)
+
+          // 更新 conversations 表的 user1_name 字段
+          await supabase
+            .from('conversations')
+            .update({ user1_name: newUsername })
+            .eq('user1_name', oldUsername)
+
+          // 更新 conversations 表的 user2_name 字段
+          await supabase
+            .from('conversations')
+            .update({ user2_name: newUsername })
+            .eq('user2_name', oldUsername)
+
+          // 更新 messages 表的 sender_name 字段
+          await supabase
+            .from('messages')
+            .update({ sender_name: newUsername })
+            .eq('sender_name', oldUsername)
         }
 
         message.success(t('messages.updateSuccess'))
