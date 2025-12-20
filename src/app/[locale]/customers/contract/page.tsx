@@ -505,10 +505,16 @@ export default function ContractCustomersPage() {
     {
       title: t('columns.age'),
       width: 80,
-      dataIndex: 'age',
+      dataIndex: 'birth_date',
       key: 'age',
       align: 'center' as const,
-      render: (age: number) => age ? `${age}${tCommon('ageUnit')}` : '-',
+      render: (birthDate: string) => {
+        if (!birthDate) return '-'
+        const birth = dayjs(birthDate)
+        const today = dayjs()
+        const age = today.diff(birth, 'year')
+        return `${age}${tCommon('ageUnit')}`
+      },
     },
     {
       title: t('columns.gender'),
