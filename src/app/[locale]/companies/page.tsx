@@ -39,7 +39,7 @@ import { type Company, type DocumentFile } from '@/lib/supabase'
 
 export default function CompaniesPage() {
   const router = useRouter()
-  const { canAccessCompanies } = useAuth()
+  const { canAccessCompanies, isJapaneseEmployee, user } = useAuth()
   const [searchForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [companies, setCompanies] = useState<Company[]>([])
@@ -71,6 +71,11 @@ export default function CompaniesPage() {
         .from('companies')
         .select('*')
         .order('created_at', { ascending: false })
+
+      // 日方员工只能看到自己创建的企业
+      if (isJapaneseEmployee && user?.id) {
+        query = query.eq('owner_id', user.id)
+      }
 
       // 应用搜索条件
       if (searchName) {
