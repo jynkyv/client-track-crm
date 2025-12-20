@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from '@/navigation'
-import { supabase, Ticket, Applicant, Company, Customer, type DocumentFile } from '@/lib/supabase'
+import { supabase, Ticket, Applicant, Company, Customer, type DocumentFile, type WorkOrderQuestion, type WorkOrderAnswer } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import {
     Card,
@@ -22,7 +22,8 @@ import {
     Upload,
     Tabs,
     Tag,
-    Checkbox
+    Checkbox,
+    Collapse
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined, PictureOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
@@ -62,13 +63,20 @@ export default function WorkOrderDetailPage() {
     const [viewModalVisible, setViewModalVisible] = useState(false)
     const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
 
-    // 反馈 Modal 状态
     const [feedbackModalVisible, setFeedbackModalVisible] = useState(false)
     const [feedbackApplicant, setFeedbackApplicant] = useState<Customer | null>(null)
     const [feedbackFields, setFeedbackFields] = useState<string[]>([])
     const [feedbackContent, setFeedbackContent] = useState('')
     const [submittingFeedback, setSubmittingFeedback] = useState(false)
     const tFeedback = useTranslations('FeedbackCenter')
+
+    // 问答功能状态
+    const [questions, setQuestions] = useState<WorkOrderQuestion[]>([])
+    const [newQuestionContent, setNewQuestionContent] = useState('')
+    const [replyContents, setReplyContents] = useState<Record<string, string>>({})
+    const [submittingQuestion, setSubmittingQuestion] = useState(false)
+    const [submittingReply, setSubmittingReply] = useState<string | null>(null)
+    const tQA = useTranslations('WorkOrderQA')
 
     const t = useTranslations('WorkOrder')
     const tCommon = useTranslations('Common')
@@ -143,10 +151,122 @@ export default function WorkOrderDetailPage() {
         }
     }
 
+    // 获取问答列表
+    const fetchQuestions = async () => {
+        try {
+            // 获取问题列表
+            const { data: questionsData, error: questionsError } = await supabase
+                .from('work_order_questions')
+                .select('*')
+                .eq('work_order_id', ticketId)
+                .order('created_at', { ascending: false })
+
+            if (questionsError) throw questionsError
+
+            // 获取所有问题的回复
+            if (questionsData && questionsData.length > 0) {
+                const questionIds = questionsData.map(q => q.id)
+                const { data: answersData, error: answersError } = await supabase
+                    .from('work_order_answers')
+                    .select('*')
+                    .in('question_id', questionIds)
+                    .order('created_at', { ascending: true })
+
+                if (answersError) throw answersError
+
+                // 将回复关联到问题
+                const questionsWithAnswers = questionsData.map(q => ({
+                    ...q,
+                    answers: answersData?.filter(a => a.question_id === q.id) || []
+                }))
+                setQuestions(questionsWithAnswers)
+            } else {
+                setQuestions([])
+            }
+        } catch (error) {
+            console.error('获取问答列表失败:', error)
+        }
+    }
+
+    // 提交问题（中方员工）
+    const handleSubmitQuestion = async () => {
+        if (!newQuestionContent.trim()) {
+            message.warning(tQA('messages.contentRequired'))
+            return
+        }
+        if (!user) return
+
+        setSubmittingQuestion(true)
+        try {
+            const { error } = await supabase
+                .from('work_order_questions')
+                .insert([{
+                    work_order_id: ticketId,
+                    asker_id: user.id,
+                    asker_name: user.username,
+                    content: newQuestionContent.trim(),
+                    is_answered: false
+                }])
+
+            if (error) throw error
+            message.success(tQA('messages.submitSuccess'))
+            setNewQuestionContent('')
+            fetchQuestions()
+        } catch (error) {
+            console.error('提交问题失败:', error)
+            message.error(tQA('messages.submitError'))
+        } finally {
+            setSubmittingQuestion(false)
+        }
+    }
+
+    // 提交回复（日方员工/工单负责人）
+    const handleSubmitReply = async (questionId: string) => {
+        const content = replyContents[questionId]?.trim()
+        if (!content) {
+            message.warning(tQA('messages.contentRequired'))
+            return
+        }
+        if (!user) return
+
+        setSubmittingReply(questionId)
+        try {
+            // 插入回复
+            const { error: replyError } = await supabase
+                .from('work_order_answers')
+                .insert([{
+                    question_id: questionId,
+                    responder_id: user.id,
+                    responder_name: user.username,
+                    content: content
+                }])
+
+            if (replyError) throw replyError
+
+            // 标记问题为已回复
+            const { error: updateError } = await supabase
+                .from('work_order_questions')
+                .update({ is_answered: true, updated_at: new Date().toISOString() })
+                .eq('id', questionId)
+
+            if (updateError) throw updateError
+
+            message.success(tQA('messages.submitSuccess'))
+            setReplyContents(prev => ({ ...prev, [questionId]: '' }))
+            fetchQuestions()
+        } catch (error) {
+            console.error('提交回复失败:', error)
+            message.error(tQA('messages.submitError'))
+        } finally {
+            setSubmittingReply(null)
+        }
+    }
+
     useEffect(() => {
         if (ticketId) {
             fetchTicketDetail()
             fetchApplicants()
+            fetchQuestions()
         }
     }, [ticketId])
 
@@ -710,6 +830,126 @@ export default function WorkOrderDetailPage() {
                     )}
                 </div>
             </Card>
+
+            {/* 问答区域 - 中方员工和工单负责人可见 */}
+            {(isChineseEmployee || isTicketOwner || isAdmin) && (
+                <Card style={{ marginTop: 16 }}>
+                    <Collapse defaultActiveKey={questions.some(q => !q.is_answered) ? ['qa'] : []}>
+                        <Collapse.Panel
+                            header={
+                                <Space>
+                                    <span>{tQA('collapseTitle')}</span>
+                                    {questions.filter(q => !q.is_answered).length > 0 && (
+                                        <Tag color="red">
+                                            {questions.filter(q => !q.is_answered).length} {tQA('pendingAnswer')}
+                                        </Tag>
+                                    )}
+                                </Space>
+                            }
+                            key="qa"
+                        >
+                            {/* 中方员工提问表单 */}
+                            {isChineseEmployee && (
+                                <div style={{ marginBottom: 24, padding: 16, background: '#fafafa', borderRadius: 8 }}>
+                                    <h4 style={{ marginBottom: 12 }}>{tQA('askQuestion')}</h4>
+                                    <Input.TextArea
+                                        value={newQuestionContent}
+                                        onChange={(e) => setNewQuestionContent(e.target.value)}
+                                        placeholder={tQA('questionPlaceholder')}
+                                        rows={3}
+                                        style={{ marginBottom: 12 }}
+                                    />
+                                    <Button
+                                        type="primary"
+                                        onClick={handleSubmitQuestion}
+                                        loading={submittingQuestion}
+                                    >
+                                        {tQA('submitQuestion')}
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* 问题列表 */}
+                            {questions.length > 0 ? (
+                                <div>
+                                    {questions.map((question) => (
+                                        <div
+                                            key={question.id}
+                                            style={{
+                                                marginBottom: 16,
+                                                padding: 16,
+                                                border: '1px solid #e8e8e8',
+                                                borderRadius: 8,
+                                                background: question.is_answered ? '#fff' : 'rgba(255, 0, 0, 0.05)'
+                                            }}
+                                        >
+                                            {/* 问题内容 */}
+                                            <div style={{ marginBottom: 12 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                                    <Space>
+                                                        <Tag color="blue">{tQA('questionBy')}: {question.asker_name}</Tag>
+                                                        <span style={{ color: '#999', fontSize: 12 }}>
+                                                            {new Date(question.created_at).toLocaleString('zh-CN')}
+                                                        </span>
+                                                    </Space>
+                                                    <Tag color={question.is_answered ? 'green' : 'orange'}>
+                                                        {question.is_answered ? tQA('answered') : tQA('pendingAnswer')}
+                                                    </Tag>
+                                                </div>
+                                                <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{question.content}</p>
+                                            </div>
+
+                                            {/* 回复列表 */}
+                                            {question.answers && question.answers.length > 0 && (
+                                                <div style={{ marginLeft: 24, borderLeft: '2px solid #1890ff', paddingLeft: 16 }}>
+                                                    {question.answers.map((answer) => (
+                                                        <div key={answer.id} style={{ marginBottom: 8, padding: 8, background: '#f0f7ff', borderRadius: 4 }}>
+                                                            <div style={{ marginBottom: 4 }}>
+                                                                <Space>
+                                                                    <Tag color="green">{tQA('replyBy')}: {answer.responder_name}</Tag>
+                                                                    <span style={{ color: '#999', fontSize: 12 }}>
+                                                                        {new Date(answer.created_at).toLocaleString('zh-CN')}
+                                                                    </span>
+                                                                </Space>
+                                                            </div>
+                                                            <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{answer.content}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* 日方员工/工单负责人回复表单 */}
+                                            {(isTicketOwner || isAdmin) && !question.is_answered && (
+                                                <div style={{ marginTop: 12, marginLeft: 24 }}>
+                                                    <Input.TextArea
+                                                        value={replyContents[question.id] || ''}
+                                                        onChange={(e) => setReplyContents(prev => ({ ...prev, [question.id]: e.target.value }))}
+                                                        placeholder={tQA('replyPlaceholder')}
+                                                        rows={2}
+                                                        style={{ marginBottom: 8 }}
+                                                    />
+                                                    <Button
+                                                        type="primary"
+                                                        size="small"
+                                                        onClick={() => handleSubmitReply(question.id)}
+                                                        loading={submittingReply === question.id}
+                                                    >
+                                                        {tQA('submitReply')}
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+                                    {tQA('noQuestions')}
+                                </div>
+                            )}
+                        </Collapse.Panel>
+                    </Collapse>
+                </Card>
+            )}
 
             {/* 应聘者列表 - 仅日方员工可见 */}
             {!isChineseEmployee && (
