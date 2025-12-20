@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Layout, Menu, Button, Dropdown, Space, Badge } from 'antd'
-import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined, CheckSquareOutlined, AlertOutlined } from '@ant-design/icons'
+import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined, CheckSquareOutlined, AlertOutlined, BellOutlined } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, usePathname, useRouter } from '@/navigation'
 import ChatWidget from './ChatWidget'
@@ -18,6 +18,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations('Dashboard')
   const tCommon = useTranslations('Common')
   const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0)
+  const [questionNotifications, setQuestionNotifications] = useState<Array<{
+    id: string
+    work_order_id: string
+    work_order_name: string
+    question_content: string
+    responder_name: string
+    created_at: string
+  }>>([])
+  const tQA = useTranslations('WorkOrderQA')
 
   useEffect(() => {
     if (!loading && !user) {
@@ -56,6 +65,104 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const interval = setInterval(fetchPendingCount, 30000)
     return () => clearInterval(interval)
   }, [user])
+
+  // 获取问题回复通知（中方员工查看自己提问的未读回复）
+  useEffect(() => {
+    const fetchQuestionNotifications = async () => {
+      if (!user || user.country !== '中国') return
+      try {
+        const { supabase } = await import('@/lib/supabase')
+
+        // 获取我提问的问题
+        const { data: questions, error: questionsError } = await supabase
+          .from('work_order_questions')
+          .select('id, work_order_id, content')
+          .eq('asker_id', user.id)
+
+        if (questionsError) throw questionsError
+        if (!questions || questions.length === 0) {
+          setQuestionNotifications([])
+          return
+        }
+
+        // 获取这些问题的未读回复
+        const questionIds = questions.map(q => q.id)
+        const { data: answers, error: answersError } = await supabase
+          .from('work_order_answers')
+          .select('id, question_id, responder_name, created_at, is_read')
+          .in('question_id', questionIds)
+          .eq('is_read', false) // 只获取未读回复
+          .order('created_at', { ascending: false })
+          .limit(10)
+
+        if (answersError) throw answersError
+        if (!answers || answers.length === 0) {
+          setQuestionNotifications([])
+          return
+        }
+
+        // 获取工单名称
+        const workOrderIds = [...new Set(questions.map(q => q.work_order_id))]
+        const { data: workOrders } = await supabase
+          .from('work_orders')
+          .select('id, name')
+          .in('id', workOrderIds)
+
+        const workOrderMap: Record<string, string> = {}
+        workOrders?.forEach(wo => {
+          workOrderMap[wo.id] = wo.name
+        })
+
+        // 创建问题ID到问题的映射
+        const questionMap: Record<string, { work_order_id: string, content: string }> = {}
+        questions.forEach(q => {
+          questionMap[q.id] = { work_order_id: q.work_order_id, content: q.content }
+        })
+
+        // 组装通知数据（基于未读回复）
+        const notifications = answers.map(a => {
+          const question = questionMap[a.question_id]
+          return {
+            id: a.id, // 使用回复ID
+            work_order_id: question?.work_order_id || '',
+            work_order_name: workOrderMap[question?.work_order_id || ''] || '',
+            question_content: question?.content.substring(0, 50) + ((question?.content.length || 0) > 50 ? '...' : '') || '',
+            responder_name: a.responder_name,
+            created_at: a.created_at
+          }
+        }).filter(n => n.work_order_id)
+
+        setQuestionNotifications(notifications)
+      } catch (error) {
+        console.error('获取问题通知失败:', error)
+      }
+    }
+
+    fetchQuestionNotifications()
+    const interval = setInterval(fetchQuestionNotifications, 30000)
+    return () => clearInterval(interval)
+  }, [user])
+
+  // 标记回复为已读
+  const markNotificationAsRead = async (answerId: string, workOrderId: string) => {
+    try {
+      const { supabase } = await import('@/lib/supabase')
+      await supabase
+        .from('work_order_answers')
+        .update({ is_read: true })
+        .eq('id', answerId)
+
+      // 立即从本地状态移除该通知
+      setQuestionNotifications(prev => prev.filter(n => n.id !== answerId))
+
+      // 跳转到工单详情页
+      router.push(`/work-orders/${workOrderId}`)
+    } catch (error) {
+      console.error('标记已读失败:', error)
+      // 即使标记失败也跳转
+      router.push(`/work-orders/${workOrderId}`)
+    }
+  }
 
   // 如果是登录页面，直接显示内容
   if (pathname === '/login') {
@@ -206,6 +313,54 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         }}>
           <h2 style={{ margin: 0, color: '#1890ff' }}></h2>
           <Space>
+            {/* 问题回复通知 - 仅中方员工显示 */}
+            {user?.country === '中国' && (
+              <Dropdown
+                menu={{
+                  items: questionNotifications.length > 0 ? [
+                    ...questionNotifications.map((n, index) => ({
+                      key: n.id,
+                      label: (
+                        <div
+                          style={{ maxWidth: 300, cursor: 'pointer' }}
+                          onClick={() => markNotificationAsRead(n.id, n.work_order_id)}
+                        >
+                          <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
+                            {tQA('notifications.newReply')}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#666' }}>
+                            {n.work_order_name} - {n.responder_name} {tQA('replied')}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
+                            {n.question_content}
+                          </div>
+                        </div>
+                      )
+                    })),
+                    { type: 'divider' as const },
+                    {
+                      key: 'view-all',
+                      label: tQA('notifications.viewDetail'),
+                      onClick: () => router.push('/work-orders')
+                    }
+                  ] : [
+                    {
+                      key: 'empty',
+                      label: tQA('notifications.noNotifications'),
+                      disabled: true
+                    }
+                  ]
+                }}
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <Badge count={questionNotifications.length} size="small">
+                  <Button type="text" icon={<BellOutlined />}>
+                    {tQA('notifications.title')}
+                  </Button>
+                </Badge>
+              </Dropdown>
+            )}
             <LanguageSwitcher />
             <Dropdown
               menu={{ items: userMenuItems }}
