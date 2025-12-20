@@ -210,3 +210,28 @@ export interface Feedback {
   submitter_name?: string
   handler_name?: string
 }
+
+// 工单问题类型定义
+export interface WorkOrderQuestion {
+  id: string
+  work_order_id: string // 关联工单ID
+  asker_id: string // 提问者ID（中方员工）
+  asker_name: string // 提问者姓名
+  content: string // 问题内容
+  is_answered: boolean // 是否已回复
+  created_at: string
+  updated_at: string
+  // 关联数据
+  answers?: WorkOrderAnswer[]
+}
+
+// 工单回复类型定义
+export interface WorkOrderAnswer {
+  id: string
+  question_id: string // 关联问题ID
+  responder_id: string // 回复者ID（日方员工/工单负责人）
+  responder_name: string // 回复者姓名
+  content: string // 回复内容
+  is_read: boolean // 提问者是否已读
+  created_at: string
+}
