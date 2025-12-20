@@ -635,6 +635,37 @@
             "immigration_materials": "入管局资料"
         }
     },
+    "WorkOrderQA": {
+        "title": "问答区域",
+        "collapseTitle": "问答交流",
+        "askQuestion": "提问",
+        "reply": "回复",
+        "noQuestions": "暂无问题",
+        "questionPlaceholder": "请输入您的问题...",
+        "replyPlaceholder": "请输入回复内容...",
+        "submitQuestion": "提交问题",
+        "submitReply": "提交回复",
+        "answered": "已回复",
+        "pendingAnswer": "待回复",
+        "pendingQuestions": "待回复问题",
+        "questionBy": "提问人",
+        "replyBy": "回复人",
+        "questionTime": "提问时间",
+        "replyTime": "回复时间",
+        "messages": {
+            "submitSuccess": "提交成功",
+            "submitError": "提交失败",
+            "contentRequired": "请输入内容",
+            "fetchError": "获取问答列表失败"
+        },
+        "notifications": {
+            "title": "问题通知",
+            "newReply": "收到新回复",
+            "noNotifications": "暂无通知",
+            "viewDetail": "查看详情"
+        },
+        "replied": "已回复"
+    },
     "Login": {
         "title": "系统登录",
         "username": "用户名",

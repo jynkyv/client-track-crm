@@ -632,6 +632,37 @@
             "immigration_materials": "入管局資料"
         }
     },
+    "WorkOrderQA": {
+        "title": "Q&A",
+        "collapseTitle": "質疑応答",
+        "askQuestion": "質問する",
+        "reply": "返信",
+        "noQuestions": "質問はありません",
+        "questionPlaceholder": "質問を入力してください...",
+        "replyPlaceholder": "返信を入力してください...",
+        "submitQuestion": "質問を送信",
+        "submitReply": "返信を送信",
+        "answered": "返信済み",
+        "pendingAnswer": "返信待ち",
+        "pendingQuestions": "返信待ちの質問",
+        "questionBy": "質問者",
+        "replyBy": "返信者",
+        "questionTime": "質問時間",
+        "replyTime": "返信時間",
+        "messages": {
+            "submitSuccess": "送信しました",
+            "submitError": "送信に失敗しました",
+            "contentRequired": "内容を入力してください",
+            "fetchError": "Q&Aの取得に失敗しました"
+        },
+        "notifications": {
+            "title": "質問通知",
+            "newReply": "新しい返信があります",
+            "noNotifications": "通知はありません",
+            "viewDetail": "詳細を見る"
+        },
+        "replied": "が返信しました"
+    },
     "Login": {
         "title": "システムログイン",
         "username": "ユーザー名",
