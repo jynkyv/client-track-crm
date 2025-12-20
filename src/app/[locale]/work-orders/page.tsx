@@ -42,6 +42,7 @@ export default function WorkOrdersPage() {
     const [createDrawerVisible, setCreateDrawerVisible] = useState(false)
     const t = useTranslations('WorkOrder')
     const tCommon = useTranslations('Common')
+    const tQA = useTranslations('WorkOrderQA')
 
     // 搜索状态
     const [searchCompanyName, setSearchCompanyName] = useState('')
@@ -49,6 +50,8 @@ export default function WorkOrdersPage() {
     const [searchOwnerName, setSearchOwnerName] = useState('')
     // 签证状态统计
     const [visaStats, setVisaStats] = useState<Record<string, { pending: number, completed: number }>>({})
+    // 待回复问题数量
+    const [pendingQuestionCounts, setPendingQuestionCounts] = useState<Record<string, number>>({})
 
     // 获取企业列表
     const fetchCompanies = async () => {
@@ -79,6 +82,11 @@ export default function WorkOrdersPage() {
           )
         `)
                 .order('created_at', { ascending: false })
+
+            // 日方员工只能看到自己创建的工单
+            if (isJapaneseEmployee && user?.id) {
+                query = query.eq('owner_id', user.id)
+            }
 
             // 工单名称搜索（数据库层面）
             if (searchTicketName) {
@@ -133,11 +141,30 @@ export default function WorkOrdersPage() {
                     setVisaStats(stats)
                 }
 
-                // 按待办签证数量降序排序
+                // 获取每个工单的待回复问题数量
+                const { data: questionsData, error: questionsError } = await supabase
+                    .from('work_order_questions')
+                    .select('work_order_id, is_answered')
+                    .in('work_order_id', workOrderIds)
+                    .eq('is_answered', false)
+
+                const questionCounts: Record<string, number> = {}
+                if (!questionsError && questionsData) {
+                    questionsData.forEach((q: { work_order_id: string }) => {
+                        questionCounts[q.work_order_id] = (questionCounts[q.work_order_id] || 0) + 1
+                    })
+                    setPendingQuestionCounts(questionCounts)
+                }
+
+                // 排序：待回复问题优先 > 待办签证 > 创建时间
                 const sortedData = [...filteredData].sort((a: Ticket, b: Ticket) => {
+                    const aQuestions = questionCounts[a.id] || 0
+                    const bQuestions = questionCounts[b.id] || 0
+                    if (aQuestions !== bQuestions) return bQuestions - aQuestions // 问题优先
+
                     const aPending = stats[a.id]?.pending || 0
                     const bPending = stats[b.id]?.pending || 0
-                    return bPending - aPending
+                    return bPending - aPending // 签证次之
                 })
                 setTickets(sortedData)
             } else {
@@ -259,6 +286,21 @@ export default function WorkOrdersPage() {
             align: 'center' as const,
             render: (id: string) => `${applicantCounts[id] || 0}人`
         },
+        // 待回复问题列 - 仅日方员工和管理员可见
+        ...(!isChineseEmployee ? [{
+            title: tQA('pendingQuestions'),
+            dataIndex: 'id',
+            key: 'pending_questions',
+            width: 120,
+            align: 'center' as const,
+            render: (id: string) => {
+                const count = pendingQuestionCounts[id] || 0
+                if (count === 0) {
+                    return <span style={{ color: '#999' }}>-</span>
+                }
+                return <Tag color="red">{count}{tQA('pendingAnswer')}</Tag>
+            }
+        }] : []),
         // 签证状态列 - 仅日方员工和管理员可见
         ...(!isChineseEmployee ? [{
             title: t('columns.visaStatus'),
@@ -399,6 +441,10 @@ export default function WorkOrdersPage() {
                     dataSource={tickets}
                     loading={loading}
                     rowKey="id"
+                    rowClassName={(record) => {
+                        const pending = pendingQuestionCounts[record.id] || 0
+                        return pending > 0 ? 'pending-question-row' : ''
+                    }}
                     pagination={{
                         showSizeChanger: true,
                         showQuickJumper: true,
@@ -408,6 +454,14 @@ export default function WorkOrdersPage() {
                     }}
                     scroll={{ x: 'max-content' }}
                 />
+                <style jsx global>{`
+                    .pending-question-row {
+                        background-color: rgba(255, 0, 0, 0.08) !important;
+                    }
+                    .pending-question-row:hover > td {
+                        background-color: rgba(255, 0, 0, 0.12) !important;
+                    }
+                `}</style>
             </Card>
 
             {/* 创建工单Drawer */}
