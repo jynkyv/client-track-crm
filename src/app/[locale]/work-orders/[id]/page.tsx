@@ -367,6 +367,7 @@ export default function WorkOrderDetailPage() {
 
     // 查看文件
     const handleViewFiles = (files: DocumentFile[]) => {
+        console.log('Viewing files:', files)
         if (!files || files.length === 0) {
             message.warning(t('messages.noFileWarning'))
             return
@@ -1256,37 +1257,62 @@ export default function WorkOrderDetailPage() {
                 width={800}
             >
                 <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                    {currentViewFiles.map((file, index) => (
-                        <div
-                            key={index}
-                            style={{
-                                padding: '12px',
-                                borderBottom: '1px solid #f0f0f0',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <FileTextOutlined style={{ marginRight: 8, fontSize: '16px', color: '#1890ff' }} />
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span style={{ wordBreak: 'break-all' }}>
-                                        {file.url.split('/').pop()}
-                                    </span>
-                                    <span style={{ fontSize: '12px', color: '#999' }}>
-                                        {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString(locale) : '-'}
-                                    </span>
-                                </div>
-                            </div>
-                            <Button
-                                type="link"
-                                onClick={() => window.open(getFileUrl(file.url), '_blank')}
+                    {currentViewFiles.map((file, index) => {
+                        console.log('Rendering file:', file)
+                        let fileUrl = ''
+                        let uploadTime = null
+
+                        if (typeof file === 'string') {
+                            try {
+                                const parsed = JSON.parse(file)
+                                if (parsed && typeof parsed === 'object') {
+                                    fileUrl = parsed.url
+                                    uploadTime = parsed.uploadedAt
+                                } else {
+                                    fileUrl = file
+                                }
+                            } catch (e) {
+                                fileUrl = file
+                            }
+                        } else if (file && typeof file === 'object') {
+                            fileUrl = file.url
+                            uploadTime = file.uploadedAt
+                        }
+
+                        if (!fileUrl) return null
+
+
+                        return (
+                            <div
+                                key={index}
+                                style={{
+                                    padding: '12px',
+                                    borderBottom: '1px solid #f0f0f0',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
                             >
-                                {tCommon('view')}
-                            </Button>
-                        </div >
-                    ))
-                    }
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <FileTextOutlined style={{ marginRight: 8, fontSize: '16px', color: '#1890ff' }} />
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ wordBreak: 'break-all' }}>
+                                            {fileUrl.split('/').pop()}
+                                        </span>
+                                        <span style={{ fontSize: '12px', color: '#999' }}>
+                                            {t('uploadTime')}: {uploadTime ? new Date(uploadTime).toLocaleString(locale) : '-'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <Button
+                                    type="link"
+                                    onClick={() => window.open(getFileUrl(fileUrl), '_blank')}
+                                >
+                                    {tCommon('view')}
+                                </Button>
+                            </div >
+                        )
+                    })}
                 </div >
             </Modal >
 

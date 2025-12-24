@@ -34,7 +34,7 @@ interface DocumentField {
 
 export default function CreateCompanyPage() {
   const router = useRouter()
-  const { canAccessCompanies } = useAuth()
+  const { canAccessCompanies, user } = useAuth()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState<Record<string, boolean>>({})
@@ -151,6 +151,7 @@ export default function CreateCompanyPage() {
         address: values.address || null,
         contact: values.contact || null,
         email: values.email || null,
+        owner_id: user?.id,
         ...documentUrls
       }
 
