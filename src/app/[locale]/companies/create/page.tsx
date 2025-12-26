@@ -152,6 +152,7 @@ export default function CreateCompanyPage() {
         contact: values.contact || null,
         email: values.email || null,
         owner_id: user?.id,
+        owner_name: user?.username,
         ...documentUrls
       }
 

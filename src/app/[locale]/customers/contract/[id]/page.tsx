@@ -188,7 +188,26 @@ export default function CustomerDetailPage() {
       cancelText: t('messages.confirmCancel'),
       onOk: async () => {
         try {
-          const currentFiles = (customer[field as keyof CustomerDetail] as DocumentFile[]) || []
+          const rawFiles = (customer[field as keyof CustomerDetail] as any[]) || []
+
+          // Normalize files to DocumentFile[]
+          const currentFiles: DocumentFile[] = rawFiles.map((file: any) => {
+            if (typeof file === 'string') {
+              try {
+                // Try to parse if it looks like JSON
+                if (file.trim().startsWith('{')) {
+                  const parsed = JSON.parse(file)
+                  return (parsed && typeof parsed === 'object') ? parsed : { url: file, uploadedAt: '' }
+                }
+                // Otherwise it's likely just a URL string (legacy data)
+                return { url: file, uploadedAt: '' }
+              } catch {
+                return { url: file, uploadedAt: '' }
+              }
+            }
+            return file
+          }).filter(f => f && f.url) // Ensure valid objects
+
           const newFiles = currentFiles.filter(f => f.url !== fileUrl)
 
           const { error } = await supabase

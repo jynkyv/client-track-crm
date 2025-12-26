@@ -114,6 +114,12 @@ export default function UsersPage() {
             .update({ owner_name: newUsername })
             .eq('owner_name', oldUsername)
 
+          // 更新 companies 表的 owner_name 字段
+          await supabase
+            .from('companies')
+            .update({ owner_name: newUsername })
+            .eq('owner_name', oldUsername)
+
           // 更新 conversations 表的 user1_name 字段
           await supabase
             .from('conversations')

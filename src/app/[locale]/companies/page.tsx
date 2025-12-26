@@ -241,7 +241,22 @@ export default function CompaniesPage() {
       okButtonProps: { danger: true },
       async onOk() {
         try {
-          const currentFiles = (company[field as keyof Company] as DocumentFile[]) || []
+          const currentFilesRaw = (company[field as keyof Company] as any[]) || []
+
+          // Helper to parse file
+          const parseFile = (file: any): DocumentFile | null => {
+            if (typeof file === 'string') {
+              try {
+                const parsed = JSON.parse(file)
+                return (parsed && typeof parsed === 'object') ? parsed : { url: file, uploadedAt: '' }
+              } catch {
+                return { url: file, uploadedAt: '' }
+              }
+            }
+            return file
+          }
+
+          const currentFiles = currentFilesRaw.map(parseFile).filter(Boolean) as DocumentFile[]
           const updatedFiles = currentFiles.filter((f) => f.url !== url)
 
           const { error } = await supabase
@@ -506,43 +521,67 @@ export default function CompaniesPage() {
       >
         <List
           dataSource={currentViewFiles}
-          renderItem={(file, index) => (
-            <List.Item
-              actions={[
-                <Button
-                  key="view"
-                  type="link"
-                  icon={<EyeOutlined />}
-                  onClick={() => window.open(getFileUrl(file.url), '_blank')}
-                >
-                  查看
-                </Button>,
-                currentCompany && (
-                  <Button
-                    key="delete"
-                    type="link"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => handleDeleteFile(file.url, currentViewField, currentCompany)}
-                  >
-                    删除
-                  </Button>
-                )
-              ].filter(Boolean)}
-            >
-              <List.Item.Meta
-                avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
-                title={
-                  <Space direction="vertical" size={0}>
-                    <span>{file.url.split('/').pop()}</span>
-                    <span style={{ fontSize: '12px', color: '#999' }}>
-                      {t('uploadTime')}: {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString(locale) : '-'}
-                    </span>
-                  </Space>
+          renderItem={(file: any, index) => {
+            let fileUrl = ''
+            let uploadTime = null
+
+            if (typeof file === 'string') {
+              try {
+                const parsed = JSON.parse(file)
+                if (parsed && typeof parsed === 'object') {
+                  fileUrl = parsed.url
+                  uploadTime = parsed.uploadedAt
+                } else {
+                  fileUrl = file
                 }
-              />
-            </List.Item>
-          )}
+              } catch {
+                fileUrl = file
+              }
+            } else if (file && typeof file === 'object') {
+              fileUrl = file.url
+              uploadTime = file.uploadedAt
+            }
+
+            if (!fileUrl) return null
+
+            return (
+              <List.Item
+                actions={[
+                  <Button
+                    key="view"
+                    type="link"
+                    icon={<EyeOutlined />}
+                    onClick={() => window.open(getFileUrl(fileUrl), '_blank')}
+                  >
+                    查看
+                  </Button>,
+                  currentCompany && (
+                    <Button
+                      key="delete"
+                      type="link"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDeleteFile(fileUrl, currentViewField, currentCompany)}
+                    >
+                      删除
+                    </Button>
+                  )
+                ].filter(Boolean)}
+              >
+                <List.Item.Meta
+                  avatar={<FilePdfOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />}
+                  title={
+                    <Space direction="vertical" size={0}>
+                      <span>{fileUrl.split('/').pop()}</span>
+                      <span style={{ fontSize: '12px', color: '#999' }}>
+                        {t('uploadTime')}: {uploadTime ? new Date(uploadTime).toLocaleString(locale) : '-'}
+                      </span>
+                    </Space>
+                  }
+                />
+              </List.Item>
+            )
+          }}
         />
       </Modal>
     </div >
