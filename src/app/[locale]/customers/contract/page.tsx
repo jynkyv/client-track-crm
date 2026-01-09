@@ -19,7 +19,8 @@ import {
   Col,
   InputNumber,
   TableProps,
-  DatePicker
+  DatePicker,
+  Modal
 } from 'antd'
 import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { supabase, Customer, Payment } from '@/lib/supabase'
@@ -710,7 +711,16 @@ export default function ContractCustomersPage() {
             key: 'delete',
             label: t('actions.delete'),
             icon: <DeleteOutlined />,
-            onClick: () => handleDelete(record.id)
+            onClick: () => {
+              Modal.confirm({
+                title: t('messages.confirmDeleteTitle'),
+                content: t('messages.confirmDeleteContent'),
+                okText: t('messages.confirmOk'),
+                cancelText: t('messages.confirmCancel'),
+                okButtonProps: { danger: true },
+                onOk: () => handleDelete(record.id),
+              })
+            }
           })
         }
 

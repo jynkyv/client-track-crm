@@ -605,7 +605,7 @@ export default function CustomersPage() {
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Customer) => {
-        const menuItems = [
+        const menuItems: any[] = [
           {
             key: 'view',
             label: t('actions.view'),
@@ -651,16 +651,32 @@ export default function CustomersPage() {
               },
             ],
           },
-          {
-            type: 'divider' as const,
-          },
-          {
-            key: 'delete',
-            label: tCommon('delete'),
-            danger: true,
-            onClick: () => handleDelete(record.id),
-          },
         ]
+
+        // 仅管理员可以删除
+        if (isAdmin) {
+          menuItems.push(
+            {
+              type: 'divider' as const,
+            },
+            {
+              key: 'delete',
+              label: tCommon('delete'),
+              danger: true,
+              onClick: () => {
+                Modal.confirm({
+                  title: t('deleteConfirm'),
+                  content: t('deleteMessage'),
+                  okText: tCommon('confirm'),
+                  cancelText: tCommon('cancel'),
+                  okButtonProps: { danger: true },
+                  onOk: () => handleDelete(record.id),
+                })
+              },
+            }
+          )
+        }
+
         return (
           <Dropdown menu={{ items: menuItems }} trigger={['click']}>
             <Button type="link" icon={<MoreOutlined />} />

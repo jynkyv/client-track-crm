@@ -229,7 +229,8 @@
             "updateError": "更新失敗",
             "customerNotFound": "顧客が見つかりません",
             "confirmDeleteTitle": "削除の確認",
-            "confirmDeleteContent": "このファイルを削除してもよろしいですか？この操作は元に戻せません。",
+            "confirmDeleteContent": "この顧客を削除してもよろしいですか？この操作は元に戻せません。",
+            "confirmDeleteFileContent": "このファイルを削除してもよろしいですか？この操作は元に戻せません。",
             "confirmOk": "確認",
             "confirmCancel": "キャンセル"
         },
