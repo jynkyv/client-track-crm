@@ -152,6 +152,7 @@ export interface Company {
   employee_count?: number // 公司从业人数
   registered_capital?: string // 注册资本金
   address?: string // 公司地址
+  intern_address?: string // 实习地址
   contact?: string // 联系方式
   email?: string // 联系邮箱
   // PDF文档字段

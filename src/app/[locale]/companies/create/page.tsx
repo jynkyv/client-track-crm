@@ -149,6 +149,7 @@ export default function CreateCompanyPage() {
         employee_count: values.employee_count || null,
         registered_capital: values.registered_capital || null,
         address: values.address || null,
+        intern_address: values.intern_address || null,
         contact: values.contact || null,
         email: values.email || null,
         owner_id: user?.id,
@@ -270,15 +271,26 @@ export default function CreateCompanyPage() {
             </Col>
             <Col span={12}>
               <Form.Item
+                name="intern_address"
+                label={t('form.internAddress')}
+              >
+                <TextArea
+                  placeholder={t('form.internAddressPlaceholder')}
+                  rows={2}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
                 name="contact"
                 label={t('form.contact')}
               >
                 <Input placeholder={t('form.contactPlaceholder')} />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="email"

@@ -463,6 +463,8 @@
             "registeredCapitalPlaceholder": "请输入注册资本金",
             "address": "公司地址",
             "addressPlaceholder": "请输入公司地址",
+            "internAddress": "实习地址",
+            "internAddressPlaceholder": "请输入实习地址",
             "contact": "联系方式",
             "contactPlaceholder": "请输入联系方式",
             "email": "联系邮箱",

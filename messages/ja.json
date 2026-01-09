@@ -460,6 +460,8 @@
             "registeredCapitalPlaceholder": "資本金を入力",
             "address": "住所",
             "addressPlaceholder": "住所を入力",
+            "internAddress": "実習先住所",
+            "internAddressPlaceholder": "実習先住所を入力",
             "contact": "連絡先",
             "contactPlaceholder": "連絡先を入力",
             "email": "メールアドレス",
