@@ -209,6 +209,7 @@
             "changeStatus": "状态变更",
             "payment": "付款/退款",
             "delete": "删除",
+            "switchBinding": "切换企业/工单",
             "upload": "上传"
         },
         "messages": {

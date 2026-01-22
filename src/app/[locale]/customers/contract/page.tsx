@@ -705,8 +705,17 @@ export default function ContractCustomersPage() {
           }
         ]
 
-        // 在admin身份下添加删除选项
         if (isAdmin) {
+          // 如果已经绑定了企业/工单，添加切换选项
+          if (record.company_id || record.work_order_id) {
+            menuItems.push({
+              key: 'switchBinding',
+              label: t('actions.switchBinding'),
+              icon: <SwapOutlined />,
+              onClick: () => handleBind(record)
+            })
+          }
+
           menuItems.push({
             key: 'delete',
             label: t('actions.delete'),
