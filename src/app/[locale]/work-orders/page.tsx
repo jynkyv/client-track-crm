@@ -22,7 +22,7 @@ import {
     PlusOutlined,
     MessageOutlined
 } from '@ant-design/icons'
-import { useRouter } from '@/navigation'
+import { useRouter, Link } from '@/navigation'
 import { supabase, Ticket, Company } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslations } from 'next-intl'
@@ -255,6 +255,11 @@ export default function WorkOrdersPage() {
             key: 'company_name',
             width: 150,
             align: 'center' as const,
+            render: (text: string, record: Ticket) => (
+                <Link href={`/companies/${record.company_id}`} style={{ color: '#1890ff', cursor: 'pointer' }}>
+                    {text}
+                </Link>
+            )
         },
         {
             title: t('columns.ticketName'),
@@ -262,6 +267,7 @@ export default function WorkOrdersPage() {
             key: 'name',
             width: 150,
             align: 'center' as const,
+            render: (text: string) => <Tag color="blue">{text}</Tag>
         },
         {
             title: t('columns.position'),
@@ -494,7 +500,15 @@ export default function WorkOrdersPage() {
                         label={t('form.ticketName')}
                         rules={[{ required: true, message: t('form.ticketNamePlaceholder') }]}
                     >
-                        <Input placeholder={t('form.ticketNamePlaceholder')} />
+                        <Select
+                            placeholder={t('form.ticketNamePlaceholder')}
+                            mode="tags"
+                            style={{ width: '100%' }}
+                            options={[
+                                // Remove duplicates and empty values from existing ticket names
+                                ...Array.from(new Set(tickets.map(t => t.name).filter(Boolean))).map(name => ({ label: name, value: name }))
+                            ]}
+                        />
                     </Form.Item>
 
                     <Form.Item

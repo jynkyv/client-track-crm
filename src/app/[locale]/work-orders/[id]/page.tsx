@@ -1374,7 +1374,15 @@ export default function WorkOrderDetailPage() {
                                 label={t('form.ticketName')}
                                 rules={[{ required: true, message: t('form.ticketNamePlaceholder') }]}
                             >
-                                <Input placeholder={t('form.ticketNamePlaceholder')} />
+                                <Select
+                                    placeholder={t('form.ticketNamePlaceholder')}
+                                    mode="tags"
+                                    style={{ width: '100%' }}
+                                // For edit mode, we might want to fetch unique options, but for now allow tags.
+                                // Or fetch options similar to Create page if needed.
+                                // Given we don't have 'tickets' list here, we rely on free input or maybe user remembers.
+                                // Ideally we fetch common types.
+                                />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
