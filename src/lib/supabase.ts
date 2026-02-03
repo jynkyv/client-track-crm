@@ -165,6 +165,7 @@ export interface Company {
   instructor_license?: DocumentFile[] // 技能実習指導員講習许可证
   visa_application?: DocumentFile[] // 入国管理局签证申请
   employment_contract?: DocumentFile[] // 雇佣合同
+  association_application_form?: DocumentFile[] // 组合加入申请书
   is_association_member?: boolean // 是否加入组合
   owner_id?: string // 负责人ID（创建者）
   created_at: string

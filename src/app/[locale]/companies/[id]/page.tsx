@@ -285,6 +285,7 @@ export default function CompanyDetailPage() {
     { key: 'instructor_license', label: t('columns.instructorLicense') },
     { key: 'visa_application', label: t('columns.visaApplication') },
     { key: 'employment_contract', label: t('columns.employmentContract') },
+    { key: 'association_application_form', label: t('columns.associationApplicationForm') },
   ]
 
   // 获取企业详情

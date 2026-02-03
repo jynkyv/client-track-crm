@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import { useRouter } from '@/navigation'
+import { useParams, useRouter } from 'next/navigation'
+import { Link } from '@/navigation'
 import { supabase, Ticket, Applicant, Company, Customer, type DocumentFile, type WorkOrderQuestion, type WorkOrderAnswer } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -731,7 +731,13 @@ export default function WorkOrderDetailPage() {
             >
                 <Descriptions bordered column={2}>
                     <Descriptions.Item label={t('columns.name')}>{ticket?.name}</Descriptions.Item>
-                    <Descriptions.Item label={t('columns.companyName')}>{company?.name}</Descriptions.Item>
+                    <Descriptions.Item label={t('columns.companyName')}>
+                        {company ? (
+                            <Link href={`/companies/${company.id}`} style={{ color: '#1890ff', fontWeight: 500 }}>
+                                {company.name}
+                            </Link>
+                        ) : '-'}
+                    </Descriptions.Item>
                     <Descriptions.Item label={t('form.position')}>{ticket?.position}</Descriptions.Item>
                     <Descriptions.Item label={t('form.recruitCount')}>{ticket?.recruit_count}人</Descriptions.Item>
                     <Descriptions.Item label={t('form.salary')}>{ticket?.salary}</Descriptions.Item>
