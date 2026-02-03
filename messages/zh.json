@@ -255,16 +255,16 @@
         "search": {
             "companyName": "企业名称",
             "companyNamePlaceholder": "请输入企业名称",
-            "ticketName": "工单名称",
-            "ticketNamePlaceholder": "请输入工单名称",
+            "ticketName": "業種",
+            "ticketNamePlaceholder": "请输入業種",
             "owner": "负责人",
             "ownerPlaceholder": "请输入负责人姓名"
         },
         "columns": {
             "createdAt": "创建时间",
             "companyName": "企业名称",
-            "ticketName": "工单类型",
-            "name": "工单类型",
+            "ticketName": "業種",
+            "name": "業種",
             "position": "岗位名称",
             "recruitCount": "招聘人数",
             "applicantCount": "已投递人数",
@@ -283,8 +283,8 @@
         "form": {
             "selectCompany": "选择企业",
             "selectCompanyPlaceholder": "请选择企业",
-            "ticketName": "工单类型",
-            "ticketNamePlaceholder": "请选择或输入工单类型",
+            "ticketName": "業種",
+            "ticketNamePlaceholder": "请选择或输入業種",
             "position": "岗位名称",
             "positionPlaceholder": "请输入岗位名称",
             "recruitCount": "招聘人数",

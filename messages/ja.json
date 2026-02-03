@@ -254,16 +254,16 @@
         "search": {
             "companyName": "企業名",
             "companyNamePlaceholder": "企業名を入力",
-            "ticketName": "求人票名",
-            "ticketNamePlaceholder": "求人票名を入力",
+            "ticketName": "業種",
+            "ticketNamePlaceholder": "業種を入力",
             "owner": "担当者",
             "ownerPlaceholder": "担当者名を入力"
         },
         "columns": {
             "createdAt": "作成日時",
             "companyName": "企業名",
-            "ticketName": "求人票名",
-            "name": "求人票名",
+            "ticketName": "業種",
+            "name": "業種",
             "position": "職種",
             "recruitCount": "募集人数",
             "applicantCount": "応募者数",
@@ -282,8 +282,8 @@
         "form": {
             "selectCompany": "企業を選択",
             "selectCompanyPlaceholder": "企業を選択してください",
-            "ticketName": "求人票名",
-            "ticketNamePlaceholder": "求人票名を入力してください",
+            "ticketName": "業種",
+            "ticketNamePlaceholder": "業種を入力してください",
             "position": "職種",
             "positionPlaceholder": "職種を入力してください",
             "recruitCount": "募集人数",
