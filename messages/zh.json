@@ -277,7 +277,8 @@
             "view": "查看",
             "viewDetail": "查看详情",
             "upload": "上传",
-            "uploading": "上传中..."
+            "uploading": "上传中...",
+            "exportAssociationMembers": "导出组合成员"
         },
         "form": {
             "selectCompany": "选择企业",

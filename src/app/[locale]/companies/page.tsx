@@ -22,7 +22,8 @@ import {
   UploadOutlined,
   FilePdfOutlined,
   ReloadOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  FileExcelOutlined
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useRouter } from '@/navigation'
@@ -30,6 +31,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFileUrl } from '@/lib/utils'
 import { useTranslations, useLocale } from 'next-intl'
+import * as XLSX from 'xlsx'
 
 const { Option } = Select
 
@@ -354,6 +356,59 @@ export default function CompaniesPage() {
     )
   }
 
+  // 导出组合成员
+  const handleExportAssociationMembers = async () => {
+    try {
+      message.loading(t('messages.uploading').replace('...', '')) // Reusing uploading message or generic loading
+      // Ideally use a specific loading message, but using what's available or generic
+
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('is_association_member', true)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      if (!data || data.length === 0) {
+        message.info(t('messages.noAssociationMembers') || '没有找到组合成员')
+        return
+      }
+
+      // Prepare data for Excel
+      const exportData = data.map(company => ({
+        '氏　　　名': `${company.name}\n代表取締役\n${company.representative || ''}`,
+        '住　　　所': company.address || '',
+        '加入日': '1', // Placeholder as per user request/screenshot
+        '業　　　種': company.industry || '',
+        '資本金の額\n又は\n出資の総額': company.registered_capital || '',
+        '常用\n従業\n員数': `${company.employee_count || 0}人`
+      }))
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new()
+      const ws = XLSX.utils.json_to_sheet(exportData)
+
+      // Set specific column widths
+      ws['!cols'] = [
+        { wch: 40 }, // Name
+        { wch: 40 }, // Address
+        { wch: 10 }, // Join Date
+        { wch: 20 }, // Industry
+        { wch: 20 }, // Capital
+        { wch: 10 }, // Employees
+      ]
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Association Members')
+      XLSX.writeFile(wb, `Association_Members_${new Date().toISOString().split('T')[0]}.xlsx`)
+
+      message.success(tCommon('exportSuccess') || '导出成功')
+    } catch (error) {
+      console.error('Export failed:', error)
+      message.error(tCommon('exportError') || '导出失败')
+    }
+  }
+
   const columns = [
     {
       title: t('columns.name'),
@@ -438,9 +493,17 @@ export default function CompaniesPage() {
       <Card>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2>{t('title')}</h2>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            {t('create')}
-          </Button>
+          <Space>
+            <Button
+              icon={<FileExcelOutlined />}
+              onClick={handleExportAssociationMembers}
+            >
+              {t('actions.exportAssociationMembers')}
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              {t('create')}
+            </Button>
+          </Space>
         </div>
 
         {/* 搜索区域 */}
