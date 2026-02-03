@@ -16,7 +16,8 @@ import {
   List,
   Form,
   Input,
-  InputNumber
+  InputNumber,
+  Switch
 } from 'antd'
 import type { UploadFile } from 'antd'
 import {
@@ -60,6 +61,7 @@ function EditCompanyForm({
         legal_number: company.legal_number,
         representative: company.representative,
         industry: company.industry,
+        is_association_member: company.is_association_member,
         employee_count: company.employee_count,
         registered_capital: company.registered_capital,
         address: company.address,
@@ -82,6 +84,7 @@ function EditCompanyForm({
           legal_number: values.legal_number,
           representative: values.representative,
           industry: values.industry,
+          is_association_member: values.is_association_member,
           employee_count: values.employee_count || null,
           registered_capital: values.registered_capital || null,
           address: values.address || null,
@@ -154,6 +157,15 @@ function EditCompanyForm({
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item
+            name="is_association_member"
+            label={t('columns.isAssociationMember')}
+            valuePropName="checked"
+          >
+            <Switch checkedChildren="是" unCheckedChildren="否" />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
             name="employee_count"
             label={t('form.employeeCount')}
           >
@@ -165,6 +177,9 @@ function EditCompanyForm({
             />
           </Form.Item>
         </Col>
+      </Row>
+
+      <Row gutter={16}>
         <Col span={12}>
           <Form.Item
             name="registered_capital"
@@ -503,6 +518,7 @@ export default function CompanyDetailPage() {
             <Descriptions.Item label={t('form.legalNumber')}>{company.legal_number}</Descriptions.Item>
             <Descriptions.Item label={t('form.representative')}>{company.representative}</Descriptions.Item>
             <Descriptions.Item label={t('form.industry')}>{company.industry}</Descriptions.Item>
+            <Descriptions.Item label={t('columns.isAssociationMember')}>{company.is_association_member ? '是' : '否'}</Descriptions.Item>
             <Descriptions.Item label={t('form.employeeCount')}>{company.employee_count}人</Descriptions.Item>
             <Descriptions.Item label={t('form.registeredCapital')}>{company.registered_capital}</Descriptions.Item>
             <Descriptions.Item label={t('form.address')} span={2}>{company.address}</Descriptions.Item>

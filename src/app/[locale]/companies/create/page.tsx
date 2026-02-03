@@ -12,7 +12,8 @@ import {
   Col,
   Upload,
   message,
-  Space
+  Space,
+  Switch
 } from 'antd'
 import type { UploadFile } from 'antd'
 import {
@@ -146,6 +147,7 @@ export default function CreateCompanyPage() {
         legal_number: values.legal_number,
         representative: values.representative,
         industry: values.industry,
+        is_association_member: values.is_association_member,
         employee_count: values.employee_count || null,
         registered_capital: values.registered_capital || null,
         address: values.address || null,
@@ -234,6 +236,16 @@ export default function CreateCompanyPage() {
           </Row>
 
           <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="is_association_member"
+                label={t('columns.isAssociationMember')}
+                valuePropName="checked"
+                initialValue={false}
+              >
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
             <Col span={12}>
               <Form.Item
                 name="employee_count"

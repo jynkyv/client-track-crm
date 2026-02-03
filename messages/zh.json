@@ -423,6 +423,7 @@
         "columns": {
             "name": "企业名称",
             "industry": "所属行业",
+            "isAssociationMember": "加入组合",
             "teihon": "藤本",
             "financialReport": "决算报告书",
             "industryLicense": "行业许可证",

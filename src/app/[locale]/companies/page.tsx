@@ -85,10 +85,55 @@ export default function CompaniesPage() {
         query = query.ilike('industry', `%${searchIndustry}%`)
       }
 
-      const { data, error } = await query
+      const { data: companiesData, error } = await query
 
       if (error) throw error
-      setCompanies(data || [])
+
+      // Calculate risk status
+      // 1. Get all company IDs
+      const companyIds = (companiesData || []).map(c => c.id)
+
+      if (companyIds.length > 0) {
+        // 2. Find companies with pending visa applicants
+        // We need to go through work_orders -> customers
+        // First get work orders for these companies
+        const { data: workOrders } = await supabase
+          .from('work_orders')
+          .select('id, company_id')
+          .in('company_id', companyIds)
+
+        if (workOrders && workOrders.length > 0) {
+          const workOrderIds = workOrders.map(wo => wo.id)
+
+          // Get customers with pending visa status
+          const { data: riskyCustomers } = await supabase
+            .from('customers')
+            .select('work_order_id')
+            .in('work_order_id', workOrderIds)
+            .eq('visa_status', 'pending')
+
+          if (riskyCustomers && riskyCustomers.length > 0) {
+            const riskyWorkOrderIds = new Set(riskyCustomers.map(rc => rc.work_order_id))
+            const riskyCompanyIds = new Set(
+              workOrders
+                .filter(wo => riskyWorkOrderIds.has(wo.id))
+                .map(wo => wo.company_id)
+            )
+
+            // Mark companies as risky
+            const companiesWithRisk = (companiesData || []).map(c => ({
+              ...c,
+              has_pending_visa: riskyCompanyIds.has(c.id)
+            }))
+
+            setCompanies(companiesWithRisk)
+            setLoading(false)
+            return
+          }
+        }
+      }
+
+      setCompanies(companiesData || [])
     } catch (error) {
       console.error('获取企业列表失败:', error)
       message.error(t('messages.fetchError'))
@@ -325,6 +370,14 @@ export default function CompaniesPage() {
       align: 'center' as const,
     },
     {
+      title: t('columns.isAssociationMember'),
+      dataIndex: 'is_association_member',
+      key: 'is_association_member',
+      width: 120,
+      align: 'center' as const,
+      render: (val: boolean) => val ? '是' : '否'
+    },
+    {
       title: t('columns.teihon'),
       key: 'teihon',
       width: 150,
@@ -441,7 +494,27 @@ export default function CompaniesPage() {
             showTotal: (total) => `共 ${total} 条记录`,
           }}
           scroll={{ x: 'max-content' }}
+          rowClassName={(record: any) => {
+            // Red highlight if NOT association member AND has pending visa applicants
+            if (record.is_association_member === false && record.has_pending_visa) {
+              return 'bg-red-100 hover:bg-red-200'
+            }
+            return ''
+          }}
         />
+        <style jsx global>{`
+          .bg-red-100 {
+            background-color: #fee2e2 !important;
+          }
+          .bg-red-100:hover {
+            background-color: #fecaca !important;
+          }
+          /* Ensure Ant Table hover doesn't override completely or looks okay */
+          .ant-table-tbody > tr.bg-red-100.ant-table-row:hover > td,
+          .ant-table-tbody > tr.bg-red-100 > td.ant-table-cell-row-hover {
+            background-color: #fecaca !important;
+          }
+        `}</style>
       </Card>
 
       {/* 上传PDF Modal */}
