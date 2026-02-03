@@ -276,7 +276,8 @@
             "view": "詳細",
             "viewDetail": "詳細を見る",
             "upload": "アップロード",
-            "uploading": "アップロード中..."
+            "uploading": "アップロード中...",
+            "exportAssociationMembers": "組合員名簿出力"
         },
         "form": {
             "selectCompany": "企業を選択",

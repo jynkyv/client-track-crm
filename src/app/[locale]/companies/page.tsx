@@ -128,6 +128,15 @@ export default function CompaniesPage() {
               has_pending_visa: riskyCompanyIds.has(c.id)
             }))
 
+            // Sort: Risky companies first, then by created_at (default)
+            companiesWithRisk.sort((a, b) => {
+              const aRisk = a.has_pending_visa && !a.is_association_member
+              const bRisk = b.has_pending_visa && !b.is_association_member
+              if (aRisk && !bRisk) return -1
+              if (!aRisk && bRisk) return 1
+              return 0
+            })
+
             setCompanies(companiesWithRisk)
             setLoading(false)
             return
