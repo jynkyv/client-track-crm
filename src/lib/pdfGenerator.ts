@@ -15,15 +15,15 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
     // You can download Noto Sans SC or similar and rename it
     let customFont
     try {
-        const fontBytes = await fetch('/fonts/custom_font.ttf').then(res => {
-            if (!res.ok) throw new Error('Font not found')
+        // Use encoded space for the URL
+        const fontBytes = await fetch('/fonts/MS%20Mincho.ttf').then(res => {
+            if (!res.ok) throw new Error(`Font fetch failed: ${res.statusText}`)
             return res.arrayBuffer()
         })
         customFont = await pdfDoc.embedFont(fontBytes)
     } catch (e) {
-        console.warn('Custom font not found, falling back to standard font (Chinese will not render correctly). Please upload a font to public/fonts/custom_font.ttf')
-        // Fallback to standard font (will not support Chinese)
-        customFont = await pdfDoc.embedFont('Helvetica')
+        console.error('Font loading error:', e)
+        throw new Error('无法加载中文字体文件 (MS Mincho.ttf)。请确保文件存在于 public/fonts/ 目录下。错误信息: ' + (e as Error).message)
     }
 
     const pages = pdfDoc.getPages()
