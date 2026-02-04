@@ -45,18 +45,18 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
         const date = dayjs(company.created_at)
         // Previous refined: x: 400, y: 760
         // New: x: 425 (+25), y: 755 (-5)
-        firstPage.drawText(`${date.year()}`, { x: 425, y: 755, size: fontSize, font: customFont, color })
-        firstPage.drawText(`${date.month() + 1}`, { x: 475, y: 755, size: fontSize, font: customFont, color })
-        firstPage.drawText(`${date.date()}`, { x: 515, y: 755, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.year()}`, { x: 422, y: 756, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.month() + 1}`, { x: 472, y: 756, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.date()}`, { x: 505, y: 756, size: fontSize, font: customFont, color })
     }
 
     // 2. Company Name - Move Down More
     // Previous refined: y: 430. Move Down more (-20) -> 410
-    firstPage.drawText(company.name || '', { x: 200, y: 410, size: fontSize, font: customFont, color })
+    firstPage.drawText(company.name || '', { x: 200, y: 420, size: fontSize, font: customFont, color })
 
     // 3. Representative - No Change from previous step
     // Previous refined: y: 380
-    firstPage.drawText(company.representative || '', { x: 200, y: 380, size: fontSize, font: customFont, color })
+    firstPage.drawText(company.representative || '', { x: 200, y: 375, size: fontSize, font: customFont, color })
 
     // 4. First Training Date - No Change from previous step
     // Previous refined: y: 330

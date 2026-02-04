@@ -11,6 +11,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
     "@ant-design/pro-components": "^2.8.10",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@supabase/supabase-js": "^2.76.1",
     "@types/bcryptjs": "^2.4.6",
     "ali-oss": "^6.23.0",
@@ -19,8 +20,10 @@
     "dayjs": "^1.11.19",
     "docx": "^9.5.1",
     "file-saver": "^2.0.5",
+    "fontkit": "^2.0.4",
     "next": "^14.2.33",
     "next-intl": "^4.5.8",
+    "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "xlsx": "^0.18.5"
