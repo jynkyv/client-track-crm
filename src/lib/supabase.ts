@@ -85,7 +85,6 @@ export interface Payment {
 // 工单类型定义
 export interface Ticket {
   id: string
-  name: string // 工单名称
   company_id: string // 企业ID
   position: string // 岗位名称
   recruit_count: number // 招聘人数
@@ -98,6 +97,7 @@ export interface Ticket {
   work_environment_images?: DocumentFile[] // 工作环境图片
   owner_id: string // 负责人ID（创建者）
   owner_name: string // 负责人姓名
+  industry?: string // 业种/行业
   created_at: string
   updated_at: string
 }

@@ -30,6 +30,15 @@ import { useTranslations } from 'next-intl'
 const { Option } = Select
 const { TextArea } = Input
 
+const INDUSTRIES = [
+    { value: '農業・林業関係', label: '農業・林業関係' },
+    { value: '漁業関係', label: '漁業関係' },
+    { value: '建設関係', label: '建設関係' },
+    { value: '食品製造関係', label: '食品製造関係' },
+    { value: '繊維・衣服関係', label: '繊維・衣服関係' },
+    { value: '機械・金属関係', label: '機械・金属関係' },
+]
+
 export default function WorkOrdersPage() {
     const router = useRouter()
     const { canAccessTickets, isChineseEmployee, isJapaneseEmployee, user } = useAuth()
@@ -88,9 +97,8 @@ export default function WorkOrdersPage() {
                 query = query.eq('owner_id', user.id)
             }
 
-            // 工单名称搜索（数据库层面）
             if (searchTicketName) {
-                query = query.ilike('name', `%${searchTicketName}%`)
+                query = query.eq('industry', searchTicketName)
             }
             // 负责人搜索（数据库层面）
             if (searchOwnerName) {
@@ -217,7 +225,7 @@ export default function WorkOrdersPage() {
                 .from('work_orders')
                 .insert([{
                     company_id: values.company_id,
-                    name: values.name,
+                    industry: values.industry,
                     position: values.position,
                     recruit_count: values.recruit_count,
                     salary: values.salary,
@@ -263,11 +271,11 @@ export default function WorkOrdersPage() {
         },
         {
             title: t('columns.ticketName'),
-            dataIndex: 'name',
-            key: 'name',
+            dataIndex: 'industry',
+            key: 'industry',
             width: 150,
             align: 'center' as const,
-            render: (text: string) => <Tag color="blue">{text}</Tag>
+            render: (text: string) => <Tag color="blue">{text || '-'}</Tag>
         },
         {
             title: t('columns.position'),
@@ -414,14 +422,17 @@ export default function WorkOrdersPage() {
                             />
                         </Form.Item>
                         <Form.Item label={t('search.ticketName')} style={{ marginBottom: 16 }}>
-                            <Input
+                            <Select
                                 placeholder={t('search.ticketNamePlaceholder')}
-                                prefix={<SearchOutlined />}
                                 value={searchTicketName}
-                                onChange={(e) => setSearchTicketName(e.target.value)}
+                                onChange={setSearchTicketName}
                                 allowClear
                                 style={{ width: 200 }}
-                            />
+                            >
+                                {INDUSTRIES.map(i => (
+                                    <Option key={i.value} value={i.value}>{i.label}</Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                         <Form.Item label={t('search.owner')} style={{ marginBottom: 16 }}>
                             <Input
@@ -496,19 +507,15 @@ export default function WorkOrdersPage() {
                     </Form.Item>
 
                     <Form.Item
-                        name="name"
+                        name="industry"
                         label={t('form.ticketName')}
                         rules={[{ required: true, message: t('form.ticketNamePlaceholder') }]}
                     >
-                        <Select
-                            placeholder={t('form.ticketNamePlaceholder')}
-                            mode="tags"
-                            style={{ width: '100%' }}
-                            options={[
-                                // Remove duplicates and empty values from existing ticket names
-                                ...Array.from(new Set(tickets.map(t => t.name).filter(Boolean))).map(name => ({ label: name, value: name }))
-                            ]}
-                        />
+                        <Select placeholder={t('form.ticketNamePlaceholder')}>
+                            {INDUSTRIES.map(i => (
+                                <Option key={i.value} value={i.value}>{i.label}</Option>
+                            ))}
+                        </Select>
                     </Form.Item>
 
                     <Form.Item

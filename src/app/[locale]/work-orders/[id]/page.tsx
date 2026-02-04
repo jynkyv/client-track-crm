@@ -33,6 +33,15 @@ import { useTranslations, useLocale } from 'next-intl'
 const { Option } = Select
 const { TextArea } = Input
 
+const INDUSTRIES = [
+    { value: '農業・林業関係', label: '農業・林業関係' },
+    { value: '漁業関係', label: '漁業関係' },
+    { value: '建設関係', label: '建設関係' },
+    { value: '食品製造関係', label: '食品製造関係' },
+    { value: '繊維・衣服関係', label: '繊維・衣服関係' },
+    { value: '機械・金属関係', label: '機械・金属関係' },
+]
+
 export default function WorkOrderDetailPage() {
     const params = useParams()
     const router = useRouter()
@@ -657,7 +666,7 @@ export default function WorkOrderDetailPage() {
     // 打开编辑工单Drawer
     const handleEditTicket = () => {
         editTicketForm.setFieldsValue({
-            name: ticket?.name,
+            industry: ticket?.industry,
             position: ticket?.position,
             recruit_count: ticket?.recruit_count,
             salary: ticket?.salary,
@@ -676,7 +685,7 @@ export default function WorkOrderDetailPage() {
             const { error } = await supabase
                 .from('work_orders')
                 .update({
-                    name: values.name,
+                    industry: values.industry,
                     position: values.position,
                     recruit_count: values.recruit_count,
                     salary: values.salary,
@@ -730,7 +739,7 @@ export default function WorkOrderDetailPage() {
                 )}
             >
                 <Descriptions bordered column={2}>
-                    <Descriptions.Item label={t('columns.name')}>{ticket?.name}</Descriptions.Item>
+                    <Descriptions.Item label={t('columns.name')}>{ticket?.industry}</Descriptions.Item>
                     <Descriptions.Item label={t('columns.companyName')}>
                         {company ? (
                             <Link href={`/companies/${company.id}`} style={{ color: '#1890ff', fontWeight: 500 }}>
@@ -1376,19 +1385,15 @@ export default function WorkOrderDetailPage() {
                     <Row gutter={16}>
                         <Col span={12}>
                             <Form.Item
-                                name="name"
+                                name="industry"
                                 label={t('form.ticketName')}
                                 rules={[{ required: true, message: t('form.ticketNamePlaceholder') }]}
                             >
-                                <Select
-                                    placeholder={t('form.ticketNamePlaceholder')}
-                                    mode="tags"
-                                    style={{ width: '100%' }}
-                                // For edit mode, we might want to fetch unique options, but for now allow tags.
-                                // Or fetch options similar to Create page if needed.
-                                // Given we don't have 'tickets' list here, we rely on free input or maybe user remembers.
-                                // Ideally we fetch common types.
-                                />
+                                <Select placeholder={t('form.ticketNamePlaceholder')}>
+                                    {INDUSTRIES.map(i => (
+                                        <Option key={i.value} value={i.value}>{i.label}</Option>
+                                    ))}
+                                </Select>
                             </Form.Item>
                         </Col>
                         <Col span={12}>
