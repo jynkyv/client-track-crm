@@ -126,6 +126,8 @@ export default function CompaniesPage() {
             .select('work_order_id')
             .in('work_order_id', workOrderIds)
             .eq('visa_status', 'pending')
+            .neq('stage2_status', '面试失败') // Explicitly exclude Failed
+            .neq('stage2_status', '已拒绝')   // Explicitly exclude Rejected
 
           if (riskyCustomers && riskyCustomers.length > 0) {
             const riskyWorkOrderIds = new Set(riskyCustomers.map(rc => rc.work_order_id))
