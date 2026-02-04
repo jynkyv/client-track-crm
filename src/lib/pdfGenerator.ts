@@ -40,29 +40,29 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
     // Using some standard positions for now, can be tweaked.
 
     // 1. Date (Year Month Day) - Top Right
+    // 1. Creation Date (Date/Month/Day) - Move Left and Up
     if (company.created_at) {
         const date = dayjs(company.created_at)
-        firstPage.drawText(`${date.year()}`, { x: 450, y: 750, size: fontSize, font: customFont, color })
-        firstPage.drawText(`${date.month() + 1}`, { x: 500, y: 750, size: fontSize, font: customFont, color })
-        firstPage.drawText(`${date.date()}`, { x: 540, y: 750, size: fontSize, font: customFont, color })
+        // Previous: x: 450, y: 750. Move Left (-50) and Up (+10)
+        firstPage.drawText(`${date.year()}`, { x: 400, y: 760, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.month() + 1}`, { x: 450, y: 760, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.date()}`, { x: 490, y: 760, size: fontSize, font: customFont, color })
     }
 
-    // 2. Company Name
-    // 3. Representative
-    // 4. First Training Date
+    // 2. Company Name - Move Down
+    // Previous: y: 450. Move Down (-20)
+    firstPage.drawText(company.name || '', { x: 200, y: 430, size: fontSize, font: customFont, color })
 
-    // Need precise coordinates. For now, putting them in typical spots.
-    // 2. Company Name: "1. 加入企业名"
-    firstPage.drawText(company.name || '', { x: 200, y: 450, size: fontSize, font: customFont, color })
+    // 3. Representative - Move Down
+    // Previous: y: 400. Move Down (-20)
+    firstPage.drawText(company.representative || '', { x: 200, y: 380, size: fontSize, font: customFont, color })
 
-    // 3. Representative: "2. 代表者氏名"
-    firstPage.drawText(company.representative || '', { x: 200, y: 400, size: fontSize, font: customFont, color })
-
-    // 4. First Training Date: "3. 加入日"
+    // 4. First Training Date - Move Down
+    // Previous: y: 350. Move Down (-20)
     if (company.first_training_at) {
         const trainDate = dayjs(company.first_training_at)
         const dateStr = `${trainDate.year()}年 ${trainDate.month() + 1}月 ${trainDate.date()}日`
-        firstPage.drawText(dateStr, { x: 200, y: 350, size: fontSize, font: customFont, color })
+        firstPage.drawText(dateStr, { x: 200, y: 330, size: fontSize, font: customFont, color })
     }
 
     const pdfBytes = await pdfDoc.save()
