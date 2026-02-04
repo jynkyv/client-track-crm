@@ -623,10 +623,10 @@ export default function CompaniesPage() {
           }}
         />
         <style jsx global>{`
-          .bg-red-100 {
+          .bg-red-100, .bg-red-100 .ant-table-cell {
             background-color: #fee2e2 !important;
           }
-          .bg-red-100:hover {
+          .bg-red-100:hover, .bg-red-100:hover .ant-table-cell {
             background-color: #fecaca !important;
           }
           /* Ensure Ant Table hover doesn't override completely or looks okay */
