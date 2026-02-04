@@ -366,7 +366,7 @@ export default function ChatWidget() {
                 width="50vw"
                 style={{ top: '25vh' }}
                 styles={{ body: { height: '50vh', padding: 0 } }}
-                destroyOnClose
+                destroyOnHidden={true}
             >
                 <div style={{ display: 'flex', height: '100%' }}>
                     {/* 左侧联系人列表 */}
