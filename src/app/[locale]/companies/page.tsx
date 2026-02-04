@@ -37,6 +37,15 @@ const { Option } = Select
 
 import { type Company, type DocumentFile } from '@/lib/supabase'
 
+const INDUSTRIES = [
+  { value: '農業・林業関係', label: '農業・林業関係' },
+  { value: '漁業関係', label: '漁業関係' },
+  { value: '建設関係', label: '建設関係' },
+  { value: '食品製造関係', label: '食品製造関係' },
+  { value: '繊維・衣服関係', label: '繊維・衣服関係' },
+  { value: '機械・金属関係', label: '機械・金属関係' },
+]
+
 // Removed local Company interface definition in favor of imported one
 
 export default function CompaniesPage() {
@@ -56,6 +65,7 @@ export default function CompaniesPage() {
   const [viewModalVisible, setViewModalVisible] = useState(false)
   const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
   const [currentViewField, setCurrentViewField] = useState<string>('')
+  const [industryCounts, setIndustryCounts] = useState<Record<string, { total: number, joined: number }>>({})
 
   const t = useTranslations('Company')
   const tCommon = useTranslations('Common')
@@ -143,6 +153,30 @@ export default function CompaniesPage() {
           }
         }
       }
+
+      // Calculate industry counts
+      const industryCounts: Record<string, { total: number, joined: number }> = {}
+      INDUSTRIES.forEach(i => industryCounts[i.value] = { total: 0, joined: 0 })
+
+      const countsData = companiesData || []
+      countsData.forEach(c => {
+        const industry = c.industry || '其他'
+        if (!industryCounts[industry]) {
+          // Try to find if it matches one of the known ones loosely or just add it
+          // For now, if not in list, maybe ignore or put in separate bucket?
+          // Since we want to display counts on the dropdown options, we only care about the options we have.
+          // If data is old and has different industry names, they won't match.
+        } else {
+          industryCounts[industry].total++
+          if (c.is_association_member) {
+            industryCounts[industry].joined++
+          }
+        }
+      })
+
+      // We need to pass this state to the render or store it.
+      // Since Render is using `INDUSTRIES` constant, we might need a state for counts or just Map.
+      setIndustryCounts(industryCounts)
 
       setCompanies(companiesData || [])
     } catch (error) {
@@ -346,13 +380,15 @@ export default function CompaniesPage() {
     const fileCount = files?.length || 0
     return (
       <Space>
-        <Button
-          size="small"
-          icon={<UploadOutlined />}
-          onClick={() => handleUpload(field, record)}
-        >
-          {t('actions.upload')}
-        </Button>
+        {field !== 'association_application_form' && (
+          <Button
+            size="small"
+            icon={<UploadOutlined />}
+            onClick={() => handleUpload(field, record)}
+          >
+            {t('actions.upload')}
+          </Button>
+        )}
         <Button
           size="small"
           icon={<FilePdfOutlined />}
@@ -524,6 +560,14 @@ export default function CompaniesPage() {
       align: 'center' as const,
     },
     {
+      title: '创建时间', // Creation Time
+      dataIndex: 'created_at',
+      key: 'created_at',
+      width: 150,
+      align: 'center' as const,
+      render: (val: string) => val ? new Date(val).toLocaleDateString() : '-'
+    },
+    {
       title: t('columns.isAssociationMember'),
       dataIndex: 'is_association_member',
       key: 'is_association_member',
@@ -628,12 +672,14 @@ export default function CompaniesPage() {
                 value={searchIndustry}
                 onChange={setSearchIndustry}
                 allowClear
-                style={{ width: 200 }}
+                style={{ width: 300 }}
               >
-                <Option value="制造业">制造业</Option>
-                <Option value="服务业">服务业</Option>
-                <Option value="IT">IT</Option>
-                <Option value="金融">金融</Option>
+                {INDUSTRIES.map(i => {
+                  const count = industryCounts[i.value] || { total: 0, joined: 0 }
+                  return (
+                    <Option key={i.value} value={i.value}>{`${i.label} [${count.joined}/${count.total}]`}</Option>
+                  )
+                })}
                 <Option value="其他">其他</Option>
               </Select>
             </Form.Item>

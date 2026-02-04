@@ -17,8 +17,20 @@ import {
   Form,
   Input,
   InputNumber,
-  Switch
+  Switch,
+  Select
 } from 'antd'
+
+const { Option } = Select
+
+const INDUSTRIES = [
+  { value: '農業・林業関係', label: '農業・林業関係' },
+  { value: '漁業関係', label: '漁業関係' },
+  { value: '建設関係', label: '建設関係' },
+  { value: '食品製造関係', label: '食品製造関係' },
+  { value: '繊維・衣服関係', label: '繊維・衣服関係' },
+  { value: '機械・金属関係', label: '機械・金属関係' },
+]
 import type { UploadFile } from 'antd'
 import {
   EditOutlined,
@@ -149,7 +161,11 @@ function EditCompanyForm({
             label={t('form.industry')}
             rules={[{ required: true, message: t('form.industryPlaceholder') }]}
           >
-            <Input placeholder={t('form.industryPlaceholder')} />
+            <Select placeholder={t('form.industryPlaceholder')}>
+              {INDUSTRIES.map(i => (
+                <Option key={i.value} value={i.value}>{i.label}</Option>
+              ))}
+            </Select>
           </Form.Item>
         </Col>
       </Row>
