@@ -201,18 +201,18 @@ export default function ContractCustomersPage() {
       // 获取工单列表
       const { data: workOrdersData, error: workOrdersError } = await supabase
         .from('work_orders')
-        .select('id, name, company_id')
-        .order('name', { ascending: true })
+        .select('id, position, company_id')
+        .order('position', { ascending: true })
 
       if (workOrdersError) throw workOrdersError
 
       const workOrdersMap = new Map<string, string>()
       const workOrdersList: Array<{ id: string, name: string, company_id: string }> = []
       workOrdersData?.forEach(workOrder => {
-        workOrdersMap.set(workOrder.id, workOrder.name)
+        workOrdersMap.set(workOrder.id, workOrder.position)
         workOrdersList.push({
           id: workOrder.id,
-          name: workOrder.name,
+          name: workOrder.position, // Map position to name for compatibility
           company_id: workOrder.company_id
         })
       })
@@ -232,12 +232,18 @@ export default function ContractCustomersPage() {
     try {
       const { data, error } = await supabase
         .from('work_orders')
-        .select('id, name, company_id')
+        .select('id, position, company_id')
         .eq('company_id', companyId)
-        .order('name', { ascending: true })
+        .order('position', { ascending: true })
 
       if (error) throw error
-      setWorkOrderList(data || [])
+      // Map position to name for compatibility
+      const mappedData = (data || []).map(item => ({
+        id: item.id,
+        name: item.position,
+        company_id: item.company_id
+      }))
+      setWorkOrderList(mappedData)
     } catch (error) {
       console.error('获取工单列表失败:', error)
       setWorkOrderList([])
