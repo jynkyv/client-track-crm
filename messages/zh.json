@@ -24,7 +24,11 @@
         "loading": "加载中...",
         "view": "查看",
         "close": "关闭",
-        "submit": "提交"
+        "submit": "提交",
+        "exporting": "正在导出...",
+        "exportSuccess": "导出成功",
+        "exportError": "导出失败",
+        "noData": "暂无数据"
     },
     "Dashboard": {
         "title": "仪表盘",
@@ -233,7 +237,8 @@
             "confirmDeleteContent": "确定要删除这个客户吗？此操作不可撤销。",
             "confirmDeleteFileContent": "确定要删除此文件吗？此操作不可撤销。",
             "confirmOk": "确认",
-            "confirmCancel": "取消"
+            "confirmCancel": "取消",
+            "noAssociationMembers": "未找到组合成员"
         },
         "uploadTime": "上传时间",
         "status": {
@@ -442,7 +447,8 @@
             "view": "查看",
             "viewDetail": "查看详情",
             "edit": "编辑",
-            "delete": "删除"
+            "delete": "删除",
+            "exportAssociationMembers": "导出组合成员"
         },
         "upload": {
             "title": "上传",
