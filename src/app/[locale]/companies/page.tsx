@@ -708,19 +708,21 @@ export default function CompaniesPage() {
             </Form.Item>
             <Form.Item label={t('search.industry')} style={{ marginBottom: 16 }}>
               <Select
-                placeholder={t('search.industryPlaceholder')}
+                placeholder={t('filters.industry')}
+                style={{ width: 250 }} // Increased width to accommodate counts
+                allowClear
                 value={searchIndustry}
                 onChange={setSearchIndustry}
-                allowClear
-                style={{ width: 300 }}
               >
                 {INDUSTRIES.map(i => {
-                  const count = industryCounts[i.value] || { total: 0, joined: 0 }
+                  const counts = industryCounts[i.value] || { total: 0, joined: 0 }
+                  const label = `${i.label} [${counts.joined}/${counts.total}]`
                   return (
-                    <Option key={i.value} value={i.value}>{`${i.label} [${count.joined}/${count.total}]`}</Option>
+                    <Select.Option key={i.value} value={i.value}>
+                      {label}
+                    </Select.Option>
                   )
                 })}
-
               </Select>
             </Form.Item>
             <Form.Item style={{ marginBottom: 16 }}>
