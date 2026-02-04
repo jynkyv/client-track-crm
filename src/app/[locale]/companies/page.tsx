@@ -681,7 +681,7 @@ export default function CompaniesPage() {
                     <Option key={i.value} value={i.value}>{`${i.label} [${count.joined}/${count.total}]`}</Option>
                   )
                 })}
-                <Option value="其他">其他</Option>
+
               </Select>
             </Form.Item>
             <Form.Item style={{ marginBottom: 16 }}>
