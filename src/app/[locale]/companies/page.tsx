@@ -116,8 +116,10 @@ export default function CompaniesPage() {
       console.log('Fetched companies:', companiesData?.length, companiesData?.[0])
 
       // Calculate risk status
+      let finalCompanies = companiesData || []
+
       // 1. Get all company IDs
-      const companyIds = (companiesData || []).map(c => c.id)
+      const companyIds = finalCompanies.map(c => c.id)
 
       if (companyIds.length > 0) {
         // 2. Find companies with pending visa applicants
@@ -149,23 +151,19 @@ export default function CompaniesPage() {
             )
 
             // Mark companies as risky
-            const companiesWithRisk = (companiesData || []).map(c => ({
+            finalCompanies = finalCompanies.map(c => ({
               ...c,
               has_pending_visa: riskyCompanyIds.has(c.id)
             }))
 
             // Sort: Risky companies first, then by created_at (default)
-            companiesWithRisk.sort((a, b) => {
+            finalCompanies.sort((a, b) => {
               const aRisk = a.has_pending_visa && !a.is_association_member
               const bRisk = b.has_pending_visa && !b.is_association_member
               if (aRisk && !bRisk) return -1
               if (!aRisk && bRisk) return 1
               return 0
             })
-
-            setCompanies(companiesWithRisk)
-            setLoading(false)
-            return
           }
         }
       }
@@ -179,9 +177,12 @@ export default function CompaniesPage() {
         counts[ind.name] = { total: 0, joined: 0 }
       })
 
-      const countsData = companiesData || []
-      countsData.forEach(c => {
-        const industryName = c.industries?.name || 'その他'
+      finalCompanies.forEach(c => { // Use finalCompanies to be consistent
+        // Handle potentially array-wrapped joined data or singular object
+        const industries = c.industries as any
+        const industryName = Array.isArray(industries)
+          ? industries[0]?.name
+          : (industries?.name || 'その他')
 
         if (!counts[industryName]) {
           counts[industryName] = { total: 0, joined: 0 }
@@ -196,7 +197,7 @@ export default function CompaniesPage() {
       })
 
       setIndustryCounts(counts)
-      setCompanies(companiesData || [])
+      setCompanies(finalCompanies)
     } catch (error) {
       console.error('获取企业列表失败:', error)
       message.error(t('messages.fetchError'))
