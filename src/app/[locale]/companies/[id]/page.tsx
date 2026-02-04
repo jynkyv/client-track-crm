@@ -596,30 +596,27 @@ export default function CompanyDetailPage() {
 
                       {field.key === 'association_application_form' ? (
                         <Space>
-                          {company?.first_training_at ? (
-                            <Button
-                              size="small"
-                              icon={<FilePdfOutlined />}
-                              onClick={async () => {
-                                if (!company) return
-                                try {
-                                  message.loading('正在生成文件...')
-                                  // Cast because CompanyDetail might miss fields, checking type safety
-                                  const pdfBytes = await generateUnionJoinApplication(company as any)
-                                  const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                                  saveAs(blob, `${company.name}_入会申请书.pdf`)
-                                  message.success('下载成功')
-                                } catch (e) {
-                                  console.error(e)
-                                  message.error('生成失败: ' + (e as Error).message)
-                                }
-                              }}
-                            >
-                              下载申请书
-                            </Button>
-                          ) : (
-                            <span style={{ color: '#ccc' }}>暂无数据</span>
-                          )}
+                          <Button
+                            size="small"
+                            icon={<FilePdfOutlined />}
+                            disabled={!company?.first_training_at}
+                            onClick={async () => {
+                              if (!company || !company.first_training_at) return
+                              try {
+                                message.loading('正在生成文件...')
+                                // Cast because CompanyDetail might miss fields, checking type safety
+                                const pdfBytes = await generateUnionJoinApplication(company as any)
+                                const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
+                                saveAs(blob, `${company.name}_入会申请书.pdf`)
+                                message.success('下载成功')
+                              } catch (e) {
+                                console.error(e)
+                                message.error('生成失败: ' + (e as Error).message)
+                              }
+                            }}
+                          >
+                            下载申请书
+                          </Button>
                         </Space>
                       ) : (
                         <Space>
