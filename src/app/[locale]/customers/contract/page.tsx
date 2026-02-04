@@ -22,7 +22,7 @@ import {
   DatePicker,
   Modal
 } from 'antd'
-import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { supabase, Customer, Payment } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from '@/navigation'
@@ -55,6 +55,8 @@ export default function ContractCustomersPage() {
   const [statusForm] = Form.useForm()
   const [paymentForm] = Form.useForm()
   const [bindForm] = Form.useForm()
+  const [createDrawerVisible, setCreateDrawerVisible] = useState(false)
+  const [createForm] = Form.useForm()
   const { isAdmin, user, canAccessCustomers } = useAuth()
   const router = useRouter()
   const t = useTranslations('contract')
@@ -351,6 +353,87 @@ export default function ContractCustomersPage() {
         .eq('id', selectedCustomer.id)
 
       if (error) throw error
+
+      // 自动生成入会申请书逻辑
+      if (values.stage2_status === '培训中' && selectedCustomer.stage2_status !== '培训中' && selectedCustomer.company_id) {
+        try {
+          message.loading(tCommon('generatingDocument'))
+
+          // 1. Fetch current company files
+          const { data: company, error: companyError } = await supabase
+            .from('companies')
+            .select('association_application_form')
+            .eq('id', selectedCustomer.company_id)
+            .single()
+
+          if (!companyError && company) {
+            // 2. Generate DOCX
+            const { Document, Packer, Paragraph, TextRun, AlignmentType } = await import('docx')
+
+            const doc = new Document({
+              sections: [{
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    children: [
+                      new TextRun({
+                        text: "技能实习生入会申请书",
+                        bold: true,
+                        size: 32,
+                      }),
+                    ],
+                  }),
+                  new Paragraph({
+                    text: `申请人: ${selectedCustomer.real_name}`,
+                    spacing: { before: 400 },
+                  }),
+                  new Paragraph({
+                    text: `申请日期: ${dayjs().format('YYYY-MM-DD')}`,
+                  }),
+                  new Paragraph({
+                    text: "兹申请加入组合。",
+                    spacing: { before: 200 },
+                  }),
+                ],
+              }],
+            });
+
+            const blob = await Packer.toBlob(doc);
+            const fileName = `入会申请书_${selectedCustomer.real_name}_${dayjs().format('YYYYMMDD')}.docx`;
+            const file = new File([blob], fileName, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+            // 3. Upload
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const uploadRes = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (uploadRes.ok) {
+              const { url } = await uploadRes.json();
+              const currentFiles = company.association_application_form || [];
+              const newFile = {
+                url: url,
+                uploadedAt: new Date().toISOString()
+              };
+
+              // 4. Update Company
+              await supabase
+                .from('companies')
+                .update({ association_application_form: [...currentFiles, newFile] })
+                .eq('id', selectedCustomer.company_id);
+
+              message.success('已自动生成入会申请书')
+            }
+          }
+        } catch (genError) {
+          console.error('Auto-generation failed:', genError)
+          message.error('生成入会申请书失败')
+        }
+      }
+
       message.success(tCommon('success'))
       setStatusDrawerVisible(false)
       fetchCustomers()
@@ -455,6 +538,50 @@ export default function ContractCustomersPage() {
   const calculateWalletBalance = useCallback((customerId: string, payments: Payment[]) => {
     return payments.reduce((sum, payment) => sum + payment.amount, 0)
   }, [])
+
+  const handleCreate = () => {
+    createForm.resetFields()
+    setCreateDrawerVisible(true)
+  }
+
+  const handleCreateSubmit = async (values: any) => {
+    try {
+      const submitValues = {
+        real_name: values.real_name,
+        phone: values.phone,
+        gender: values.gender,
+        birth_date: values.birth_date ? values.birth_date.format('YYYY-MM-DD') : null,
+        household_location: values.household_location,
+        current_residence: values.current_residence,
+        contact: values.contact,
+        wechat: values.wechat,
+        emergency_contact: values.emergency_contact,
+        emergency_phone: values.emergency_phone,
+        work_experience: values.work_experience,
+        notes: values.notes,
+        status: 'closed',
+        stage2_status: '待面试',
+        owner: user?.username || 'employee',
+        wallet_balance: 0,
+        nickname: values.real_name, // Fallback for legacy field
+        intention: '高', // Default
+        source: '直接创建'
+      }
+
+      const { error } = await supabase
+        .from('customers')
+        .insert([submitValues])
+
+      if (error) throw error
+
+      message.success(tCommon('success'))
+      setCreateDrawerVisible(false)
+      fetchCustomers()
+    } catch (error: any) {
+      console.error('Create error:', error)
+      message.error(`${tCommon('error')}: ${error?.message || 'Unknown error'}`)
+    }
+  }
 
   const columns = [
     {
@@ -762,6 +889,11 @@ export default function ContractCustomersPage() {
       <Card>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2>{t('title')}</h2>
+          {!isAdmin && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              {t('add')}
+            </Button>
+          )}
         </div>
 
         {/* 筛选和搜索区域 */}
@@ -1107,6 +1239,147 @@ export default function ContractCustomersPage() {
         </Form>
       </Drawer>
 
+
+      {/* 创建客户 Drawer */}
+      <Drawer
+        title={t('add')}
+        placement="right"
+        width={720}
+        onClose={() => setCreateDrawerVisible(false)}
+        open={createDrawerVisible}
+        extra={
+          <Space>
+            <Button onClick={() => setCreateDrawerVisible(false)}>{tCommon('cancel')}</Button>
+            <Button type="primary" onClick={() => createForm.submit()}>
+              {tCommon('submit')}
+            </Button>
+          </Space>
+        }
+      >
+        <Form
+          form={createForm}
+          layout="vertical"
+          onFinish={handleCreateSubmit}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="real_name"
+                label={t('form.realName')}
+                rules={[{ required: true, message: t('form.realNamePlaceholder') }]}
+              >
+                <Input placeholder={t('form.realNamePlaceholder')} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="phone"
+                label={t('columns.phone')}
+                rules={[{ required: true, message: t('form.contactPlaceholder') }]}
+              >
+                <Input placeholder={t('form.contactPlaceholder')} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="gender"
+                label={t('form.gender')}
+                rules={[{ required: true, message: t('form.genderPlaceholder') }]}
+              >
+                <Select placeholder={t('form.genderPlaceholder')}>
+                  <Option value="male">{tCommon('gender.male')}</Option>
+                  <Option value="female">{tCommon('gender.female')}</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="birth_date"
+                label={t('form.birthDate')}
+                rules={[{ required: true, message: t('form.birthDatePlaceholder') }]}
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="household_location"
+                label={t('form.householdLocation')}
+              >
+                <Input placeholder={t('form.householdLocationPlaceholder')} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="current_residence"
+                label={t('form.currentResidence')}
+              >
+                <Input placeholder={t('form.currentResidencePlaceholder')} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="contact"
+                label={t('form.contact')}
+              >
+                <Input placeholder={t('form.contactPlaceholder')} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="wechat"
+                label={t('form.wechat')}
+              >
+                <Input placeholder={t('form.wechatPlaceholder')} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="emergency_contact"
+                label={t('form.emergencyContact')}
+              >
+                <Input placeholder={t('form.emergencyContactPlaceholder')} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="emergency_phone"
+                label={t('form.emergencyPhone')}
+              >
+                <Input placeholder={t('form.emergencyPhonePlaceholder')} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="work_experience"
+                label={t('columns.workExperience')}
+              >
+                <Input.TextArea rows={4} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="notes"
+                label={t('columns.notes')}
+              >
+                <Input.TextArea rows={4} />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Drawer>
     </div>
   )
 }

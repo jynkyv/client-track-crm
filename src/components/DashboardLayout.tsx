@@ -191,13 +191,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       label: t('menu.customers'),
       children: [
         {
-          key: 'customers/potential',
-          icon: <FileTextOutlined />,
-          label: <Link href="/customers/potential">{t('menu.potentialCustomers')}</Link>,
-        },
-        {
           key: 'customers/contract',
-          icon: <CheckCircleOutlined />,
+          icon: <TeamOutlined />,
           label: <Link href="/customers/contract">{t('menu.contractCustomers')}</Link>,
         },
       ],

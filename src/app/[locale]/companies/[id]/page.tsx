@@ -30,6 +30,7 @@ const INDUSTRIES = [
   { value: '食品製造関係', label: '食品製造関係' },
   { value: '繊維・衣服関係', label: '繊維・衣服関係' },
   { value: '機械・金属関係', label: '機械・金属関係' },
+  { value: 'その他', label: 'その他' },
 ]
 import type { UploadFile } from 'antd'
 import {
