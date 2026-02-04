@@ -586,12 +586,17 @@ export default function CompaniesPage() {
       render: (_: any, record: Company) => renderPdfColumn('teihon', record)
     },
     {
+      title: t('columns.financialReport'),
+      key: 'financial_report',
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('financial_report', record)
     },
     {
       title: t('columns.associationApplicationForm'),
+      key: 'association_application_form',
+      width: 140,
+      align: 'center' as const,
       render: (_: any, record: Company) => {
         // Only show if first_training_at is set (meaning they have a trainee)
         if (!record.first_training_at) {
