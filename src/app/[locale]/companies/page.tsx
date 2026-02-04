@@ -397,15 +397,17 @@ export default function CompaniesPage() {
 
       // Helper to create styled paragraphs
       const createText = (text: string, alignment: (typeof AlignmentType)[keyof typeof AlignmentType] = AlignmentType.CENTER) => {
+        const lines = text.split('\n');
         return new Paragraph({
           alignment: alignment,
-          children: [
+          children: lines.map((line, index) =>
             new TextRun({
-              text: text,
+              text: line,
               font: "ＭＳ 明朝", // MS Mincho
               size: 22, // 11pt
+              break: index > 0 ? 1 : 0
             })
-          ]
+          )
         });
       };
 
