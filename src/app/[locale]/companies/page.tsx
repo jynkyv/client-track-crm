@@ -84,41 +84,55 @@ export default function CompaniesPage() {
   const fetchCompanies = async () => {
     setLoading(true)
     try {
-      let query = supabase
+      // 1. Build Base Query Conditions (Owner & Name)
+      const buildBaseQuery = (q: any) => {
+        if (isJapaneseEmployee && user?.id) {
+          q = q.eq('owner_id', user.id)
+        }
+        if (searchName) {
+          q = q.ilike('name', `%${searchName}%`)
+        }
+        return q
+      }
+
+      // 2. Query for Table List (Includes Industry Filter)
+      let listQuery = supabase
         .from('companies')
         .select('*, industries(name)')
         .order('created_at', { ascending: false })
 
-      // 日方员工只能看到自己创建的企业
-      if (isJapaneseEmployee && user?.id) {
-        query = query.eq('owner_id', user.id)
-      }
+      listQuery = buildBaseQuery(listQuery)
 
-      // 应用搜索条件
-      if (searchName) {
-        query = query.ilike('name', `%${searchName}%`)
-      }
-      if (searchIndustry) { // searchIndustry is now ID as string
+      if (searchIndustry) {
         const industryIdVal = parseInt(searchIndustry)
         if (!isNaN(industryIdVal)) {
-          query = query.eq('industry_id', industryIdVal)
+          listQuery = listQuery.eq('industry_id', industryIdVal)
         }
       }
 
-      const { data: companiesData, error } = await query
+      // 3. Query for Stats (Excludes Industry Filter, only Name/Owner)
+      let statsQuery = supabase
+        .from('companies')
+        .select('industry_id, is_association_member, industries(name)')
 
-      if (error) {
-        console.error('Query Error:', error)
-        throw error
-      }
+      statsQuery = buildBaseQuery(statsQuery)
+
+      // 4. Execute both
+      const [listRes, statsRes] = await Promise.all([listQuery, statsQuery])
+
+      if (listRes.error) throw listRes.error
+      if (statsRes.error) throw statsRes.error
+
+      const companiesData = listRes.data || []
+      const statsData = statsRes.data || []
 
       // Verification log
       console.log('Fetched companies:', companiesData?.length, companiesData?.[0])
 
-      // Calculate risk status
-      let finalCompanies = companiesData || []
+      // --- Logic for RISK Sorting (using filtered companiesData) ---
+      let finalCompanies = companiesData
 
-      // 1. Get all company IDs
+      // 1. Get all company IDs from the visible list
       const companyIds = finalCompanies.map(c => c.id)
 
       if (companyIds.length > 0) {
@@ -168,7 +182,7 @@ export default function CompaniesPage() {
         }
       }
 
-      // Calculate industry counts
+      // --- Logic for COUNTS (using statsData - unfiltered by industry) ---
       // Map: Industry Name -> Counts
       const counts: Record<string, { total: number, joined: number }> = {}
 
@@ -177,9 +191,9 @@ export default function CompaniesPage() {
         counts[ind.name] = { total: 0, joined: 0 }
       })
 
-      finalCompanies.forEach(c => { // Use finalCompanies to be consistent
+      statsData.forEach((c: any) => { // Use statsData for count calculation
         // Handle potentially array-wrapped joined data or singular object
-        const industries = c.industries as any
+        const industries = c.industries
         const industryName = Array.isArray(industries)
           ? industries[0]?.name
           : (industries?.name || 'その他')
