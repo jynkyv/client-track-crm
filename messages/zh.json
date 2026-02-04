@@ -485,6 +485,9 @@
             "save": "保存",
             "cancel": "取消"
         },
+        "details": {
+            "industry": "所属行业"
+        },
         "messages": {
             "fetchError": "获取企业列表失败",
             "fetchDetailError": "获取企业详情失败",

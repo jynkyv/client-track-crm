@@ -107,7 +107,13 @@ export default function CompaniesPage() {
 
       const { data: companiesData, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.error('Query Error:', error)
+        throw error
+      }
+
+      // Verification log
+      console.log('Fetched companies:', companiesData?.length, companiesData?.[0])
 
       // Calculate risk status
       // 1. Get all company IDs
