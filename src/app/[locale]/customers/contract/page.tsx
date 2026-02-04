@@ -548,7 +548,15 @@ export default function ContractCustomersPage() {
       dataIndex: 'real_name',
       key: 'real_name',
       align: 'center' as const,
-      render: (name: string) => name || '-',
+      render: (name: string, record: Customer) => (
+        <Button
+          type="link"
+          style={{ padding: 0 }}
+          onClick={() => router.push(`/customers/contract/${record.id}`)}
+        >
+          {name || '-'}
+        </Button>
+      ),
     },
     {
       title: t('columns.status'),
@@ -733,7 +741,7 @@ export default function ContractCustomersPage() {
           <Button
             type="link"
             onClick={() => handleViewPaymentHistory(record)}
-            style={{ padding: 0, fontWeight: 'bold', color: currentBalance > 0 ? '#52c41a' : '#999' }}
+            style={{ padding: 0, fontWeight: 'bold', color: currentBalance >= walletLimit ? '#52c41a' : '#ff4d4f' }}
           >
             ¥{formatAmount(currentBalance)}/{formatAmount(walletLimit)}
           </Button>
