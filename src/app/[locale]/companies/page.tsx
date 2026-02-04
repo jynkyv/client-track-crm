@@ -613,7 +613,7 @@ export default function CompaniesPage() {
               try {
                 message.loading('正在生成文件...')
                 const pdfBytes = await generateUnionJoinApplication(record)
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+                const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
                 saveAs(blob, `${record.name}_入会申请书.pdf`)
                 message.success('下载成功')
               } catch (e) {
