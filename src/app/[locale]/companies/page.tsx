@@ -592,43 +592,6 @@ export default function CompaniesPage() {
     },
     {
       title: t('columns.associationApplicationForm'),
-      key: 'association_application_form',
-      width: 180,
-      align: 'center' as const,
-      render: (_: any, record: Company) => {
-        // Only show if first_training_at is set (meaning they have a trainee)
-        if (!record.first_training_at) {
-          return <span style={{ color: '#ccc' }}>-</span>
-        }
-        return (
-          <Button
-            type="link"
-            size="small"
-            icon={<FilePdfOutlined />}
-            onClick={async () => {
-              try {
-                message.loading('正在生成文件...')
-                const pdfBytes = await generateUnionJoinApplication(record)
-                // Cast Uint8Array to any to bypass BlobPart strict typing or use Array.from
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' })
-                saveAs(blob, `${record.name}_入会申请书.pdf`)
-                message.success('下载成功')
-              } catch (e) {
-                console.error(e)
-                message.error('生成失败: ' + (e as Error).message)
-              }
-            }}
-          >
-            下载申请书
-          </Button>
-        )
-      }
-    },
-    {
-      title: t('columns.associationApplicationForm'),
-      key: 'association_application_form',
-      width: 180,
-      align: 'center' as const,
       render: (_: any, record: Company) => {
         // Only show if first_training_at is set (meaning they have a trainee)
         if (!record.first_training_at) {
@@ -657,6 +620,8 @@ export default function CompaniesPage() {
         )
       }
     },
+
+
     // {
     //   title: t('columns.otitMaterials'),
     //   key: 'otit_materials',
