@@ -368,8 +368,7 @@ export default function CompaniesPage() {
   // 导出组合成员
   const handleExportAssociationMembers = async () => {
     try {
-      message.loading(t('messages.uploading').replace('...', '')) // Reusing uploading message or generic loading
-      // Ideally use a specific loading message, but using what's available or generic
+      message.loading(tCommon('exporting'))
 
       const { data, error } = await supabase
         .from('companies')
@@ -380,41 +379,90 @@ export default function CompaniesPage() {
       if (error) throw error
 
       if (!data || data.length === 0) {
-        message.info(t('messages.noAssociationMembers') || '没有找到组合成员')
+        message.info(t('messages.noAssociationMembers'))
         return
       }
 
-      // Prepare data for Excel
-      const exportData = data.map(company => ({
-        '氏　　　名': `${company.name}\n代表取締役\n${company.representative || ''}`,
-        '住　　　所': company.address || '',
-        '加入日': '1', // Placeholder as per user request/screenshot
-        '業　　　種': company.industry || '',
-        '資本金の額\n又は\n出資の総額': company.registered_capital || '',
-        '常用\n従業\n員数': `${company.employee_count || 0}人`
-      }))
+      // Import libraries dynamically or ensure they are imported at the top
+      // Assuming imports will be added separately or dynamic import here if needed
+      // For this replace, I will assume dynamic import or rely on top level (which needs to be added)
+      // BUT for cleaner code, I will use dynamic import inside function or assume top level is handled in next step.
+      // Let's use dynamic import to avoid potential SSR issues or massive bundle size if not tree-shaken, 
+      // but 'docx' is usually fine. Let's assume standard import for now, but I need to add imports to file top.
+      // Since I can only replace a chunk, I will use dynamic import within the function for safety and simplicity of this tool call.
 
-      // Create workbook and worksheet
-      const wb = XLSX.utils.book_new()
-      const ws = XLSX.utils.json_to_sheet(exportData)
+      const { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, TextRun, AlignmentType, BorderStyle } = await import('docx');
+      const FileSaver = await import('file-saver');
+      const saveAs = FileSaver.default || FileSaver.saveAs || FileSaver;
 
-      // Set specific column widths
-      ws['!cols'] = [
-        { wch: 40 }, // Name
-        { wch: 40 }, // Address
-        { wch: 10 }, // Join Date
-        { wch: 20 }, // Industry
-        { wch: 20 }, // Capital
-        { wch: 10 }, // Employees
-      ]
+      const tableRows = [
+        new TableRow({
+          children: [
+            new TableCell({ width: { size: 25, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "氏　　　名", alignment: AlignmentType.CENTER })] }),
+            new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "住　　　所", alignment: AlignmentType.CENTER })] }),
+            new TableCell({ width: { size: 10, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "加入日", alignment: AlignmentType.CENTER })] }),
+            new TableCell({ width: { size: 15, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "業　　　種", alignment: AlignmentType.CENTER })] }),
+            new TableCell({ width: { size: 10, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "資本金の額\n又は\n出資の総額", alignment: AlignmentType.CENTER })] }),
+            new TableCell({ width: { size: 10, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "常用\n従業\n員数", alignment: AlignmentType.CENTER })] }),
+          ],
+        }),
+      ];
 
-      XLSX.utils.book_append_sheet(wb, ws, 'Association Members')
-      XLSX.writeFile(wb, `Association_Members_${new Date().toISOString().split('T')[0]}.xlsx`)
+      data.forEach(company => {
+        tableRows.push(
+          new TableRow({
+            children: [
+              new TableCell({
+                children: [
+                  new Paragraph({ text: company.name || '', alignment: AlignmentType.CENTER }),
+                  new Paragraph({ text: "代表取締役", alignment: AlignmentType.CENTER }),
+                  new Paragraph({ text: company.representative || '', alignment: AlignmentType.CENTER }),
+                ],
+              }),
+              new TableCell({ children: [new Paragraph({ text: company.address || '', alignment: AlignmentType.CENTER })] }),
+              new TableCell({ children: [new Paragraph({ text: "1", alignment: AlignmentType.CENTER })] }), // Placeholder as per request
+              new TableCell({ children: [new Paragraph({ text: company.industry || '', alignment: AlignmentType.CENTER })] }),
+              new TableCell({ children: [new Paragraph({ text: company.registered_capital || '', alignment: AlignmentType.CENTER })] }),
+              new TableCell({ children: [new Paragraph({ text: `${company.employee_count || 0}人`, alignment: AlignmentType.CENTER })] }),
+            ],
+          })
+        );
+      });
 
-      message.success(tCommon('exportSuccess') || '导出成功')
+      const doc = new Document({
+        sections: [
+          {
+            children: [
+              new Paragraph({
+                text: "組合会員一覧",
+                heading: "Heading1",
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 200 },
+              }),
+              new Table({
+                rows: tableRows,
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                  top: { style: BorderStyle.SINGLE, size: 1 },
+                  bottom: { style: BorderStyle.SINGLE, size: 1 },
+                  left: { style: BorderStyle.SINGLE, size: 1 },
+                  right: { style: BorderStyle.SINGLE, size: 1 },
+                  insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
+                  insideVertical: { style: BorderStyle.SINGLE, size: 1 },
+                }
+              }),
+            ],
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `組合会員一覧_${new Date().toISOString().split('T')[0]}.docx`);
+
+      message.success(tCommon('exportSuccess'))
     } catch (error) {
       console.error('Export failed:', error)
-      message.error(tCommon('exportError') || '导出失败')
+      message.error(tCommon('exportError'))
     }
   }
 
