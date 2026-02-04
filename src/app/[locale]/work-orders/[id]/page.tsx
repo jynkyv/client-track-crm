@@ -667,7 +667,7 @@ export default function WorkOrderDetailPage() {
     // 打开编辑工单Drawer
     const handleEditTicket = () => {
         editTicketForm.setFieldsValue({
-            industry: ticket?.industry,
+            // Industry is inherited
             position: ticket?.position,
             recruit_count: ticket?.recruit_count,
             salary: ticket?.salary,
@@ -686,7 +686,7 @@ export default function WorkOrderDetailPage() {
             const { error } = await supabase
                 .from('work_orders')
                 .update({
-                    industry: values.industry,
+                    // Industry is not updated here, it lives on Company
                     position: values.position,
                     recruit_count: values.recruit_count,
                     salary: values.salary,
@@ -740,7 +740,8 @@ export default function WorkOrderDetailPage() {
                 )}
             >
                 <Descriptions bordered column={2}>
-                    <Descriptions.Item label={t('columns.name')}>{ticket?.industry}</Descriptions.Item>
+
+                    <Descriptions.Item label={t('columns.name')}>{company?.industry || '-'}</Descriptions.Item>
                     <Descriptions.Item label={t('columns.companyName')}>
                         {company ? (
                             <Link href={`/companies/${company.id}`} style={{ color: '#1890ff', fontWeight: 500 }}>
@@ -1384,19 +1385,6 @@ export default function WorkOrderDetailPage() {
                     onFinish={handleEditTicketSubmit}
                 >
                     <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="industry"
-                                label={t('form.ticketName')}
-                                rules={[{ required: true, message: t('form.ticketNamePlaceholder') }]}
-                            >
-                                <Select placeholder={t('form.ticketNamePlaceholder')}>
-                                    {INDUSTRIES.map(i => (
-                                        <Option key={i.value} value={i.value}>{i.label}</Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                        </Col>
                         <Col span={12}>
                             <Form.Item
                                 name="position"

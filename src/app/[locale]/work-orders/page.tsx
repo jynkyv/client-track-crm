@@ -88,7 +88,8 @@ export default function WorkOrdersPage() {
                 .select(`
           *,
           companies:company_id (
-            name
+            name,
+            industry
           )
         `)
                 .order('created_at', { ascending: false })
@@ -226,7 +227,7 @@ export default function WorkOrdersPage() {
                 .from('work_orders')
                 .insert([{
                     company_id: values.company_id,
-                    industry: values.industry,
+                    industry: companies.find(c => c.id === values.company_id)?.industry, // Auto-inherit industry
                     position: values.position,
                     recruit_count: values.recruit_count,
                     salary: values.salary,
@@ -272,7 +273,7 @@ export default function WorkOrdersPage() {
         },
         {
             title: t('columns.ticketName'),
-            dataIndex: 'industry',
+            dataIndex: ['companies', 'industry'],
             key: 'industry',
             width: 150,
             align: 'center' as const,
@@ -507,17 +508,7 @@ export default function WorkOrdersPage() {
                         </Select>
                     </Form.Item>
 
-                    <Form.Item
-                        name="industry"
-                        label={t('form.ticketName')}
-                        rules={[{ required: true, message: t('form.ticketNamePlaceholder') }]}
-                    >
-                        <Select placeholder={t('form.ticketNamePlaceholder')}>
-                            {INDUSTRIES.map(i => (
-                                <Option key={i.value} value={i.value}>{i.label}</Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
+                    {/* Industry is inherited from Company, no manual input */}
 
                     <Form.Item
                         name="position"
