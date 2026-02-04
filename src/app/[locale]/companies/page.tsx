@@ -726,13 +726,13 @@ export default function CompaniesPage() {
               />
             </Form.Item>
             <Form.Item label={t('search.industry')} style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('details.industry')}</label>
               <Select
                 placeholder={t('details.industry')}
                 value={searchIndustry}
                 onChange={setSearchIndustry}
                 allowClear
-                style={{ width: '100%' }}
+                style={{ width: 280 }}
+                dropdownMatchSelectWidth={false}
               >
                 {industriesList.map(ind => (
                   <Option key={ind.id} value={String(ind.id)}>
