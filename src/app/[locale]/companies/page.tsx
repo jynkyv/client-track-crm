@@ -391,19 +391,34 @@ export default function CompaniesPage() {
       // but 'docx' is usually fine. Let's assume standard import for now, but I need to add imports to file top.
       // Since I can only replace a chunk, I will use dynamic import within the function for safety and simplicity of this tool call.
 
-      const { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, TextRun, AlignmentType, BorderStyle } = await import('docx');
+      const { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, TextRun, AlignmentType, BorderStyle, VerticalAlign } = await import('docx');
       const FileSaver = await import('file-saver');
       const saveAs = FileSaver.default || FileSaver.saveAs || FileSaver;
 
+      // Helper to create styled paragraphs
+      const createText = (text: string, alignment: (typeof AlignmentType)[keyof typeof AlignmentType] = AlignmentType.CENTER) => {
+        return new Paragraph({
+          alignment: alignment,
+          children: [
+            new TextRun({
+              text: text,
+              font: "ＭＳ 明朝", // MS Mincho
+              size: 22, // 11pt
+            })
+          ]
+        });
+      };
+
       const tableRows = [
         new TableRow({
+          height: { value: 782, rule: 'atLeast' }, // Based on XML
           children: [
-            new TableCell({ width: { size: 25, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "氏　　　名", alignment: AlignmentType.CENTER })] }),
-            new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "住　　　所", alignment: AlignmentType.CENTER })] }),
-            new TableCell({ width: { size: 10, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "加入日", alignment: AlignmentType.CENTER })] }),
-            new TableCell({ width: { size: 15, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "業　　　種", alignment: AlignmentType.CENTER })] }),
-            new TableCell({ width: { size: 10, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "資本金の額\n又は\n出資の総額", alignment: AlignmentType.CENTER })] }),
-            new TableCell({ width: { size: 10, type: WidthType.PERCENTAGE }, children: [new Paragraph({ text: "常用\n従業\n員数", alignment: AlignmentType.CENTER })] }),
+            new TableCell({ verticalAlign: VerticalAlign.CENTER, width: { size: 2410, type: WidthType.DXA }, children: [createText("氏　　　名", AlignmentType.CENTER)] }),
+            new TableCell({ verticalAlign: VerticalAlign.CENTER, width: { size: 2297, type: WidthType.DXA }, children: [createText("住　　　所", AlignmentType.CENTER)] }),
+            new TableCell({ verticalAlign: VerticalAlign.CENTER, width: { size: 822, type: WidthType.DXA }, children: [createText("加入日", AlignmentType.CENTER)] }),
+            new TableCell({ verticalAlign: VerticalAlign.CENTER, width: { size: 2126, type: WidthType.DXA }, children: [createText("業　　　種", AlignmentType.CENTER)] }),
+            new TableCell({ verticalAlign: VerticalAlign.CENTER, width: { size: 1418, type: WidthType.DXA }, children: [createText("資本金の額\n又は\n出資の総額", AlignmentType.CENTER)] }),
+            new TableCell({ verticalAlign: VerticalAlign.CENTER, width: { size: 708, type: WidthType.DXA }, children: [createText("常用\n従業\n員数", AlignmentType.CENTER)] }),
           ],
         }),
       ];
@@ -411,19 +426,21 @@ export default function CompaniesPage() {
       data.forEach(company => {
         tableRows.push(
           new TableRow({
+            height: { value: 1077, rule: 'atLeast' }, // Based on XML
             children: [
               new TableCell({
+                verticalAlign: VerticalAlign.CENTER,
                 children: [
-                  new Paragraph({ text: company.name || '', alignment: AlignmentType.CENTER }),
-                  new Paragraph({ text: "代表取締役", alignment: AlignmentType.CENTER }),
-                  new Paragraph({ text: company.representative || '', alignment: AlignmentType.CENTER }),
+                  createText(company.name || '', AlignmentType.LEFT),
+                  createText("代表取締役", AlignmentType.LEFT),
+                  createText(company.representative || '', AlignmentType.LEFT),
                 ],
               }),
-              new TableCell({ children: [new Paragraph({ text: company.address || '', alignment: AlignmentType.CENTER })] }),
-              new TableCell({ children: [new Paragraph({ text: "1", alignment: AlignmentType.CENTER })] }), // Placeholder as per request
-              new TableCell({ children: [new Paragraph({ text: company.industry || '', alignment: AlignmentType.CENTER })] }),
-              new TableCell({ children: [new Paragraph({ text: company.registered_capital || '', alignment: AlignmentType.CENTER })] }),
-              new TableCell({ children: [new Paragraph({ text: `${company.employee_count || 0}人`, alignment: AlignmentType.CENTER })] }),
+              new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [createText(company.address || '', AlignmentType.LEFT)] }),
+              new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [createText("1", AlignmentType.CENTER)] }),
+              new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [createText(company.industry || '', AlignmentType.CENTER)] }),
+              new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [createText(company.registered_capital || '', AlignmentType.CENTER)] }),
+              new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [createText(`${company.employee_count || 0}人`, AlignmentType.CENTER)] }),
             ],
           })
         );
@@ -432,23 +449,46 @@ export default function CompaniesPage() {
       const doc = new Document({
         sections: [
           {
+            properties: {
+              page: {
+                margin: {
+                  top: 1247,
+                  right: 1191,
+                  bottom: 964,
+                  left: 1418,
+                },
+              },
+            },
             children: [
               new Paragraph({
-                text: "組合会員一覧",
-                heading: "Heading1",
                 alignment: AlignmentType.CENTER,
-                spacing: { after: 200 },
+                spacing: { line: 500, after: 200 }, // Reduced line spacing for title slightly, but kept some visual separation
+                children: [
+                  new TextRun({
+                    text: "組合会員一覧",
+                    font: "ＭＳ 明朝",
+                    size: 32, // 16pt based on XML
+                    bold: true,
+                    color: "000000",
+                  })
+                ]
               }),
               new Table({
                 rows: tableRows,
-                width: { size: 100, type: WidthType.PERCENTAGE },
+                width: { size: 9781, type: WidthType.DXA }, // Exact total width from XML
+                margins: {
+                  top: 0,
+                  bottom: 0,
+                  left: 108,
+                  right: 108,
+                },
                 borders: {
-                  top: { style: BorderStyle.SINGLE, size: 1 },
-                  bottom: { style: BorderStyle.SINGLE, size: 1 },
-                  left: { style: BorderStyle.SINGLE, size: 1 },
-                  right: { style: BorderStyle.SINGLE, size: 1 },
-                  insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
-                  insideVertical: { style: BorderStyle.SINGLE, size: 1 },
+                  top: { style: BorderStyle.SINGLE, size: 4 }, // size 4 = 1/2 pt? XML says sz="4"
+                  bottom: { style: BorderStyle.SINGLE, size: 4 },
+                  left: { style: BorderStyle.SINGLE, size: 4 },
+                  right: { style: BorderStyle.SINGLE, size: 4 },
+                  insideHorizontal: { style: BorderStyle.SINGLE, size: 4 },
+                  insideVertical: { style: BorderStyle.SINGLE, size: 4 },
                 }
               }),
             ],
