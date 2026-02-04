@@ -146,7 +146,9 @@ export interface DocumentFile {
 export interface Company {
   id: string
   name: string // 企业名称
-  industry?: string // 所属行业
+  industry?: string // 所属行业 (Legacy, kept for backup)
+  industry_id?: number // 所属行业ID
+  industries?: { name: string } // 关联行业对象
   first_training_at?: string // 首次出现培训中客户的时间
   legal_number?: string // 法人番号
   representative?: string // 代表取缔役

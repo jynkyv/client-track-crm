@@ -39,15 +39,8 @@ import { type Company, type DocumentFile } from '@/lib/supabase'
 import { generateUnionJoinApplication } from '@/lib/pdfGenerator'
 import { saveAs } from 'file-saver'
 
-const INDUSTRIES = [
-  { value: '農業・林業関係', label: '農業・林業関係' },
-  { value: '漁業関係', label: '漁業関係' },
-  { value: '建設関係', label: '建設関係' },
-  { value: '食品製造関係', label: '食品製造関係' },
-  { value: '繊維・衣服関係', label: '繊維・衣服関係' },
-  { value: '機械・金属関係', label: '機械・金属関係' },
-  { value: 'その他', label: 'その他' },
-]
+// Local constant removed in favor of DB fetch
+
 
 // Removed local Company interface definition in favor of imported one
 
@@ -78,13 +71,22 @@ export default function CompaniesPage() {
   const [searchName, setSearchName] = useState('')
   const [searchIndustry, setSearchIndustry] = useState('')
 
+  // 行业列表状态
+  const [industriesList, setIndustriesList] = useState<{ id: number, name: string }[]>([])
+
+  // 获取行业列表
+  const fetchIndustries = async () => {
+    const { data } = await supabase.from('industries').select('id, name').order('id')
+    setIndustriesList(data || [])
+  }
+
   // 获取企业列表
   const fetchCompanies = async () => {
     setLoading(true)
     try {
       let query = supabase
         .from('companies')
-        .select('*')
+        .select('*, industries(name)')
         .order('created_at', { ascending: false })
 
       // 日方员工只能看到自己创建的企业
@@ -96,8 +98,11 @@ export default function CompaniesPage() {
       if (searchName) {
         query = query.ilike('name', `%${searchName}%`)
       }
-      if (searchIndustry) {
-        query = query.ilike('industry', `%${searchIndustry}%`)
+      if (searchIndustry) { // searchIndustry is now ID as string
+        const industryIdVal = parseInt(searchIndustry)
+        if (!isNaN(industryIdVal)) {
+          query = query.eq('industry_id', industryIdVal)
+        }
       }
 
       const { data: companiesData, error } = await query
@@ -160,40 +165,31 @@ export default function CompaniesPage() {
       }
 
       // Calculate industry counts
-      const industryCounts: Record<string, { total: number, joined: number }> = {}
-      INDUSTRIES.forEach(i => industryCounts[i.value] = { total: 0, joined: 0 })
+      // Map: Industry Name -> Counts
+      const counts: Record<string, { total: number, joined: number }> = {}
+
+      // Initialize with fetched industries so they show 0 if empty
+      industriesList.forEach(ind => {
+        counts[ind.name] = { total: 0, joined: 0 }
+      })
 
       const countsData = companiesData || []
       countsData.forEach(c => {
-        const rawIndustry = (c.industry || '').trim()
-        let industryKey = 'その他'
+        const industryName = c.industries?.name || 'その他'
 
-        // 1. Check for exact match with valid Japanese keys
-        if (industryCounts[rawIndustry]) {
-          industryKey = rawIndustry
-        } else {
-          // 2. Fuzzy match for Chinese/Legacy variations
-          if (rawIndustry.match(/[农農林]/)) industryKey = '農業・林業関係'
-          else if (rawIndustry.match(/[渔漁]/)) industryKey = '漁業関係'
-          else if (rawIndustry.match(/[建]/)) industryKey = '建設関係'
-          else if (rawIndustry.match(/[食]/)) industryKey = '食品製造関係'
-          else if (rawIndustry.match(/[纤衣繊維]/)) industryKey = '繊維・衣服関係'
-          else if (rawIndustry.match(/[机金機]/)) industryKey = '機械・金属関係'
-          else if (rawIndustry.match(/[其他]/)) industryKey = 'その他'
+        if (!counts[industryName]) {
+          counts[industryName] = { total: 0, joined: 0 }
         }
 
-        if (industryCounts[industryKey]) {
-          industryCounts[industryKey].total++
+        if (counts[industryName]) {
+          counts[industryName].total++
           if (c.is_association_member) {
-            industryCounts[industryKey].joined++
+            counts[industryName].joined++
           }
         }
       })
 
-      // We need to pass this state to the render or store it.
-      // Since Render is using `INDUSTRIES` constant, we might need a state for counts or just Map.
-      setIndustryCounts(industryCounts)
-
+      setIndustryCounts(counts)
       setCompanies(companiesData || [])
     } catch (error) {
       console.error('获取企业列表失败:', error)
@@ -205,8 +201,14 @@ export default function CompaniesPage() {
 
   // 初始化数据
   useEffect(() => {
-    fetchCompanies()
-  }, [searchName, searchIndustry])
+    fetchIndustries()
+  }, [])
+
+  useEffect(() => {
+    if (industriesList.length > 0) {
+      fetchCompanies()
+    }
+  }, [searchName, searchIndustry, industriesList])
 
   // 重置搜索
   const handleResetSearch = () => {
@@ -718,22 +720,20 @@ export default function CompaniesPage() {
               />
             </Form.Item>
             <Form.Item label={t('search.industry')} style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('details.industry')}</label>
               <Select
-                placeholder={t('filters.industry')}
-                style={{ width: 250 }} // Increased width to accommodate counts
-                allowClear
+                placeholder={t('details.industry')}
                 value={searchIndustry}
                 onChange={setSearchIndustry}
+                allowClear
+                style={{ width: '100%' }}
               >
-                {INDUSTRIES.map(i => {
-                  const counts = industryCounts[i.value] || { total: 0, joined: 0 }
-                  const label = `${i.label} [${counts.joined}/${counts.total}]`
-                  return (
-                    <Select.Option key={i.value} value={i.value}>
-                      {label}
-                    </Select.Option>
-                  )
-                })}
+                {industriesList.map(ind => (
+                  <Option key={ind.id} value={String(ind.id)}>
+                    {ind.name}
+                    {industryCounts[ind.name] ? ` [${industryCounts[ind.name].joined}/${industryCounts[ind.name].total}]` : ''}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
             <Form.Item style={{ marginBottom: 16 }}>
