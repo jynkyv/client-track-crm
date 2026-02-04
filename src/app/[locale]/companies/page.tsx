@@ -163,43 +163,29 @@ export default function CompaniesPage() {
       const industryCounts: Record<string, { total: number, joined: number }> = {}
       INDUSTRIES.forEach(i => industryCounts[i.value] = { total: 0, joined: 0 })
 
-      // Map for legacy Chinese industry names to Japanese
-      const industryMap: Record<string, string> = {
-        '农业・林业关系': '農業・林業関係',
-        '渔业关系': '漁業関係',
-        '建设关系': '建設関係',
-        '食品制造关系': '食品製造関係',
-        '纤维・衣服关系': '繊維・衣服関係',
-        '机械・金属关系': '機械・金属関係',
-        '其他': 'その他',
-        // Handle potential partial matches or variations if needed
-        '农业': '農業・林業関係',
-        '林业': '農業・林業関係',
-        '渔业': '漁業関係',
-        '建设': '建設関係',
-        '食品': '食品製造関係',
-        '食品制造': '食品製造関係',
-        '纤维': '繊維・衣服関係',
-        '衣服': '繊維・衣服関係',
-        '机械': '機械・金属関係',
-        '金属': '機械・金属関係',
-      }
-
       const countsData = companiesData || []
       countsData.forEach(c => {
-        let industry = c.industry || 'その他'
+        const rawIndustry = (c.industry || '').trim()
+        let industryKey = 'その他'
 
-        // Try to normalize if it's not a direct match
-        if (!industryCounts[industry]) {
-          if (industryMap[industry]) {
-            industry = industryMap[industry]
-          }
+        // 1. Check for exact match with valid Japanese keys
+        if (industryCounts[rawIndustry]) {
+          industryKey = rawIndustry
+        } else {
+          // 2. Fuzzy match for Chinese/Legacy variations
+          if (rawIndustry.match(/[农農林]/)) industryKey = '農業・林業関係'
+          else if (rawIndustry.match(/[渔漁]/)) industryKey = '漁業関係'
+          else if (rawIndustry.match(/[建]/)) industryKey = '建設関係'
+          else if (rawIndustry.match(/[食]/)) industryKey = '食品製造関係'
+          else if (rawIndustry.match(/[纤衣繊維]/)) industryKey = '繊維・衣服関係'
+          else if (rawIndustry.match(/[机金機]/)) industryKey = '機械・金属関係'
+          else if (rawIndustry.match(/[其他]/)) industryKey = 'その他'
         }
 
-        if (industryCounts[industry]) {
-          industryCounts[industry].total++
+        if (industryCounts[industryKey]) {
+          industryCounts[industryKey].total++
           if (c.is_association_member) {
-            industryCounts[industry].joined++
+            industryCounts[industryKey].joined++
           }
         }
       })
