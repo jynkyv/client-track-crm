@@ -12,7 +12,8 @@ import {
   Upload,
   Modal,
   message,
-  List
+  List,
+  Tag
 } from 'antd'
 import type { UploadFile } from 'antd'
 import {
@@ -749,12 +750,27 @@ export default function CompaniesPage() {
                 style={{ width: 280 }}
                 dropdownMatchSelectWidth={false}
               >
-                {industriesList.map(ind => (
-                  <Option key={ind.id} value={String(ind.id)}>
-                    {ind.name}
-                    {industryCounts[ind.name] ? ` [${industryCounts[ind.name].joined}/${industryCounts[ind.name].total}]` : ''}
-                  </Option>
-                ))}
+                {industriesList.map(ind => {
+                  const counts = industryCounts[ind.name]
+                  const hasCounts = counts && (counts.total > 0 || counts.joined > 0)
+                  const isCompleted = counts && counts.joined === counts.total && counts.total > 0
+
+                  return (
+                    <Option key={ind.id} value={String(ind.id)}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <span>{ind.name}</span>
+                        {hasCounts && (
+                          <Tag
+                            color={isCompleted ? 'success' : 'error'}
+                            style={{ marginLeft: 8, marginRight: 0 }}
+                          >
+                            {counts.joined}/{counts.total}
+                          </Tag>
+                        )}
+                      </div>
+                    </Option>
+                  )
+                })}
               </Select>
             </Form.Item>
             <Form.Item style={{ marginBottom: 16 }}>
