@@ -43,6 +43,8 @@ import {
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { saveAs } from 'file-saver'
+import { generateUnionJoinApplication } from '@/lib/pdfGenerator'
 import { getFileUrl } from '@/lib/utils'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -591,37 +593,67 @@ export default function CompanyDetailPage() {
                   <Col xs={24} sm={12} md={8} key={field.key}>
                     <Card size="small">
                       <div style={{ marginBottom: 8, fontWeight: 500 }}>{field.label}</div>
-                      <Space>
-                        <Button
-                          size="small"
-                          icon={<UploadOutlined />}
-                          onClick={() => handleUpload(field.key)}
-                        >
-                          {t('actions.upload')}
-                        </Button>
-                        <Button
-                          size="small"
-                          icon={<FilePdfOutlined />}
-                          onClick={() => handleViewPdfs(company?.[field.key as keyof CompanyDetail] as DocumentFile[], field.key)}
-                          disabled={!company?.[field.key as keyof CompanyDetail] || (company[field.key as keyof CompanyDetail] as DocumentFile[]).length === 0}
-                        >
-                          {t('actions.view')}
-                          {company?.[field.key as keyof CompanyDetail] && (company[field.key as keyof CompanyDetail] as DocumentFile[]).length > 0 ?
-                            `(${(company[field.key as keyof CompanyDetail] as DocumentFile[]).length})` : ''}
-                        </Button>
-                      </Space>
+
+                      {field.key === 'association_application_form' ? (
+                        <Space>
+                          {company?.first_training_at ? (
+                            <Button
+                              size="small"
+                              icon={<FilePdfOutlined />}
+                              onClick={async () => {
+                                if (!company) return
+                                try {
+                                  message.loading('正在生成文件...')
+                                  // Cast because CompanyDetail might miss fields, checking type safety
+                                  const pdfBytes = await generateUnionJoinApplication(company as any)
+                                  const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
+                                  saveAs(blob, `${company.name}_入会申请书.pdf`)
+                                  message.success('下载成功')
+                                } catch (e) {
+                                  console.error(e)
+                                  message.error('生成失败: ' + (e as Error).message)
+                                }
+                              }}
+                            >
+                              下载申请书
+                            </Button>
+                          ) : (
+                            <span style={{ color: '#ccc' }}>暂无数据</span>
+                          )}
+                        </Space>
+                      ) : (
+                        <Space>
+                          <Button
+                            size="small"
+                            icon={<UploadOutlined />}
+                            onClick={() => handleUpload(field.key)}
+                          >
+                            {t('actions.upload')}
+                          </Button>
+                          {fileCount > 0 && (
+                            <Button
+                              size="small"
+                              icon={<EyeOutlined />}
+                              onClick={() => handleViewPdfs(files, field.key)}
+                            >
+                              {t('actions.view')} ({fileCount})
+                            </Button>
+                          )}
+                        </Space>
+                      )}
                     </Card>
                   </Col>
+
                 )
               })}
             </Row>
-          </div>
+          </div >
         )
         }
-      </Card>
+      </Card >
 
       {/* 编辑Modal */}
-      <Modal
+      < Modal
         title={t('detail.editTitle')}
         open={editModalVisible}
         onCancel={() => setEditModalVisible(false)}
@@ -638,10 +670,10 @@ export default function CompanyDetailPage() {
           onCancel={() => setEditModalVisible(false)}
           t={t}
         />
-      </Modal>
+      </Modal >
 
       {/* 上传PDF Modal */}
-      <Modal
+      < Modal
         title={`${t('upload.title')}${documentFields.find(f => f.key === currentUploadField)?.label || '文件'}`}
         open={uploadModalVisible}
         onCancel={() => {
@@ -701,15 +733,16 @@ export default function CompanyDetailPage() {
       </Modal >
 
       {/* 查看文件 Modal */}
-      <Modal
+      < Modal
         title={`查看${documentFields.find(f => f.key === currentViewField)?.label || '文件'}`}
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setViewModalVisible(false)}>
-            关闭
-          </Button>
-        ]}
+        footer={
+          [
+            <Button key="close" onClick={() => setViewModalVisible(false)}>
+              关闭
+            </Button>
+          ]}
         width={600}
       >
         <List
@@ -753,7 +786,7 @@ export default function CompanyDetailPage() {
             </List.Item>
           )}
         />
-      </Modal>
+      </Modal >
     </div >
   )
 }
