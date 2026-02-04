@@ -361,82 +361,34 @@ export default function ContractCustomersPage() {
       if (error) throw error
 
       // 自动生成入会申请书逻辑
+      // 自动更新企业首次培训时间, 并触发(记录)入会申请书生成需求
       if (values.stage2_status === '培训中' && selectedCustomer.stage2_status !== '培训中' && selectedCustomer.company_id) {
         try {
-          message.loading(tCommon('generatingDocument'))
-
-          // 1. Fetch current company files
+          // 1. Fetch current company info
           const { data: company, error: companyError } = await supabase
             .from('companies')
-            .select('association_application_form')
+            .select('id, first_training_at')
             .eq('id', selectedCustomer.company_id)
             .single()
 
           if (!companyError && company) {
-            // 2. Generate DOCX
-            const { Document, Packer, Paragraph, TextRun, AlignmentType } = await import('docx')
-
-            const doc = new Document({
-              sections: [{
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [
-                      new TextRun({
-                        text: "技能实习生入会申请书",
-                        bold: true,
-                        size: 32,
-                      }),
-                    ],
-                  }),
-                  new Paragraph({
-                    text: `申请人: ${selectedCustomer.real_name}`,
-                    spacing: { before: 400 },
-                  }),
-                  new Paragraph({
-                    text: `申请日期: ${dayjs().format('YYYY-MM-DD')}`,
-                  }),
-                  new Paragraph({
-                    text: "兹申请加入组合。",
-                    spacing: { before: 200 },
-                  }),
-                ],
-              }],
-            });
-
-            const blob = await Packer.toBlob(doc);
-            const fileName = `入会申请书_${selectedCustomer.real_name}_${dayjs().format('YYYYMMDD')}.docx`;
-            const file = new File([blob], fileName, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-
-            // 3. Upload
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const uploadRes = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData
-            });
-
-            if (uploadRes.ok) {
-              const { url } = await uploadRes.json();
-              const currentFiles = company.association_application_form || [];
-              const newFile = {
-                url: url,
-                uploadedAt: new Date().toISOString()
-              };
-
-              // 4. Update Company
-              await supabase
+            // 2. Add first_training_at if not present
+            if (!company.first_training_at) {
+              const now = new Date().toISOString()
+              const { error: updateError } = await supabase
                 .from('companies')
-                .update({ association_application_form: [...currentFiles, newFile] })
-                .eq('id', selectedCustomer.company_id);
+                .update({ first_training_at: now })
+                .eq('id', company.id)
 
-              message.success('已自动生成入会申请书')
+              if (updateError) {
+                console.error('Failed to update first_training_at:', updateError)
+              } else {
+                message.success(tCommon('success'))
+              }
             }
           }
-        } catch (genError) {
-          console.error('Auto-generation failed:', genError)
-          message.error('生成入会申请书失败')
+        } catch (err) {
+          console.error('Error updating company training time:', err)
         }
       }
 

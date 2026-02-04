@@ -147,6 +147,7 @@ export interface Company {
   id: string
   name: string // 企业名称
   industry?: string // 所属行业
+  first_training_at?: string // 首次出现培训中客户的时间
   legal_number?: string // 法人番号
   representative?: string // 代表取缔役
   employee_count?: number // 公司从业人数

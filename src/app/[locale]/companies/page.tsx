@@ -36,6 +36,8 @@ import * as XLSX from 'xlsx'
 const { Option } = Select
 
 import { type Company, type DocumentFile } from '@/lib/supabase'
+import { generateUnionJoinApplication } from '@/lib/pdfGenerator'
+import { saveAs } from 'file-saver'
 
 const INDUSTRIES = [
   { value: '農業・林業関係', label: '農業・林業関係' },
@@ -589,6 +591,39 @@ export default function CompaniesPage() {
       width: 150,
       align: 'center' as const,
       render: (_: any, record: Company) => renderPdfColumn('financial_report', record)
+    },
+    {
+      title: t('columns.associationApplicationForm'),
+      key: 'association_application_form',
+      width: 180,
+      align: 'center' as const,
+      render: (_: any, record: Company) => {
+        // Only show if first_training_at is set (meaning they have a trainee)
+        if (!record.first_training_at) {
+          return <span style={{ color: '#ccc' }}>-</span>
+        }
+        return (
+          <Button
+            type="link"
+            size="small"
+            icon={<FilePdfOutlined />}
+            onClick={async () => {
+              try {
+                message.loading('正在生成文件...')
+                const pdfBytes = await generateUnionJoinApplication(record)
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+                saveAs(blob, `${record.name}_入会申请书.pdf`)
+                message.success('下载成功')
+              } catch (e) {
+                console.error(e)
+                message.error('生成失败: ' + (e as Error).message)
+              }
+            }}
+          >
+            下载申请书
+          </Button>
+        )
+      }
     },
     // {
     //   title: t('columns.otitMaterials'),
