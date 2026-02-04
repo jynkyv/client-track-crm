@@ -23,7 +23,7 @@ import {
   FilePdfOutlined,
   ReloadOutlined,
   FileExcelOutlined,
-  FilePdfOutlined
+  DeleteOutlined
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useRouter } from '@/navigation'
