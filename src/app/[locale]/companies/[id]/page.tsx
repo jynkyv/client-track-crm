@@ -544,7 +544,7 @@ export default function CompanyDetailPage() {
 
       if (hasFile) {
         // Use existing file
-        attachments = company.association_application_form?.map((file: DocumentFile) => ({
+        attachments = (company.association_application_form || []).map((file: DocumentFile) => ({
           filename: 'Combined_Application_Form.pdf',
           url: getFileUrl(file.url)
         }))
