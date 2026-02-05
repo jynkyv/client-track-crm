@@ -876,7 +876,6 @@ export default function CompanyDetailPage() {
             </List.Item>
           )}
         />
-        />
       </Modal >
 
       {/* 发送组合加入申请书 Modal */}
