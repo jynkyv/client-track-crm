@@ -379,9 +379,10 @@
             "subjectPlaceholder": "请输入邮件主题",
             "contentPlaceholder": "请输入邮件内容",
             "sendAssociationApp": "发送组合加入申请书",
+            "sendAssociationAppSubject": "組合加入同意書および技能実習に関する事業に係る規約の送付",
             "sendAppConfirmTitle": "确认发送",
             "sendAppConfirmContent": "确定要发送组合加入申请书和技能实习规约到企业邮箱 ({email}) 吗？",
-            "appFormPresetContent": "尊敬的客户：\n\n附件是组合加入申请书和技能实习规约，请查收。\n\n谢谢。",
+            "appFormPresetContent": "{companyName} 御中\n\n平素より大変お世話になっております。\nFamily協同組合でございます。\n\nこのたび、貴社に「組合加入同意書」および\n「技能実習に関する事業に係る規約」を添付にてお送り申し上げます。\n内容をご確認の上、ファイルをご保管いただくようお願いいたします。\n\nご不明点やご質問等がございましたら、どうぞお気軽にお申し付けください。\n今後とも何卒よろしくお願い申し上げます。\n\n**************************************\nFamily協同組合\n〒300－0043　\n茨城県土浦市中央1-1-26　AGビル\nTEL ：029－886－8181\nFAX：029－886－8185\nEMAIL：family.organization.jp@gmail.com",
             "appFormSentSuccess": "邮件已发送",
             "noCompanyEmail": "企业未配置邮箱",
             "noAppForm": "企业未上传必要文件"

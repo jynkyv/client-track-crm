@@ -528,7 +528,7 @@ export default function CompanyDetailPage() {
       message.error(tCommon('email.noAppForm'))
       return
     }
-    setAppEmailContent(tWorkOrder('email.appFormPresetContent'))
+    setAppEmailContent(tWorkOrder('email.appFormPresetContent', { companyName: company.name }))
     setSendAppModalVisible(true)
   }
 
@@ -596,7 +596,7 @@ export default function CompanyDetailPage() {
         },
         body: JSON.stringify({
           to: company.email,
-          subject: tWorkOrder('email.sendAssociationApp'),
+          subject: tWorkOrder('email.sendAssociationAppSubject'),
           content: appEmailContent,
           attachments: attachments
         }),
