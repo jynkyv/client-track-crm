@@ -13,7 +13,8 @@ import {
     Drawer,
     InputNumber,
     Space,
-    Radio
+    Radio,
+    Tooltip
 } from 'antd'
 import {
     SearchOutlined,
@@ -48,6 +49,7 @@ export default function WorkOrdersPage() {
     const [loading, setLoading] = useState(false)
     const [tickets, setTickets] = useState<Ticket[]>([])
     const [applicantCounts, setApplicantCounts] = useState<Record<string, number>>({})
+    const [applicantNames, setApplicantNames] = useState<Record<string, string[]>>({})
     const [companies, setCompanies] = useState<Company[]>([])
     const [createDrawerVisible, setCreateDrawerVisible] = useState(false)
     const t = useTranslations('WorkOrder')
@@ -125,15 +127,22 @@ export default function WorkOrdersPage() {
                 const workOrderIds = filteredData.map((t: Ticket) => t.id)
                 const { data: customers, error: countError } = await supabase
                     .from('customers')
-                    .select('work_order_id, stage2_status, visa_status')
+                    .select('work_order_id, stage2_status, visa_status, real_name, nickname')
                     .in('work_order_id', workOrderIds)
 
                 const counts: Record<string, number> = {}
+                const names: Record<string, string[]> = {}
                 const stats: Record<string, { pending: number, processing: number, completed: number }> = {}
 
                 if (!countError && customers) {
-                    customers.forEach((c: { work_order_id: string, stage2_status?: string, visa_status?: string }) => {
+                    customers.forEach((c: any) => {
                         counts[c.work_order_id] = (counts[c.work_order_id] || 0) + 1
+
+                        const name = c.real_name || c.nickname
+                        if (name) {
+                            if (!names[c.work_order_id]) names[c.work_order_id] = []
+                            names[c.work_order_id].push(name)
+                        }
 
                         if (c.stage2_status === '培训中') {
                             if (!stats[c.work_order_id]) {
@@ -149,6 +158,7 @@ export default function WorkOrdersPage() {
                         }
                     })
                     setApplicantCounts(counts)
+                    setApplicantNames(names)
                     setVisaStats(stats)
                 }
 
@@ -299,9 +309,27 @@ export default function WorkOrdersPage() {
             title: t('columns.applicantCount'),
             dataIndex: 'id',
             key: 'applicant_count',
-            width: 100,
+            width: 150,
             align: 'center' as const,
-            render: (id: string) => `${applicantCounts[id] || 0}人`
+            render: (id: string) => {
+                const names = applicantNames[id] || []
+                const count = applicantCounts[id] || 0
+                if (count === 0) return '-'
+
+                const displayText = names.slice(0, 2).join(', ') + (names.length > 2 ? '...' : '')
+
+                return (
+                    <Tooltip title={
+                        <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                            {names.map((name, i) => <div key={i}>{name}</div>)}
+                        </div>
+                    }>
+                        <span style={{ cursor: 'pointer' }}>
+                            {displayText} <span style={{ color: '#999', fontSize: '12px' }}>({count}人)</span>
+                        </span>
+                    </Tooltip>
+                )
+            }
         },
         // 待回复问题列 - 仅日方员工和管理员可见
         ...(!isChineseEmployee ? [{
