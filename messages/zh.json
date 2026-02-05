@@ -380,11 +380,11 @@
             "contentPlaceholder": "请输入邮件内容",
             "sendAssociationApp": "发送组合加入申请书",
             "sendAppConfirmTitle": "确认发送",
-            "sendAppConfirmContent": "确定要发送组合加入申请书到企业邮箱 ({email}) 吗？",
-            "appFormPresetContent": "尊敬的客户：\n\n附件是组合加入申请书，请查收。\n\n谢谢。",
-            "appFormSentSuccess": "组合加入申请书已发送",
+            "sendAppConfirmContent": "确定要发送组合加入申请书和技能实习规约到企业邮箱 ({email}) 吗？",
+            "appFormPresetContent": "尊敬的客户：\n\n附件是组合加入申请书和技能实习规约，请查收。\n\n谢谢。",
+            "appFormSentSuccess": "邮件已发送",
             "noCompanyEmail": "企业未配置邮箱",
-            "noAppForm": "企业未上传组合加入申请书"
+            "noAppForm": "企业未上传必要文件"
         }
     },
     "Applicant": {
@@ -463,10 +463,11 @@
             "gmoContract": "GMO合同",
             "otitMaterials": "OTIT资料",
             "centralMaterials": "中央会资料",
-            "instructorLicense": "技能実習指導員講習许可证",
-            "visaApplication": "入国管理局签证申请",
-            "employmentContract": "雇佣合同",
-            "associationApplicationForm": "组合加入申请书",
+            "instructorLicense": "技能実習指導員講習",
+            "visaApplication": "在留資格認定証明書交付申請書",
+            "employmentContract": "雇用条件書・雇用契約書",
+            "associationApplicationForm": "組合加入申込書",
+            "technicalInternTrainingProgramAgreement": "技能実習に関する事業に係る規约",
             "actions": "操作"
         },
         "actions": {

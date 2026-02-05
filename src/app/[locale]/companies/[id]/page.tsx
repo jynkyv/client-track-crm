@@ -547,7 +547,7 @@ export default function CompanyDetailPage() {
       const pdfBytes = await generateUnionJoinApplication(company as any)
       const base64Pdf = Buffer.from(pdfBytes).toString('base64')
       attachments.push({
-        filename: `${company!.name}_Combined_Application_Form.pdf`,
+        filename: `組合加入同意書.pdf`,
         content: base64Pdf,
         encoding: 'base64'
       })
@@ -566,7 +566,7 @@ export default function CompanyDetailPage() {
       const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
       const base64Pdf = Buffer.from(pdfBytes).toString('base64')
       attachments.push({
-        filename: `${company!.name}_Technical_Intern_Agreement.pdf`,
+        filename: `技能実習に関する事業に係る規約.pdf`,
         content: base64Pdf,
         encoding: 'base64'
       })
@@ -738,7 +738,7 @@ export default function CompanyDetailPage() {
                                 // Cast because CompanyDetail might miss fields, checking type safety
                                 const pdfBytes = await generateUnionJoinApplication(company as any)
                                 const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                                saveAs(blob, `${company.name}_入会申请书.pdf`)
+                                saveAs(blob, `組合加入同意書.pdf`)
                                 message.success('下载成功')
                               } catch (e) {
                                 console.error(e)
@@ -747,6 +747,29 @@ export default function CompanyDetailPage() {
                             }}
                           >
                             下载申请书
+                          </Button>
+                        </Space>
+                      ) : field.key === 'technical_intern_training_program_agreement' ? (
+                        <Space>
+                          <Button
+                            size="small"
+                            icon={<FilePdfOutlined />}
+                            disabled={!company?.first_training_at}
+                            onClick={async () => {
+                              if (!company || !company.first_training_at) return
+                              try {
+                                message.loading('正在生成文件...')
+                                const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
+                                const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
+                                saveAs(blob, `技能実習に関する事業に係る規約.pdf`)
+                                message.success('下载成功')
+                              } catch (e) {
+                                console.error(e)
+                                message.error('生成失败: ' + (e as Error).message)
+                              }
+                            }}
+                          >
+                            下载规约
                           </Button>
                         </Space>
                       ) : (
