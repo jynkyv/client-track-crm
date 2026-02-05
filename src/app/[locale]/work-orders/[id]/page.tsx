@@ -28,6 +28,7 @@ import {
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined, PictureOutlined, MailOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
+import { generateUnionJoinApplication } from '@/lib/pdfGenerator'
 import dayjs from 'dayjs'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -629,6 +630,83 @@ export default function WorkOrderDetailPage() {
         setEmailSubject(`关于工单：${ticket?.position || ''}`)
         setEmailContent('')
         setEmailModalVisible(true)
+    }
+
+    // 打开发送组合加入申请书 Modal
+    const handleOpenSendAppModal = () => {
+        if (!company?.email) {
+            message.error(tCommon('email.noCompanyEmail'))
+            return
+        }
+
+        // Check if file exists OR if it can be generated
+        const hasFile = company.association_application_form && company.association_application_form.length > 0
+        const canGenerate = !!company.first_training_at
+
+        if (!hasFile && !canGenerate) {
+            message.error(tCommon('email.noAppForm'))
+            return
+        }
+        setAppEmailContent(t('email.appFormPresetContent'))
+        setSendAppModalVisible(true)
+    }
+
+    // 发送组合加入申请书
+    const handleSendAppForm = async () => {
+        if (!company?.email) return
+
+        try {
+            setSendingApp(true)
+
+            let attachments: { filename: string; url?: string; content?: string; encoding?: string }[] = []
+            const hasFile = company.association_application_form && company.association_application_form.length > 0
+
+            if (hasFile) {
+                // Use existing file
+                attachments = (company.association_application_form || []).map((file: DocumentFile) => ({
+                    filename: 'Combined_Application_Form.pdf',
+                    url: getFileUrl(file.url)
+                }))
+            } else if (company.first_training_at) {
+                // Generate file dynamically
+                message.loading(tCommon('loading'))
+                const pdfBytes = await generateUnionJoinApplication(company as any)
+                // Convert to base64 to send to API
+                const base64Pdf = Buffer.from(pdfBytes).toString('base64')
+                attachments = [{
+                    filename: `${company.name}_Combined_Application_Form.pdf`,
+                    content: base64Pdf,
+                    encoding: 'base64'
+                }]
+            }
+
+            const response = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    to: company.email,
+                    subject: t('email.sendAssociationApp'),
+                    content: appEmailContent,
+                    attachments: attachments
+                }),
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to send email')
+            }
+
+            message.success(t('email.appFormSentSuccess'))
+            setSendAppModalVisible(false)
+        } catch (error: any) {
+            console.error('Error sending email:', error)
+            message.error(error.message || tCommon('email.error'))
+        } finally {
+            setSendingApp(false)
+        }
     }
 
     // 发送邮件
