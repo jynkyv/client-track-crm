@@ -37,10 +37,21 @@ export async function POST(request: Request) {
             subject,
             text: content, // Plain text version
             html: content.replace(/\n/g, '<br>'), // Simple HTML conversion
-            attachments: attachments?.map((att: any) => ({
-                filename: att.filename,
-                path: att.url, // Support URL-based attachments
-            })),
+            attachments: attachments?.map((att: any) => {
+                if (att.url) {
+                    return {
+                        filename: att.filename,
+                        path: att.url, // Support URL-based attachments
+                    }
+                } else if (att.content) {
+                    return {
+                        filename: att.filename,
+                        content: att.content,
+                        encoding: att.encoding, // Support base64 content
+                    }
+                }
+                return { filename: att.filename }
+            }),
         })
 
         return NextResponse.json({ success: true })
