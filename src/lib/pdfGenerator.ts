@@ -97,26 +97,35 @@ export async function generateTechnicalInternTrainingProgramAgreement(company: C
     }
 
     const pages = pdfDoc.getPages()
-    const firstPage = pages[0]
-    const fontSize = 12
     const color = rgb(0, 0, 0)
 
-    // TODO: Adjust coordinates based on the new template
-    // For now, reuse similar positions or placeholders
-    if (company.created_at) {
-        const date = dayjs(company.created_at)
-        firstPage.drawText(`${date.year()}`, { x: 422, y: 756, size: fontSize, font: customFont, color })
-        firstPage.drawText(`${date.month() + 1}`, { x: 472, y: 756, size: fontSize, font: customFont, color })
-        firstPage.drawText(`${date.date()}`, { x: 505, y: 756, size: fontSize, font: customFont, color })
+    // Page 2 (index 1): Company Name at Top
+    if (pages.length > 1) {
+        const page2 = pages[1]
+        // Estimate coordinates: Top left-ish
+        // Assuming standard A4 (595 x 842), Top would be y ~750-800
+        // User said "Top", let's try 780. X coordinate depends on layout, try 100 or center.
+        // Let's assume there is a specific line for it.
+        // Warn: These are estimates.
+        page2.drawText(company.name || '', { x: 90, y: 657, size: 12, font: customFont, color })
     }
 
-    firstPage.drawText(company.name || '', { x: 200, y: 420, size: fontSize, font: customFont, color })
-    firstPage.drawText(company.representative || '', { x: 200, y: 375, size: fontSize, font: customFont, color })
-
-    if (company.first_training_at) {
+    // Page 8 (index 7): Date at Bottom
+    // User said: "Date when client became training status" (first_training_at)
+    if (pages.length > 7 && company.first_training_at) {
+        const page8 = pages[7]
         const trainDate = dayjs(company.first_training_at)
-        const dateStr = `${trainDate.year()}年 ${trainDate.month() + 1}月 ${trainDate.date()}日`
-        firstPage.drawText(dateStr, { x: 200, y: 330, size: fontSize, font: customFont, color })
+        // Split into Year, Month, Day (Template has labels)
+        // Using similar spacing to the top date: Year +50 -> Month +33 -> Day
+        // Base X estimate: 400.
+        // Year: 400, Month: 450, Day: 483
+        const year = `${trainDate.year()}`
+        const month = `${trainDate.month() + 1}`
+        const day = `${trainDate.date()}`
+
+        page8.drawText(year, { x: 395, y: 405, size: 12, font: customFont, color })
+        page8.drawText(month, { x: 450, y: 405, size: 12, font: customFont, color })
+        page8.drawText(day, { x: 485, y: 405, size: 12, font: customFont, color })
     }
 
     return await pdfDoc.save()
