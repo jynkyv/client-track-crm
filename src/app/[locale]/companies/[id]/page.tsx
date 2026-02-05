@@ -45,7 +45,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { saveAs } from 'file-saver'
-import { generateUnionJoinApplication } from '@/lib/pdfGenerator'
+import { generateUnionJoinApplication, generateTechnicalInternTrainingProgramAgreement } from '@/lib/pdfGenerator'
 import { getFileUrl } from '@/lib/utils'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -304,7 +304,7 @@ export default function CompanyDetailPage() {
     { key: 'teihon', label: t('columns.teihon') },
     { key: 'financial_report', label: t('columns.financialReport') },
     { key: 'industry_license', label: t('columns.industryLicense') },
-    { key: 'gmo_contract', label: t('columns.gmoContract') },
+    { key: 'technical_intern_training_program_agreement', label: t('columns.technicalInternTrainingProgramAgreement') },
     { key: 'otit_materials', label: t('columns.otitMaterials') },
     { key: 'central_materials', label: t('columns.centralMaterials') },
     { key: 'instructor_license', label: t('columns.instructorLicense') },
@@ -532,33 +532,61 @@ export default function CompanyDetailPage() {
     setSendAppModalVisible(true)
   }
 
-  // 发送组合加入申请书
+  // Generate attachments helper
+  const getDataForEmail = async () => {
+    let attachments: { filename: string; url?: string; content?: string; encoding?: string }[] = []
+
+    // 1. Association Application Form
+    const hasAppForm = company?.association_application_form && company?.association_application_form.length > 0
+    if (hasAppForm) {
+      attachments.push({
+        filename: 'Combined_Application_Form.pdf',
+        url: getFileUrl(company!.association_application_form![0].url)
+      })
+    } else if (company?.first_training_at) {
+      const pdfBytes = await generateUnionJoinApplication(company as any)
+      const base64Pdf = Buffer.from(pdfBytes).toString('base64')
+      attachments.push({
+        filename: `${company!.name}_Combined_Application_Form.pdf`,
+        content: base64Pdf,
+        encoding: 'base64'
+      })
+    }
+
+    // 2. Technical Intern Training Program Agreement
+    const termCheckKey = 'technical_intern_training_program_agreement' as keyof CompanyDetail
+    const hasAgreement = company?.[termCheckKey] && (company?.[termCheckKey] as DocumentFile[]).length > 0
+
+    if (hasAgreement) {
+      attachments.push({
+        filename: 'Technical_Intern_Agreement.pdf',
+        url: getFileUrl((company as any)[termCheckKey][0].url)
+      })
+    } else if (company?.first_training_at) {
+      const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
+      const base64Pdf = Buffer.from(pdfBytes).toString('base64')
+      attachments.push({
+        filename: `${company!.name}_Technical_Intern_Agreement.pdf`,
+        content: base64Pdf,
+        encoding: 'base64'
+      })
+    }
+
+    return attachments
+  }
+
+  // Send Application Form (Refactored)
   const handleSendAppForm = async () => {
     if (!company?.email) return
 
     try {
       setSendingApp(true)
 
-      let attachments: { filename: string; url?: string; content?: string; encoding?: string }[] = []
-      const hasFile = company.association_application_form && company.association_application_form.length > 0
+      const attachments = await getDataForEmail()
 
-      if (hasFile) {
-        // Use existing file
-        attachments = (company.association_application_form || []).map((file: DocumentFile) => ({
-          filename: 'Combined_Application_Form.pdf',
-          url: getFileUrl(file.url)
-        }))
-      } else if (company.first_training_at) {
-        // Generate file dynamically
-        message.loading(t('messages.generatingFile'))
-        const pdfBytes = await generateUnionJoinApplication(company as any)
-        // Convert to base64 to send to API
-        const base64Pdf = Buffer.from(pdfBytes).toString('base64')
-        attachments = [{
-          filename: `${company.name}_Combined_Application_Form.pdf`,
-          content: base64Pdf,
-          encoding: 'base64'
-        }]
+      if (attachments.length === 0) {
+        message.error('No documents available to send')
+        return
       }
 
       const response = await fetch('/api/send-email', {
@@ -582,6 +610,16 @@ export default function CompanyDetailPage() {
 
       message.success(tWorkOrder('email.appFormSentSuccess'))
       setSendAppModalVisible(false)
+
+      // Update application_sent_at in database
+      const { error: updateError } = await supabase
+        .from('companies')
+        .update({ application_sent_at: new Date().toISOString() })
+        .eq('id', companyId)
+
+      if (updateError) console.error('Error updating application_sent_at', updateError)
+      fetchCompany()
+
     } catch (error: any) {
       console.error('Error sending email:', error)
       message.error(error.message || tCommon('email.error'))
@@ -589,6 +627,7 @@ export default function CompanyDetailPage() {
       setSendingApp(false)
     }
   }
+
 
   return (
     <div>
@@ -604,13 +643,23 @@ export default function CompanyDetailPage() {
         title={t('detail.title')}
         extra={
           !isReadOnly && (
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => setEditModalVisible(true)}
-            >
-              {t('actions.edit')}
-            </Button>
+            <Space>
+              <Button
+                icon={<MailOutlined />}
+                onClick={handleOpenSendAppModal}
+                disabled={!!(company as any)?.application_sent_at}
+                loading={sendingApp}
+              >
+                {tWorkOrder('email.sendApplicationEmail')}
+              </Button>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => setEditModalVisible(true)}
+              >
+                {t('actions.edit')}
+              </Button>
+            </Space>
           )
         }
       >
@@ -698,17 +747,6 @@ export default function CompanyDetailPage() {
                             }}
                           >
                             下载申请书
-                          </Button>
-                          <Button
-                            size="small"
-                            icon={<MailOutlined />}
-                            disabled={
-                              (!company?.association_application_form || company.association_application_form.length === 0) &&
-                              !company?.first_training_at
-                            }
-                            onClick={handleOpenSendAppModal}
-                          >
-                            发送邮件
                           </Button>
                         </Space>
                       ) : (

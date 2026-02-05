@@ -69,3 +69,55 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
     const pdfBytes = await pdfDoc.save()
     return pdfBytes
 }
+
+export async function generateTechnicalInternTrainingProgramAgreement(company: Company): Promise<Uint8Array> {
+    // TODO: Update template path when user uploads the new template
+    const templateBytes = await fetch('/pdf/technical_intern_agreement_template.pdf').then(res => {
+        if (!res.ok) {
+            // Fallback to union join template if new one is missing, to prevent crash during dev
+            console.warn('Agreement template not found, using fallback')
+            return fetch('/pdf/union_join_template.pdf').then(r => r.arrayBuffer())
+        }
+        return res.arrayBuffer()
+    })
+    const pdfDoc = await PDFDocument.load(templateBytes)
+
+    pdfDoc.registerFontkit(fontkit)
+
+    let customFont
+    try {
+        const fontBytes = await fetch('/fonts/MS%20Mincho.ttf').then(res => {
+            if (!res.ok) throw new Error(`Font fetch failed: ${res.statusText}`)
+            return res.arrayBuffer()
+        })
+        customFont = await pdfDoc.embedFont(fontBytes)
+    } catch (e) {
+        console.error('Font loading error:', e)
+        throw new Error('无法加载中文字体文件 (MS Mincho.ttf)')
+    }
+
+    const pages = pdfDoc.getPages()
+    const firstPage = pages[0]
+    const fontSize = 12
+    const color = rgb(0, 0, 0)
+
+    // TODO: Adjust coordinates based on the new template
+    // For now, reuse similar positions or placeholders
+    if (company.created_at) {
+        const date = dayjs(company.created_at)
+        firstPage.drawText(`${date.year()}`, { x: 422, y: 756, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.month() + 1}`, { x: 472, y: 756, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.date()}`, { x: 505, y: 756, size: fontSize, font: customFont, color })
+    }
+
+    firstPage.drawText(company.name || '', { x: 200, y: 420, size: fontSize, font: customFont, color })
+    firstPage.drawText(company.representative || '', { x: 200, y: 375, size: fontSize, font: customFont, color })
+
+    if (company.first_training_at) {
+        const trainDate = dayjs(company.first_training_at)
+        const dateStr = `${trainDate.year()}年 ${trainDate.month() + 1}月 ${trainDate.date()}日`
+        firstPage.drawText(dateStr, { x: 200, y: 330, size: fontSize, font: customFont, color })
+    }
+
+    return await pdfDoc.save()
+}

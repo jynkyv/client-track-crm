@@ -163,7 +163,7 @@ export interface Company {
   teihon?: DocumentFile[] // 藤本
   financial_report?: DocumentFile[] // 决算报告书
   industry_license?: DocumentFile[] // 行业许可证
-  gmo_contract?: DocumentFile[] // GMO合同
+  technical_intern_training_program_agreement?: DocumentFile[] // 技能実習に関する事業に係る規約
   otit_materials?: DocumentFile[] // OTIT资料
   central_materials?: DocumentFile[] // 中央会资料
   instructor_license?: DocumentFile[] // 技能実習指導員講習许可证
@@ -171,6 +171,7 @@ export interface Company {
   employment_contract?: DocumentFile[] // 雇佣合同
   association_application_form?: DocumentFile[] // 组合加入申请书
   is_association_member?: boolean // 是否加入组合
+  application_sent_at?: string // 申请书发送时间
   owner_id?: string // 负责人ID（创建者）
   created_at: string
   updated_at: string
