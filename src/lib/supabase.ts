@@ -40,6 +40,7 @@ export interface Customer {
   visa_status?: 'pending' | 'processing' | 'completed' // 签证状态：待办/办理中/已完成
   interview_notice_time?: string
   last_payment_time?: string
+  email?: string // 邮箱
   // 个人信息字段
   birth_date?: string
   household_location?: string

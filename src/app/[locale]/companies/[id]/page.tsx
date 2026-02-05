@@ -39,7 +39,8 @@ import {
   UploadOutlined,
   FilePdfOutlined,
   EyeOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  MailOutlined
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -289,6 +290,11 @@ export default function CompanyDetailPage() {
   const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
   const [currentViewField, setCurrentViewField] = useState<string>('')
 
+  // 组合加入申请书发送状态
+  const [sendAppModalVisible, setSendAppModalVisible] = useState(false)
+  const [sendingApp, setSendingApp] = useState(false)
+  const [appEmailContent, setAppEmailContent] = useState('')
+
   const t = useTranslations('Company')
   const tCommon = useTranslations('Common')
   const locale = useLocale()
@@ -507,6 +513,82 @@ export default function CompanyDetailPage() {
     }
   }
 
+  // 打开发送组合加入申请书 Modal
+  const handleOpenSendAppModal = () => {
+    if (!company?.email) {
+      message.error(tCommon('email.noCompanyEmail'))
+      return
+    }
+
+    // Check if file exists OR if it can be generated
+    const hasFile = company.association_application_form && company.association_application_form.length > 0
+    const canGenerate = !!company.first_training_at
+
+    if (!hasFile && !canGenerate) {
+      message.error(tCommon('email.noAppForm'))
+      return
+    }
+    setAppEmailContent(tWorkOrder('email.appFormPresetContent'))
+    setSendAppModalVisible(true)
+  }
+
+  // 发送组合加入申请书
+  const handleSendAppForm = async () => {
+    if (!company?.email) return
+
+    try {
+      setSendingApp(true)
+
+      let attachments = []
+      const hasFile = company.association_application_form && company.association_application_form.length > 0
+
+      if (hasFile) {
+        // Use existing file
+        attachments = company.association_application_form?.map((file: DocumentFile) => ({
+          filename: 'Combined_Application_Form.pdf',
+          url: getFileUrl(file.url)
+        }))
+      } else if (company.first_training_at) {
+        // Generate file dynamically
+        message.loading(t('messages.generatingFile'))
+        const pdfBytes = await generateUnionJoinApplication(company as any)
+        // Convert to base64 to send to API
+        const base64Pdf = Buffer.from(pdfBytes).toString('base64')
+        attachments = [{
+          filename: `${company.name}_Combined_Application_Form.pdf`,
+          content: base64Pdf,
+          encoding: 'base64'
+        }]
+      }
+
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: company.email,
+          subject: tWorkOrder('email.sendAssociationApp'),
+          content: appEmailContent,
+          attachments: attachments
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send email')
+      }
+
+      message.success(tWorkOrder('email.appFormSentSuccess'))
+      setSendAppModalVisible(false)
+    } catch (error: any) {
+      console.error('Error sending email:', error)
+      message.error(error.message || tCommon('email.error'))
+    } finally {
+      setSendingApp(false)
+    }
+  }
 
   return (
     <div>
@@ -616,6 +698,17 @@ export default function CompanyDetailPage() {
                             }}
                           >
                             下载申请书
+                          </Button>
+                          <Button
+                            size="small"
+                            icon={<MailOutlined />}
+                            disabled={
+                              (!company?.association_application_form || company.association_application_form.length === 0) &&
+                              !company?.first_training_at
+                            }
+                            onClick={handleOpenSendAppModal}
+                          >
+                            发送邮件
                           </Button>
                         </Space>
                       ) : (
@@ -783,7 +876,32 @@ export default function CompanyDetailPage() {
             </List.Item>
           )}
         />
+        />
       </Modal >
+
+      {/* 发送组合加入申请书 Modal */}
+      <Modal
+        title={tWorkOrder('email.sendAssociationApp')}
+        open={sendAppModalVisible}
+        onOk={handleSendAppForm}
+        onCancel={() => setSendAppModalVisible(false)}
+        confirmLoading={sendingApp}
+        okText={tWorkOrder('email.send')}
+        cancelText={tCommon('cancel')}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <p>{tWorkOrder('email.sendAppConfirmContent', { email: company?.email || '' })}</p>
+        </div>
+        <Form layout="vertical">
+          <Form.Item label={tWorkOrder('email.content')} required>
+            <Input.TextArea
+              value={appEmailContent}
+              onChange={e => setAppEmailContent(e.target.value)}
+              rows={6}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div >
   )
 }

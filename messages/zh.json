@@ -167,7 +167,9 @@
             "emergencyContact": "紧急联系人",
             "emergencyContactPlaceholder": "请输入紧急联系人",
             "emergencyPhone": "紧急联系人电话",
-            "emergencyPhonePlaceholder": "请输入紧急联系人电话"
+            "emergencyPhonePlaceholder": "请输入紧急联系人电话",
+            "email": "邮箱",
+            "emailPlaceholder": "请输入邮箱"
         },
         "documents": {
             "resume": "原始简历",
@@ -204,6 +206,7 @@
             "createdAt": "创建时间",
             "lastPaymentTime": "最后汇款时间",
             "owner": "所属人",
+            "email": "邮箱",
             "actions": "操作"
         },
         "actions": {
@@ -360,6 +363,25 @@
             "completedUnit": "人完成",
             "markCompleted": "标记完成",
             "markPending": "标记待办"
+        },
+        "email": {
+            "send": "发送邮件",
+            "title": "发送邮件",
+            "to": "收件人",
+            "subject": "主题",
+            "content": "内容",
+            "sending": "发送中...",
+            "success": "邮件发送成功",
+            "error": "邮件发送失败",
+            "subjectPlaceholder": "请输入邮件主题",
+            "contentPlaceholder": "请输入邮件内容",
+            "sendAssociationApp": "发送组合加入申请书",
+            "sendAppConfirmTitle": "确认发送",
+            "sendAppConfirmContent": "确定要发送组合加入申请书到企业邮箱 ({email}) 吗？",
+            "appFormPresetContent": "尊敬的客户：\n\n附件是组合加入申请书，请查收。\n\n谢谢。",
+            "appFormSentSuccess": "组合加入申请书已发送",
+            "noCompanyEmail": "企业未配置邮箱",
+            "noAppForm": "企业未上传组合加入申请书"
         }
     },
     "Applicant": {

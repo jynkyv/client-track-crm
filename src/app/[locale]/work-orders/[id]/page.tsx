@@ -26,7 +26,7 @@ import {
     Collapse,
     Dropdown
 } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined, PictureOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined, PictureOutlined, MailOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
 import dayjs from 'dayjs'
 import { useTranslations, useLocale } from 'next-intl'
@@ -88,6 +88,19 @@ export default function WorkOrderDetailPage() {
     const [submittingQuestion, setSubmittingQuestion] = useState(false)
     const [submittingReply, setSubmittingReply] = useState<string | null>(null)
     const tQA = useTranslations('WorkOrderQA')
+
+    // 邮件发送状态
+    const [emailModalVisible, setEmailModalVisible] = useState(false)
+    const [sendingEmail, setSendingEmail] = useState(false)
+    const [emailTo, setEmailTo] = useState('')
+    const [emailSubject, setEmailSubject] = useState('')
+    const [emailContent, setEmailContent] = useState('')
+
+    // 组合加入申请书发送状态
+    const [sendAppModalVisible, setSendAppModalVisible] = useState(false)
+    const [sendingApp, setSendingApp] = useState(false)
+    const [appEmailContent, setAppEmailContent] = useState('')
+
 
     const t = useTranslations('WorkOrder')
     const tCommon = useTranslations('Common')
@@ -606,6 +619,63 @@ export default function WorkOrderDetailPage() {
         )
     }
 
+    // 打开邮件发送弹窗
+    const handleOpenEmailModal = (applicant: Customer) => {
+        // 尝试从 contact 中提取邮箱，如果是简单的邮箱格式
+        const contact = applicant.contact || ''
+        const emailMatch = contact.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}/)
+
+        setEmailTo(emailMatch ? emailMatch[0] : '')
+        setEmailSubject(`关于工单：${ticket?.position || ''}`)
+        setEmailContent('')
+        setEmailModalVisible(true)
+    }
+
+    // 发送邮件
+    const handleSendEmail = async () => {
+        if (!emailTo) {
+            message.warning(t('email.to') + ' ' + tCommon('required')) // Assuming required exists or just warn
+            return
+        }
+        if (!emailSubject) {
+            message.warning(t('email.subject') + ' ' + tCommon('required'))
+            return
+        }
+        if (!emailContent) {
+            message.warning(t('email.content') + ' ' + tCommon('required'))
+            return
+        }
+
+        setSendingEmail(true)
+        try {
+            const response = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    to: emailTo,
+                    subject: emailSubject,
+                    content: emailContent
+                })
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to send email')
+            }
+
+            message.success(t('email.success'))
+            setEmailModalVisible(false)
+        } catch (error: any) {
+            console.error('发送邮件失败:', error)
+            message.error(t('email.error') + ': ' + error.message)
+        } finally {
+            setSendingEmail(false)
+        }
+    }
+
     // 上传工作环境图片
     const handleUploadWorkEnvImage = async (file: File) => {
         const maxSize = 4.5 * 1024 * 1024 // 4.5MB
@@ -754,11 +824,24 @@ export default function WorkOrderDetailPage() {
             <Card
                 title={t('detail.title')}
                 style={{ marginBottom: 16 }}
-                extra={canEditTicket && (
-                    <Button type="primary" icon={<EditOutlined />} onClick={handleEditTicket}>
-                        {tCommon('edit')}
-                    </Button>
-                )}
+                extra={
+                    <Space>
+                        {isAdmin && (
+                            <Button
+                                type="primary"
+                                icon={<MailOutlined />}
+                                onClick={handleOpenSendAppModal}
+                            >
+                                {t('email.sendAssociationApp')}
+                            </Button>
+                        )}
+                        {canEditTicket && (
+                            <Button type="primary" icon={<EditOutlined />} onClick={handleEditTicket}>
+                                {tCommon('edit')}
+                            </Button>
+                        )}
+                    </Space>
+                }
             >
                 <Descriptions bordered column={2}>
 
@@ -871,333 +954,342 @@ export default function WorkOrderDetailPage() {
             </Card>
 
             {/* 问答区域 - 中方员工和工单负责人可见 */}
-            {(isChineseEmployee || isTicketOwner || isAdmin) && (
-                <Card style={{ marginTop: 16 }}>
-                    <Collapse defaultActiveKey={questions.some(q => !q.is_answered) ? ['qa'] : []}>
-                        <Collapse.Panel
-                            header={
-                                <Space>
-                                    <span>{tQA('collapseTitle')}</span>
-                                    {questions.filter(q => !q.is_answered).length > 0 && (
-                                        <Tag color="red">
-                                            {questions.filter(q => !q.is_answered).length} {tQA('pendingAnswer')}
-                                        </Tag>
-                                    )}
-                                </Space>
-                            }
-                            key="qa"
-                        >
-                            {/* 中方员工提问表单 */}
-                            {isChineseEmployee && (
-                                <div style={{ marginBottom: 24, padding: 16, background: '#fafafa', borderRadius: 8 }}>
-                                    <h4 style={{ marginBottom: 12 }}>{tQA('askQuestion')}</h4>
-                                    <Input.TextArea
-                                        value={newQuestionContent}
-                                        onChange={(e) => setNewQuestionContent(e.target.value)}
-                                        placeholder={tQA('questionPlaceholder')}
-                                        rows={3}
-                                        style={{ marginBottom: 12 }}
-                                    />
-                                    <Button
-                                        type="primary"
-                                        onClick={handleSubmitQuestion}
-                                        loading={submittingQuestion}
-                                    >
-                                        {tQA('submitQuestion')}
-                                    </Button>
-                                </div>
-                            )}
-
-                            {/* 问题列表 */}
-                            {questions.length > 0 ? (
-                                <div>
-                                    {questions.map((question) => (
-                                        <div
-                                            key={question.id}
-                                            style={{
-                                                marginBottom: 16,
-                                                padding: 16,
-                                                border: '1px solid #e8e8e8',
-                                                borderRadius: 8,
-                                                background: question.is_answered ? '#fff' : 'rgba(255, 0, 0, 0.05)'
-                                            }}
+            {
+                (isChineseEmployee || isTicketOwner || isAdmin) && (
+                    <Card style={{ marginTop: 16 }}>
+                        <Collapse defaultActiveKey={questions.some(q => !q.is_answered) ? ['qa'] : []}>
+                            <Collapse.Panel
+                                header={
+                                    <Space>
+                                        <span>{tQA('collapseTitle')}</span>
+                                        {questions.filter(q => !q.is_answered).length > 0 && (
+                                            <Tag color="red">
+                                                {questions.filter(q => !q.is_answered).length} {tQA('pendingAnswer')}
+                                            </Tag>
+                                        )}
+                                    </Space>
+                                }
+                                key="qa"
+                            >
+                                {/* 中方员工提问表单 */}
+                                {isChineseEmployee && (
+                                    <div style={{ marginBottom: 24, padding: 16, background: '#fafafa', borderRadius: 8 }}>
+                                        <h4 style={{ marginBottom: 12 }}>{tQA('askQuestion')}</h4>
+                                        <Input.TextArea
+                                            value={newQuestionContent}
+                                            onChange={(e) => setNewQuestionContent(e.target.value)}
+                                            placeholder={tQA('questionPlaceholder')}
+                                            rows={3}
+                                            style={{ marginBottom: 12 }}
+                                        />
+                                        <Button
+                                            type="primary"
+                                            onClick={handleSubmitQuestion}
+                                            loading={submittingQuestion}
                                         >
-                                            {/* 问题内容 */}
-                                            <div style={{ marginBottom: 12 }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                                    <Space>
-                                                        <Tag color="blue">{tQA('questionBy')}: {question.asker_name}</Tag>
-                                                        <span style={{ color: '#999', fontSize: 12 }}>
-                                                            {new Date(question.created_at).toLocaleString('zh-CN')}
-                                                        </span>
-                                                    </Space>
-                                                    <Tag color={question.is_answered ? 'green' : 'orange'}>
-                                                        {question.is_answered ? tQA('answered') : tQA('pendingAnswer')}
-                                                    </Tag>
-                                                </div>
-                                                <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{question.content}</p>
-                                            </div>
+                                            {tQA('submitQuestion')}
+                                        </Button>
+                                    </div>
+                                )}
 
-                                            {/* 回复列表 */}
-                                            {question.answers && question.answers.length > 0 && (
-                                                <div style={{ marginLeft: 24, borderLeft: '2px solid #1890ff', paddingLeft: 16 }}>
-                                                    {question.answers.map((answer) => (
-                                                        <div key={answer.id} style={{ marginBottom: 8, padding: 8, background: '#f0f7ff', borderRadius: 4 }}>
-                                                            <div style={{ marginBottom: 4 }}>
-                                                                <Space>
-                                                                    <Tag color="green">{tQA('replyBy')}: {answer.responder_name}</Tag>
-                                                                    <span style={{ color: '#999', fontSize: 12 }}>
-                                                                        {new Date(answer.created_at).toLocaleString('zh-CN')}
-                                                                    </span>
-                                                                </Space>
+                                {/* 问题列表 */}
+                                {questions.length > 0 ? (
+                                    <div>
+                                        {questions.map((question) => (
+                                            <div
+                                                key={question.id}
+                                                style={{
+                                                    marginBottom: 16,
+                                                    padding: 16,
+                                                    border: '1px solid #e8e8e8',
+                                                    borderRadius: 8,
+                                                    background: question.is_answered ? '#fff' : 'rgba(255, 0, 0, 0.05)'
+                                                }}
+                                            >
+                                                {/* 问题内容 */}
+                                                <div style={{ marginBottom: 12 }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                                        <Space>
+                                                            <Tag color="blue">{tQA('questionBy')}: {question.asker_name}</Tag>
+                                                            <span style={{ color: '#999', fontSize: 12 }}>
+                                                                {new Date(question.created_at).toLocaleString('zh-CN')}
+                                                            </span>
+                                                        </Space>
+                                                        <Tag color={question.is_answered ? 'green' : 'orange'}>
+                                                            {question.is_answered ? tQA('answered') : tQA('pendingAnswer')}
+                                                        </Tag>
+                                                    </div>
+                                                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{question.content}</p>
+                                                </div>
+
+                                                {/* 回复列表 */}
+                                                {question.answers && question.answers.length > 0 && (
+                                                    <div style={{ marginLeft: 24, borderLeft: '2px solid #1890ff', paddingLeft: 16 }}>
+                                                        {question.answers.map((answer) => (
+                                                            <div key={answer.id} style={{ marginBottom: 8, padding: 8, background: '#f0f7ff', borderRadius: 4 }}>
+                                                                <div style={{ marginBottom: 4 }}>
+                                                                    <Space>
+                                                                        <Tag color="green">{tQA('replyBy')}: {answer.responder_name}</Tag>
+                                                                        <span style={{ color: '#999', fontSize: 12 }}>
+                                                                            {new Date(answer.created_at).toLocaleString('zh-CN')}
+                                                                        </span>
+                                                                    </Space>
+                                                                </div>
+                                                                <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{answer.content}</p>
                                                             </div>
-                                                            <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{answer.content}</p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                )}
 
-                                            {/* 日方员工/工单负责人回复表单 */}
-                                            {(isTicketOwner || isAdmin) && !question.is_answered && (
-                                                <div style={{ marginTop: 12, marginLeft: 24 }}>
-                                                    <Input.TextArea
-                                                        value={replyContents[question.id] || ''}
-                                                        onChange={(e) => setReplyContents(prev => ({ ...prev, [question.id]: e.target.value }))}
-                                                        placeholder={tQA('replyPlaceholder')}
-                                                        rows={2}
-                                                        style={{ marginBottom: 8 }}
-                                                    />
+                                                {/* 日方员工/工单负责人回复表单 */}
+                                                {(isTicketOwner || isAdmin) && !question.is_answered && (
+                                                    <div style={{ marginTop: 12, marginLeft: 24 }}>
+                                                        <Input.TextArea
+                                                            value={replyContents[question.id] || ''}
+                                                            onChange={(e) => setReplyContents(prev => ({ ...prev, [question.id]: e.target.value }))}
+                                                            placeholder={tQA('replyPlaceholder')}
+                                                            rows={2}
+                                                            style={{ marginBottom: 8 }}
+                                                        />
+                                                        <Button
+                                                            type="primary"
+                                                            size="small"
+                                                            onClick={() => handleSubmitReply(question.id)}
+                                                            loading={submittingReply === question.id}
+                                                        >
+                                                            {tQA('submitReply')}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
+                                        {tQA('noQuestions')}
+                                    </div>
+                                )}
+                            </Collapse.Panel>
+                        </Collapse>
+                    </Card>
+                )
+            }
+
+            {/* 应聘者列表 - 仅日方员工可见 */}
+            {
+                !isChineseEmployee && (
+                    <Card
+                        title={t('detail.applicantList')}
+                        extra={
+                            isAdmin && (
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={handleAddApplicant}
+                                >
+                                    {tApplicant('add')}
+                                </Button>
+                            )
+                        }
+                    >
+                        {applicants.length > 0 ? (
+                            <Tabs
+                                type="card"
+                                items={applicants.map((applicant, index) => ({
+                                    key: applicant.id,
+                                    label: (
+                                        <Space>
+                                            {applicant.real_name || applicant.nickname || `应聘者${index + 1}`}
+                                            {applicant.stage2_status === '培训中' && getVisaStatusTag(applicant)}
+                                        </Space>
+                                    ),
+                                    children: (
+                                        <div style={{ padding: '16px 0' }}>
+                                            {isAdmin && (
+                                                <Space style={{ marginBottom: 16, float: 'right' }}>
+                                                    {/* 签证状态切换 - 仅在培训中显示 */}
+                                                    {applicant.stage2_status === '培训中' && (
+                                                        <Dropdown
+                                                            menu={{
+                                                                items: [
+                                                                    { key: 'pending', label: t('visa.pending'), onClick: () => handleToggleVisaStatus(applicant, 'pending') },
+                                                                    { key: 'processing', label: t('visa.processing'), onClick: () => handleToggleVisaStatus(applicant, 'processing') },
+                                                                    { key: 'completed', label: t('visa.completed'), onClick: () => handleToggleVisaStatus(applicant, 'completed') }
+                                                                ]
+                                                            }}
+                                                        >
+                                                            <Button>
+                                                                {t('visa.status')} <EditOutlined />
+                                                            </Button>
+                                                        </Dropdown>
+                                                    )}
+                                                    <Button
+                                                        icon={<MailOutlined />}
+                                                        onClick={() => handleOpenEmailModal(applicant)}
+                                                    >
+                                                        {t('email.send')}
+                                                    </Button>
+                                                    <Button
+                                                        icon={<EditOutlined />}
+                                                        onClick={() => handleEditApplicant(applicant)}
+                                                    >
+                                                        {tCommon('edit')}
+                                                    </Button>
+                                                    <Button
+                                                        danger
+                                                        icon={<DeleteOutlined />}
+                                                        onClick={() => handleDeleteApplicant(applicant.id)}
+                                                    >
+                                                        {tCommon('delete')}
+                                                    </Button>
+                                                </Space>
+                                            )}
+                                            <div style={{ clear: 'both' }}></div>
+
+                                            {isJapaneseEmployee && (
+                                                <div style={{ float: 'right', marginBottom: 16 }}>
                                                     <Button
                                                         type="primary"
-                                                        size="small"
-                                                        onClick={() => handleSubmitReply(question.id)}
-                                                        loading={submittingReply === question.id}
+                                                        danger
+                                                        icon={<AlertOutlined />}
+                                                        onClick={() => handleOpenFeedback(applicant)}
                                                     >
-                                                        {tQA('submitReply')}
+                                                        {tFeedback('actions.feedback')}
                                                     </Button>
                                                 </div>
                                             )}
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
-                                    {tQA('noQuestions')}
-                                </div>
-                            )}
-                        </Collapse.Panel>
-                    </Collapse>
-                </Card>
-            )}
+                                            <div style={{ clear: 'both' }}></div>
 
-            {/* 应聘者列表 - 仅日方员工可见 */}
-            {!isChineseEmployee && (
-                <Card
-                    title={t('detail.applicantList')}
-                    extra={
-                        isAdmin && (
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={handleAddApplicant}
-                            >
-                                {tApplicant('add')}
-                            </Button>
-                        )
-                    }
-                >
-                    {applicants.length > 0 ? (
-                        <Tabs
-                            type="card"
-                            items={applicants.map((applicant, index) => ({
-                                key: applicant.id,
-                                label: (
-                                    <Space>
-                                        {applicant.real_name || applicant.nickname || `应聘者${index + 1}`}
-                                        {applicant.stage2_status === '培训中' && getVisaStatusTag(applicant)}
-                                    </Space>
-                                ),
-                                children: (
-                                    <div style={{ padding: '16px 0' }}>
-                                        {isAdmin && (
-                                            <Space style={{ marginBottom: 16, float: 'right' }}>
-                                                {/* 签证状态切换 - 仅在培训中显示 */}
-                                                {applicant.stage2_status === '培训中' && (
-                                                    <Dropdown
-                                                        menu={{
-                                                            items: [
-                                                                { key: 'pending', label: t('visa.pending'), onClick: () => handleToggleVisaStatus(applicant, 'pending') },
-                                                                { key: 'processing', label: t('visa.processing'), onClick: () => handleToggleVisaStatus(applicant, 'processing') },
-                                                                { key: 'completed', label: t('visa.completed'), onClick: () => handleToggleVisaStatus(applicant, 'completed') }
-                                                            ]
-                                                        }}
-                                                    >
-                                                        <Button>
-                                                            {t('visa.status')} <EditOutlined />
-                                                        </Button>
-                                                    </Dropdown>
-                                                )}
-                                                <Button
-                                                    icon={<EditOutlined />}
-                                                    onClick={() => handleEditApplicant(applicant)}
-                                                >
-                                                    {tCommon('edit')}
-                                                </Button>
-                                                <Button
-                                                    danger
-                                                    icon={<DeleteOutlined />}
-                                                    onClick={() => handleDeleteApplicant(applicant.id)}
-                                                >
-                                                    {tCommon('delete')}
-                                                </Button>
-                                            </Space>
-                                        )}
-                                        {/* 日方员工的反馈按钮 */}
-                                        {isJapaneseEmployee && (
-                                            <div style={{ float: 'right', marginBottom: 16 }}>
-                                                <Button
-                                                    type="primary"
-                                                    danger
-                                                    icon={<AlertOutlined />}
-                                                    onClick={() => handleOpenFeedback(applicant)}
-                                                >
-                                                    {tFeedback('actions.feedback')}
-                                                </Button>
-                                            </div>
-                                        )}
-                                        <div style={{ clear: 'both' }}></div>
-
-                                        <Row gutter={[16, 16]}>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.name')}：</strong>{applicant.real_name || applicant.nickname}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{t('visa.status')}：</strong>{getVisaStatusTag(applicant)}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.gender')}：</strong>{applicant.gender === 'male' ? tApplicant('gender.male') : applicant.gender === 'female' ? tApplicant('gender.female') : applicant.gender || '-'}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.birthDate')}：</strong>{applicant.birth_date}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.householdLocation')}：</strong>{applicant.household_location}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.currentResidence')}：</strong>{applicant.current_residence}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.contact')}：</strong>{applicant.phone || applicant.contact}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.wechat')}：</strong>{applicant.wechat}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.emergencyContact')}：</strong>{applicant.emergency_contact}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div><strong>{tApplicant('form.emergencyPhone')}：</strong>{applicant.emergency_phone}</div>
-                                            </Col>
-                                            <Col xs={24} sm={12} md={8}>
-                                                <div>
-                                                    <strong>{tApplicant('form.owner')}：</strong>
-                                                    <Space>
-                                                        <span>{applicant.owner || '-'}</span>
-                                                        {applicant.owner && ownerUserMap[applicant.owner] && ownerUserMap[applicant.owner] !== user?.id && (
-                                                            <Button
-                                                                type="link"
-                                                                size="small"
-                                                                icon={<MessageOutlined />}
-                                                                onClick={() => {
-                                                                    if (typeof window !== 'undefined' && (window as any).openChat) {
-                                                                        (window as any).openChat(ownerUserMap[applicant.owner], applicant.owner)
-                                                                    }
-                                                                }}
-                                                            >
-                                                                {t('actions.chat')}
-                                                            </Button>
-                                                        )}
-                                                    </Space>
-                                                </div>
-                                            </Col>
-                                        </Row >
-
-                                        <div style={{ marginTop: 16 }}>
-                                            <h4>{t('detail.documents')}</h4>
                                             <Row gutter={[16, 16]}>
-                                                {[
-                                                    { label: tApplicant('documents.resume'), field: 'resume' },
-                                                    { label: tApplicant('documents.passport'), field: 'passport' },
-                                                    { label: tApplicant('documents.householdBook'), field: 'household_book' },
-                                                    { label: tApplicant('documents.idCard'), field: 'id_card' },
-                                                    { label: tApplicant('documents.photo2inch'), field: 'photo_2inch' },
-                                                    { label: tApplicant('documents.creditReport'), field: 'credit_report' },
-                                                    { label: tApplicant('documents.noCrimeCert'), field: 'no_crime_cert' },
-                                                    { label: tApplicant('documents.nationalCert'), field: 'national_cert' },
-                                                    { label: tApplicant('documents.provincialCert'), field: 'provincial_cert' },
-                                                    { label: tApplicant('documents.employmentContract'), field: 'employment_contract' },
-                                                    { label: tApplicant('documents.japanAgencyContract'), field: 'japan_agency_contract' },
-                                                    { label: tApplicant('documents.immigrationMaterials'), field: 'immigration_materials' },
-                                                ].map(({ label, field }) => {
-                                                    // customers表的文档字段是数组类型
-                                                    const fieldValue = applicant[field as keyof Customer] as DocumentFile[] | undefined
-                                                    const hasFile = fieldValue && fieldValue.length > 0
-                                                    const isUploading = uploadingFile === `${applicant.id}-${field}`
-                                                    return (
-                                                        <Col xs={24} sm={12} md={8} key={field}>
-                                                            <div><strong>{label}：</strong>
-                                                                <Space>
-                                                                    <Button
-                                                                        type="link"
-                                                                        icon={<FileTextOutlined />}
-                                                                        onClick={() => {
-                                                                            if (hasFile && fieldValue) {
-                                                                                handleViewFiles(fieldValue)
-                                                                            }
-                                                                        }}
-                                                                        disabled={!hasFile}
-                                                                    >
-                                                                        {t('actions.view')}{hasFile ? `(${fieldValue!.length})` : ''}
-                                                                    </Button>
-                                                                    {isAdmin && (
-                                                                        <Upload
-                                                                            showUploadList={false}
-                                                                            customRequest={({ file }) => handleUploadFile(file as File, field, applicant.id)}
-                                                                            accept=".pdf,.jpg,.jpeg,.png"
-                                                                            disabled={isUploading}
-                                                                        >
-                                                                            <Button
-                                                                                type="link"
-                                                                                icon={<UploadOutlined />}
-                                                                                size="small"
-                                                                                loading={isUploading}
-                                                                            >
-                                                                                {isUploading ? t('actions.uploading') : t('actions.upload')}
-                                                                            </Button>
-                                                                        </Upload>
-                                                                    )}
-                                                                </Space>
-                                                            </div>
-                                                        </Col>
-                                                    )
-                                                })}
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.name')}：</strong>{applicant.real_name || applicant.nickname}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{t('visa.status')}：</strong>{getVisaStatusTag(applicant)}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.gender')}：</strong>{applicant.gender === 'male' ? tApplicant('gender.male') : applicant.gender === 'female' ? tApplicant('gender.female') : applicant.gender || '-'}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.birthDate')}：</strong>{applicant.birth_date}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.householdLocation')}：</strong>{applicant.household_location}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.currentResidence')}：</strong>{applicant.current_residence}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.contact')}：</strong>{applicant.phone || applicant.contact}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.wechat')}：</strong>{applicant.wechat}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.emergencyContact')}：</strong>{applicant.emergency_contact}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.emergencyPhone')}：</strong>{applicant.emergency_phone}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
+                                                    <div>
+                                                        <strong>{tApplicant('form.owner')}：</strong>
+                                                        <Space>
+                                                            <span>{applicant.owner || '-'}</span>
+                                                            {applicant.owner && ownerUserMap[applicant.owner] && ownerUserMap[applicant.owner] !== user?.id && (
+                                                                <Button
+                                                                    type="link"
+                                                                    size="small"
+                                                                    icon={<MessageOutlined />}
+                                                                    onClick={() => {
+                                                                        if (typeof window !== 'undefined' && (window as any).openChat) {
+                                                                            (window as any).openChat(ownerUserMap[applicant.owner], applicant.owner)
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    {t('actions.chat')}
+                                                                </Button>
+                                                            )}
+                                                        </Space>
+                                                    </div>
+                                                </Col>
                                             </Row>
+
+                                            <div style={{ marginTop: 16 }}>
+                                                <h4>{t('detail.documents')}</h4>
+                                                <Row gutter={[16, 16]}>
+                                                    {[
+                                                        { label: tApplicant('documents.resume'), field: 'resume' },
+                                                        { label: tApplicant('documents.passport'), field: 'passport' },
+                                                        { label: tApplicant('documents.householdBook'), field: 'household_book' },
+                                                        { label: tApplicant('documents.idCard'), field: 'id_card' },
+                                                        { label: tApplicant('documents.photo2inch'), field: 'photo_2inch' },
+                                                        { label: tApplicant('documents.creditReport'), field: 'credit_report' },
+                                                        { label: tApplicant('documents.noCrimeCert'), field: 'no_crime_cert' },
+                                                        { label: tApplicant('documents.nationalCert'), field: 'national_cert' },
+                                                        { label: tApplicant('documents.provincialCert'), field: 'provincial_cert' },
+                                                        { label: tApplicant('documents.employmentContract'), field: 'employment_contract' },
+                                                        { label: tApplicant('documents.japanAgencyContract'), field: 'japan_agency_contract' },
+                                                        { label: tApplicant('documents.immigrationMaterials'), field: 'immigration_materials' },
+                                                    ].map(({ label, field }) => {
+                                                        const fieldValue = applicant[field as keyof Customer] as DocumentFile[] | undefined
+                                                        const hasFile = fieldValue && fieldValue.length > 0
+                                                        const isUploading = uploadingFile === `${applicant.id}-${field}`
+                                                        return (
+                                                            <Col xs={24} sm={12} md={8} key={field}>
+                                                                <div><strong>{label}：</strong>
+                                                                    <Space>
+                                                                        <Button
+                                                                            type="link"
+                                                                            icon={<FileTextOutlined />}
+                                                                            onClick={() => {
+                                                                                if (hasFile && fieldValue) {
+                                                                                    handleViewFiles(fieldValue)
+                                                                                }
+                                                                            }}
+                                                                            disabled={!hasFile}
+                                                                        >
+                                                                            {t('actions.view')}{hasFile ? `(${fieldValue!.length})` : ''}
+                                                                        </Button>
+                                                                        {isAdmin && (
+                                                                            <Upload
+                                                                                showUploadList={false}
+                                                                                customRequest={({ file }) => handleUploadFile(file as File, field, applicant.id)}
+                                                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                                                disabled={isUploading}
+                                                                            >
+                                                                                <Button
+                                                                                    type="link"
+                                                                                    icon={<UploadOutlined />}
+                                                                                    size="small"
+                                                                                    loading={isUploading}
+                                                                                >
+                                                                                    {isUploading ? t('actions.uploading') : t('actions.upload')}
+                                                                                </Button>
+                                                                            </Upload>
+                                                                        )}
+                                                                    </Space>
+                                                                </div>
+                                                            </Col>
+                                                        )
+                                                    })}
+                                                </Row>
+                                            </div>
                                         </div>
-                                    </div >
-                                )
-                            }))}
-                        />
-                    ) : (
-                        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-                            {t('detail.noApplicant')}
-                        </div>
-                    )}
-                </Card >
-            )
+                                    )
+                                }))}
+                            />
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+                                {t('detail.noApplicant')}
+                            </div>
+                        )}
+                    </Card >
+                )
             }
 
             {/* 添加/编辑应聘者Drawer */}
-            <Drawer
+            < Drawer
                 title={editingApplicant ? tApplicant('edit') : tApplicant('add')}
                 open={applicantDrawerVisible}
                 onClose={() => setApplicantDrawerVisible(false)}
@@ -1509,6 +1601,66 @@ export default function WorkOrderDetailPage() {
                     </Form.Item>
                 </Form>
             </Drawer>
+
+            {/* 发送组合加入申请书 Modal */}
+            <Modal
+                title={t('email.sendAssociationApp')}
+                open={sendAppModalVisible}
+                onOk={handleSendAppForm}
+                onCancel={() => setSendAppModalVisible(false)}
+                confirmLoading={sendingApp}
+                okText={t('email.send')}
+                cancelText={tCommon('cancel')}
+            >
+                <div style={{ marginBottom: 16 }}>
+                    <p>{t('email.sendAppConfirmContent', { email: company?.email || '' })}</p>
+                </div>
+                <Form layout="vertical">
+                    <Form.Item label={t('email.content')} required>
+                        <TextArea
+                            value={appEmailContent}
+                            onChange={e => setAppEmailContent(e.target.value)}
+                            rows={6}
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* 发送邮件 Modal */}
+            <Modal
+                title={t('email.title')}
+                open={emailModalVisible}
+                onOk={handleSendEmail}
+                onCancel={() => setEmailModalVisible(false)}
+                confirmLoading={sendingEmail}
+                okText={t('email.send')}
+                cancelText={tCommon('cancel')}
+            >
+                <Form layout="vertical">
+                    <Form.Item label={t('email.to')} required>
+                        <Input
+                            value={emailTo}
+                            onChange={e => setEmailTo(e.target.value)}
+                            placeholder="example@email.com"
+                        />
+                    </Form.Item>
+                    <Form.Item label={t('email.subject')} required>
+                        <Input
+                            value={emailSubject}
+                            onChange={e => setEmailSubject(e.target.value)}
+                            placeholder={t('email.subjectPlaceholder')}
+                        />
+                    </Form.Item>
+                    <Form.Item label={t('email.content')} required>
+                        <TextArea
+                            value={emailContent}
+                            onChange={e => setEmailContent(e.target.value)}
+                            rows={6}
+                            placeholder={t('email.contentPlaceholder')}
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div >
     )
 }

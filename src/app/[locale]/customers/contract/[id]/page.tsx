@@ -41,6 +41,7 @@ interface CustomerDetail {
   household_location: string // 户籍所在地
   current_residence: string // 现居住地
   contact: string // 联系方式
+  email?: string // 邮箱
   wechat?: string // 实名微信号
   emergency_contact?: string // 紧急联系人
   emergency_phone?: string // 紧急联系人电话
@@ -115,6 +116,7 @@ export default function CustomerDetailPage() {
           household_location: customerData.household_location,
           current_residence: customerData.current_residence,
           contact: customerData.contact,
+          email: customerData.email,
           wechat: customerData.wechat,
           emergency_contact: customerData.emergency_contact,
           emergency_phone: customerData.emergency_phone,
@@ -345,6 +347,7 @@ export default function CustomerDetailPage() {
         household_location: customer.household_location,
         current_residence: customer.current_residence,
         contact: customer.contact,
+        email: customer.email,
         wechat: customer.wechat,
         emergency_contact: customer.emergency_contact,
         emergency_phone: customer.emergency_phone,
@@ -364,6 +367,7 @@ export default function CustomerDetailPage() {
         household_location: values.household_location,
         current_residence: values.current_residence,
         contact: values.contact,
+        email: values.email,
         wechat: values.wechat,
         emergency_contact: values.emergency_contact,
         emergency_phone: values.emergency_phone,
@@ -395,6 +399,7 @@ export default function CustomerDetailPage() {
         household_location: customerData.household_location,
         current_residence: customerData.current_residence,
         contact: customerData.contact,
+        email: customerData.email,
         wechat: customerData.wechat,
         emergency_contact: customerData.emergency_contact,
         emergency_phone: customerData.emergency_phone,
@@ -474,6 +479,7 @@ export default function CustomerDetailPage() {
             <Descriptions.Item label={t('form.householdLocation')}>{customer.household_location || '-'}</Descriptions.Item>
             <Descriptions.Item label={t('form.currentResidence')}>{customer.current_residence || '-'}</Descriptions.Item>
             <Descriptions.Item label={t('form.contact')}>{customer.contact || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('form.email')}>{customer.email || '-'}</Descriptions.Item>
             <Descriptions.Item label={t('form.wechat')}>{customer.wechat || '-'}</Descriptions.Item>
             <Descriptions.Item label={t('form.emergencyContact')}>{customer.emergency_contact || '-'}</Descriptions.Item>
             <Descriptions.Item label={t('form.emergencyPhone')} span={2}>{customer.emergency_phone || '-'}</Descriptions.Item>
@@ -551,12 +557,24 @@ export default function CustomerDetailPage() {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
+                  name="email"
+                  label={t('form.email')}
+                  rules={[{ required: false, type: 'email', message: '请输入有效的邮箱地址' }]}
+                >
+                  <Input placeholder={t('form.emailPlaceholder')} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
                   name="wechat"
                   label={t('form.wechat')}
                 >
                   <Input placeholder={t('form.wechatPlaceholder')} />
                 </Form.Item>
               </Col>
+            </Row>
+
+            <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
                   name="emergency_contact"
@@ -565,9 +583,6 @@ export default function CustomerDetailPage() {
                   <Input placeholder={t('form.emergencyContactPlaceholder')} />
                 </Form.Item>
               </Col>
-            </Row>
-
-            <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
                   name="emergency_phone"

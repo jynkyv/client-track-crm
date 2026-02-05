@@ -529,6 +529,7 @@ export default function ContractCustomersPage() {
         household_location: values.household_location,
         current_residence: values.current_residence,
         contact: values.contact,
+        email: values.email,
         wechat: values.wechat,
         emergency_contact: values.emergency_contact,
         emergency_phone: values.emergency_phone,
@@ -1313,6 +1314,15 @@ export default function ContractCustomersPage() {
                   label={t('form.contact')}
                 >
                   <Input placeholder={t('form.contactPlaceholder')} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="email"
+                  label={t('form.email')}
+                  rules={[{ required: false, type: 'email', message: '请输入有效的邮箱地址' }]}
+                >
+                  <Input placeholder={t('form.emailPlaceholder')} />
                 </Form.Item>
               </Col>
               <Col span={12}>
