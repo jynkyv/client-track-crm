@@ -379,6 +379,7 @@
             "subjectPlaceholder": "请输入邮件主题",
             "contentPlaceholder": "请输入邮件内容",
             "sendAssociationApp": "发送组合加入申请书",
+            "sendApplicationEmail": "发送申请邮件",
             "sendAssociationAppSubject": "組合加入同意書および技能実習に関する事業に係る規約の送付",
             "sendAppConfirmTitle": "确认发送",
             "sendAppConfirmContent": "确定要发送组合加入申请书和技能实习规约到企业邮箱 ({email}) 吗？",
