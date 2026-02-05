@@ -539,7 +539,7 @@ export default function CompanyDetailPage() {
     try {
       setSendingApp(true)
 
-      let attachments = []
+      let attachments: { filename: string; url?: string; content?: string; encoding?: string }[] = []
       const hasFile = company.association_application_form && company.association_application_form.length > 0
 
       if (hasFile) {
