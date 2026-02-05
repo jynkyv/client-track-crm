@@ -20,17 +20,23 @@ import {
   InputNumber,
   TableProps,
   DatePicker,
-  Modal
+  Modal,
+  ConfigProvider
 } from 'antd'
+import zhCN from 'antd/es/locale/zh_CN'
 import { MoreOutlined, DollarOutlined, SwapOutlined, EyeOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { supabase, Customer, Payment } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from '@/navigation'
+import { useRouter } from 'next/navigation'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { useTranslations } from 'next-intl'
+import 'dayjs/locale/zh-cn'
+import { useTranslations, useLocale } from 'next-intl'
+
+dayjs.locale('zh-cn')
 
 const { Option } = Select
+
 
 // 格式化金额，添加千分号
 const formatAmount = (amount: number | null | undefined): string => {
@@ -61,6 +67,7 @@ export default function ContractCustomersPage() {
   const router = useRouter()
   const t = useTranslations('contract')
   const tCommon = useTranslations('Common')
+  const locale = useLocale()
 
   // 筛选和搜索状态
   const [searchName, setSearchName] = useState('')
@@ -402,7 +409,12 @@ export default function ContractCustomersPage() {
 
   // 处理编辑 - 跳转到详情页面并自动进入编辑模式
   const handleEdit = (record: Customer) => {
-    router.push(`/customers/contract/${record.id}?edit=true`)
+    if (!record?.id) {
+      message.error(tCommon('error'));
+      return;
+    }
+    const url = `/${locale}/customers/contract/${record.id}?edit=true`
+    router.push(url)
   }
 
   // 处理删除
@@ -552,7 +564,7 @@ export default function ContractCustomersPage() {
         <Button
           type="link"
           style={{ padding: 0 }}
-          onClick={() => router.push(`/customers/contract/${record.id}`)}
+          onClick={() => router.push(`/${locale}/customers/contract/${record.id}`)}
         >
           {name || '-'}
         </Button>
@@ -675,7 +687,7 @@ export default function ContractCustomersPage() {
                 type="link"
                 size="small"
                 style={{ padding: 0, height: 'auto' }}
-                onClick={() => router.push(`/companies/${record.company_id}`)}
+                onClick={() => router.push(`/${locale}/companies/${record.company_id}`)}
               >
                 {truncatedText}
               </Button>
@@ -776,7 +788,7 @@ export default function ContractCustomersPage() {
             key: 'view',
             label: t('actions.view'),
             icon: <EyeOutlined />,
-            onClick: () => router.push(`/customers/contract/${record.id}`)
+            onClick: () => router.push(`/${locale}/customers/contract/${record.id}`)
           },
           {
             key: 'edit',
@@ -851,502 +863,504 @@ export default function ContractCustomersPage() {
   }
 
   return (
-    <div>
-      <Card>
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>{t('title')}</h2>
-          {!isAdmin && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-              {t('add')}
-            </Button>
-          )}
-        </div>
+    <ConfigProvider locale={zhCN}>
+      <div>
+        <Card>
+          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2>{t('title')}</h2>
+            {!isAdmin && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                {t('add')}
+              </Button>
+            )}
+          </div>
 
-        {/* 筛选和搜索区域 */}
-        <Card style={{ marginBottom: 16 }}>
-          <h3 style={{ marginBottom: 16 }}>{tCommon('search')}</h3>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={6}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('search.realName')}</label>
-                <Input
-                  placeholder={t('search.realNamePlaceholder')}
-                  value={searchName}
-                  onChange={(e) => setSearchName(e.target.value)}
-                  allowClear
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('search.status')}</label>
-                <Select
-                  placeholder={t('search.status')}
-                  value={stage2StatusFilter}
-                  onChange={setStage2StatusFilter}
-                  allowClear
-                  style={{ width: '100%' }}
-                >
-                  <Option value="待面试">{t('status.pending')}</Option>
-                  <Option value="已通知面试">{t('status.interviewNotified')}</Option>
-                  <Option value="面试通过">{t('status.interviewPassed')}</Option>
-                  <Option value="面试失败">{t('status.interviewFailed')}</Option>
-                  <Option value="培训中">{t('status.training')}</Option>
-                  <Option value="已完成">{t('status.completed')}</Option>
-                </Select>
-              </div>
-            </Col>
-            {isAdmin && (
+          {/* 筛选和搜索区域 */}
+          <Card style={{ marginBottom: 16 }}>
+            <h3 style={{ marginBottom: 16 }}>{tCommon('search')}</h3>
+            <Row gutter={[16, 16]}>
               <Col xs={24} sm={12} md={6}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('columns.owner')}</label>
+                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('search.realName')}</label>
+                  <Input
+                    placeholder={t('search.realNamePlaceholder')}
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    allowClear
+                  />
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('search.status')}</label>
                   <Select
-                    placeholder={t('columns.owner')}
-                    value={ownerFilter}
-                    onChange={setOwnerFilter}
+                    placeholder={t('search.status')}
+                    value={stage2StatusFilter}
+                    onChange={setStage2StatusFilter}
                     allowClear
                     style={{ width: '100%' }}
                   >
-                    {users.map(user => (
-                      <Option key={user.username} value={user.username}>
-                        {user.username}
-                      </Option>
-                    ))}
+                    <Option value="待面试">{t('status.pending')}</Option>
+                    <Option value="已通知面试">{t('status.interviewNotified')}</Option>
+                    <Option value="面试通过">{t('status.interviewPassed')}</Option>
+                    <Option value="面试失败">{t('status.interviewFailed')}</Option>
+                    <Option value="培训中">{t('status.training')}</Option>
+                    <Option value="已完成">{t('status.completed')}</Option>
                   </Select>
                 </div>
               </Col>
-            )}
-          </Row>
-          <Row style={{ marginTop: 16 }}>
-            <Col span={24}>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button onClick={() => {
-                  setSearchName('')
-                  setStage2StatusFilter('')
-                  setOwnerFilter('')
-                  setCurrentPage(1)
-                  setSortField('created_at')
-                  setSortOrder('desc')
-                }}>
-                  {tCommon('reset')}
-                </Button>
-              </div>
-            </Col>
-          </Row>
+              {isAdmin && (
+                <Col xs={24} sm={12} md={6}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('columns.owner')}</label>
+                    <Select
+                      placeholder={t('columns.owner')}
+                      value={ownerFilter}
+                      onChange={setOwnerFilter}
+                      allowClear
+                      style={{ width: '100%' }}
+                    >
+                      {users.map(user => (
+                        <Option key={user.username} value={user.username}>
+                          {user.username}
+                        </Option>
+                      ))}
+                    </Select>
+                  </div>
+                </Col>
+              )}
+            </Row>
+            <Row style={{ marginTop: 16 }}>
+              <Col span={24}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button onClick={() => {
+                    setSearchName('')
+                    setStage2StatusFilter('')
+                    setOwnerFilter('')
+                    setCurrentPage(1)
+                    setSortField('created_at')
+                    setSortOrder('desc')
+                  }}>
+                    {tCommon('reset')}
+                  </Button>
+                </div>
+              </Col>
+            </Row>
+          </Card>
+
+          <Table
+            columns={columns}
+            dataSource={customers}
+            loading={loading}
+            rowKey="id"
+            onChange={handleTableChange}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `共 ${total} 条记录`,
+            }}
+            scroll={{ x: 'max-content' }}
+          />
         </Card>
 
-        <Table
-          columns={columns}
-          dataSource={customers}
-          loading={loading}
-          rowKey="id"
-          onChange={handleTableChange}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条记录`,
+        {/* 状态变更Drawer */}
+        <Drawer
+          title={`状态变更 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
+          open={statusDrawerVisible}
+          onClose={() => setStatusDrawerVisible(false)}
+          width={600}
+          placement="right"
+        >
+          <Form
+            form={statusForm}
+            layout="vertical"
+            onFinish={handleStatusSubmit}
+          >
+            <Form.Item
+              name="stage2_status"
+              label="客户状态"
+              rules={[{ required: true, message: '请选择客户状态' }]}
+            >
+              <Select placeholder="请选择客户状态">
+                <Option value="待面试">待面试</Option>
+                <Option value="已通知面试">已通知面试</Option>
+                <Option value="面试通过">面试通过</Option>
+                <Option value="面试失败">面试失败</Option>
+                <Option value="培训中">培训中</Option>
+                <Option value="已完成">已完成</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              noStyle
+              shouldUpdate={(prevValues, currentValues) => prevValues.stage2_status !== currentValues.stage2_status}
+            >
+              {({ getFieldValue }) => {
+                const status = getFieldValue('stage2_status')
+                return status === '已通知面试' ? (
+                  <Form.Item
+                    name="interview_notice_time"
+                    label="面试通知时间"
+                    rules={[{ required: true, message: '已通知面试必须填写通知时间' }]}
+                  >
+                    <DatePicker
+                      showTime
+                      style={{ width: '100%' }}
+                      placeholder="请选择面试通知时间"
+                    />
+                  </Form.Item>
+                ) : null
+              }}
+            </Form.Item>
+
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit">
+                  确认变更
+                </Button>
+                <Button onClick={() => setStatusDrawerVisible(false)}>
+                  取消
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Drawer>
+
+        {/* 付款Drawer */}
+        <Drawer
+          title={`付款/退款 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
+          open={paymentDrawerVisible}
+          onClose={() => setPaymentDrawerVisible(false)}
+          width={600}
+          placement="right"
+        >
+          <Form
+            form={paymentForm}
+            layout="vertical"
+            onFinish={handlePaymentSubmit}
+          >
+            <Form.Item
+              name="amount"
+              label="金额（支持负数表示退款）"
+              rules={[{ required: true, message: '请输入金额' }]}
+            >
+              <InputNumber
+                placeholder="请输入金额，负数表示退款"
+                style={{ width: '100%' }}
+                addonAfter="元"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="payment_name"
+              label="款项名称"
+            >
+              <Input placeholder="请输入款项名称（如：面试意向金）" />
+            </Form.Item>
+
+            <Form.Item
+              name="payment_time"
+              label="付款时间"
+              rules={[{ required: true, message: '请选择付款时间' }]}
+            >
+              <DatePicker
+                showTime
+                style={{ width: '100%' }}
+                placeholder="请选择付款时间"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="notes"
+              label="备注"
+            >
+              <Input.TextArea rows={3} placeholder="请输入备注信息" />
+            </Form.Item>
+
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit">
+                  确认
+                </Button>
+                <Button onClick={() => setPaymentDrawerVisible(false)}>
+                  取消
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Drawer>
+
+        {/* 付款历史Drawer */}
+        <Drawer
+          title={`汇款历史 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
+          open={paymentHistoryDrawerVisible}
+          onClose={() => setPaymentHistoryDrawerVisible(false)}
+          width={600}
+          placement="right"
+          styles={{
+            body: {
+              padding: '24px',
+              overflowY: 'auto'
+            }
           }}
-          scroll={{ x: 'max-content' }}
-        />
-      </Card>
-
-      {/* 状态变更Drawer */}
-      <Drawer
-        title={`状态变更 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
-        open={statusDrawerVisible}
-        onClose={() => setStatusDrawerVisible(false)}
-        width={600}
-        placement="right"
-      >
-        <Form
-          form={statusForm}
-          layout="vertical"
-          onFinish={handleStatusSubmit}
         >
-          <Form.Item
-            name="stage2_status"
-            label="客户状态"
-            rules={[{ required: true, message: '请选择客户状态' }]}
-          >
-            <Select placeholder="请选择客户状态">
-              <Option value="待面试">待面试</Option>
-              <Option value="已通知面试">已通知面试</Option>
-              <Option value="面试通过">面试通过</Option>
-              <Option value="面试失败">面试失败</Option>
-              <Option value="培训中">培训中</Option>
-              <Option value="已完成">已完成</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) => prevValues.stage2_status !== currentValues.stage2_status}
-          >
-            {({ getFieldValue }) => {
-              const status = getFieldValue('stage2_status')
-              return status === '已通知面试' ? (
-                <Form.Item
-                  name="interview_notice_time"
-                  label="面试通知时间"
-                  rules={[{ required: true, message: '已通知面试必须填写通知时间' }]}
-                >
-                  <DatePicker
-                    showTime
-                    style={{ width: '100%' }}
-                    placeholder="请选择面试通知时间"
-                  />
-                </Form.Item>
-              ) : null
-            }}
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                确认变更
-              </Button>
-              <Button onClick={() => setStatusDrawerVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Drawer>
-
-      {/* 付款Drawer */}
-      <Drawer
-        title={`付款/退款 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
-        open={paymentDrawerVisible}
-        onClose={() => setPaymentDrawerVisible(false)}
-        width={600}
-        placement="right"
-      >
-        <Form
-          form={paymentForm}
-          layout="vertical"
-          onFinish={handlePaymentSubmit}
-        >
-          <Form.Item
-            name="amount"
-            label="金额（支持负数表示退款）"
-            rules={[{ required: true, message: '请输入金额' }]}
-          >
-            <InputNumber
-              placeholder="请输入金额，负数表示退款"
-              style={{ width: '100%' }}
-              addonAfter="元"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="payment_name"
-            label="款项名称"
-          >
-            <Input placeholder="请输入款项名称（如：面试意向金）" />
-          </Form.Item>
-
-          <Form.Item
-            name="payment_time"
-            label="付款时间"
-            rules={[{ required: true, message: '请选择付款时间' }]}
-          >
-            <DatePicker
-              showTime
-              style={{ width: '100%' }}
-              placeholder="请选择付款时间"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="notes"
-            label="备注"
-          >
-            <Input.TextArea rows={3} placeholder="请输入备注信息" />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                确认
-              </Button>
-              <Button onClick={() => setPaymentDrawerVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Drawer>
-
-      {/* 付款历史Drawer */}
-      <Drawer
-        title={`汇款历史 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
-        open={paymentHistoryDrawerVisible}
-        onClose={() => setPaymentHistoryDrawerVisible(false)}
-        width={600}
-        placement="right"
-        styles={{
-          body: {
-            padding: '24px',
-            overflowY: 'auto'
-          }
-        }}
-      >
-        <div style={{ marginBottom: 24 }}>
-          <h4 style={{ margin: 0 }}>当前余额：¥{formatAmount(selectedCustomer?.wallet_balance)} / ¥{formatAmount(30000)}</h4>
-        </div>
-        {payments.length > 0 ? (
-          <Timeline
-            items={payments.map((payment) => ({
-              key: payment.id,
-              color: payment.amount >= 0 ? 'green' : 'red',
-              children: (
-                <div style={{
-                  padding: '12px',
-                  marginBottom: '12px',
-                  backgroundColor: '#fafafa',
-                  borderRadius: '4px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <strong style={{ color: payment.amount >= 0 ? '#52c41a' : '#ff4d4f', fontSize: '16px' }}>
-                      {payment.amount >= 0 ? '+' : ''}¥{formatAmount(payment.amount)}
-                    </strong>
-                    <span style={{ color: '#666', fontSize: '12px' }}>
-                      {new Date(payment.payment_time).toLocaleString()}
-                    </span>
-                  </div>
-                  {payment.payment_name && (
-                    <div style={{ marginBottom: '4px', color: '#1890ff', fontWeight: 500 }}>
-                      {payment.payment_name}
-                    </div>
-                  )}
-                  {payment.notes && (
-                    <p style={{ margin: 0, lineHeight: '1.5', color: '#666' }}>{payment.notes}</p>
-                  )}
-                  <div style={{ marginTop: '4px', fontSize: '12px', color: '#999' }}>
-                    操作人：{payment.created_by}
-                  </div>
-                </div>
-              )
-            }))}
-          />
-        ) : (
-          <div style={{
-            textAlign: 'center',
-            color: '#999',
-            padding: '40px 0'
-          }}>
-            暂无付款记录
+          <div style={{ marginBottom: 24 }}>
+            <h4 style={{ margin: 0 }}>当前余额：¥{formatAmount(selectedCustomer?.wallet_balance)} / ¥{formatAmount(30000)}</h4>
           </div>
-        )}
-      </Drawer>
+          {payments.length > 0 ? (
+            <Timeline
+              items={payments.map((payment) => ({
+                key: payment.id,
+                color: payment.amount >= 0 ? 'green' : 'red',
+                children: (
+                  <div style={{
+                    padding: '12px',
+                    marginBottom: '12px',
+                    backgroundColor: '#fafafa',
+                    borderRadius: '4px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <strong style={{ color: payment.amount >= 0 ? '#52c41a' : '#ff4d4f', fontSize: '16px' }}>
+                        {payment.amount >= 0 ? '+' : ''}¥{formatAmount(payment.amount)}
+                      </strong>
+                      <span style={{ color: '#666', fontSize: '12px' }}>
+                        {new Date(payment.payment_time).toLocaleString()}
+                      </span>
+                    </div>
+                    {payment.payment_name && (
+                      <div style={{ marginBottom: '4px', color: '#1890ff', fontWeight: 500 }}>
+                        {payment.payment_name}
+                      </div>
+                    )}
+                    {payment.notes && (
+                      <p style={{ margin: 0, lineHeight: '1.5', color: '#666' }}>{payment.notes}</p>
+                    )}
+                    <div style={{ marginTop: '4px', fontSize: '12px', color: '#999' }}>
+                      操作人：{payment.created_by}
+                    </div>
+                  </div>
+                )
+              }))}
+            />
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              color: '#999',
+              padding: '40px 0'
+            }}>
+              暂无付款记录
+            </div>
+          )}
+        </Drawer>
 
-      {/* 绑定企业/工单Drawer */}
-      <Drawer
-        title={`绑定企业/工单 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
-        open={bindDrawerVisible}
-        onClose={() => setBindDrawerVisible(false)}
-        width={600}
-        placement="right"
-      >
-        <Form
-          form={bindForm}
-          layout="vertical"
-          onFinish={handleBindSubmit}
+        {/* 绑定企业/工单Drawer */}
+        <Drawer
+          title={`绑定企业/工单 - ${selectedCustomer?.real_name || selectedCustomer?.nickname}`}
+          open={bindDrawerVisible}
+          onClose={() => setBindDrawerVisible(false)}
+          width={600}
+          placement="right"
         >
-          <Form.Item
-            name="company_id"
-            label="关联企业"
-            rules={[{ required: true, message: '请选择关联企业' }]}
+          <Form
+            form={bindForm}
+            layout="vertical"
+            onFinish={handleBindSubmit}
           >
-            <Select
-              placeholder="请选择关联企业"
-              onChange={handleBindCompanyChange}
-              allowClear
+            <Form.Item
+              name="company_id"
+              label="关联企业"
+              rules={[{ required: true, message: '请选择关联企业' }]}
             >
-              {companyList.map(company => (
-                <Option key={company.id} value={company.id}>
-                  {company.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+              <Select
+                placeholder="请选择关联企业"
+                onChange={handleBindCompanyChange}
+                allowClear
+              >
+                {companyList.map(company => (
+                  <Option key={company.id} value={company.id}>
+                    {company.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-          <Form.Item
-            name="work_order_id"
-            label="关联工单"
-            rules={[{ required: true, message: '请选择关联工单' }]}
-          >
-            <Select
-              placeholder={selectedBindCompanyId ? (workOrderList.length === 0 ? "该企业暂无工单" : "请选择关联工单") : "请先选择关联企业"}
-              disabled={!selectedBindCompanyId}
-              loading={!!(selectedBindCompanyId && workOrderList.length === 0)}
+            <Form.Item
+              name="work_order_id"
+              label="关联工单"
+              rules={[{ required: true, message: '请选择关联工单' }]}
             >
-              {workOrderList.map(workOrder => (
-                <Option key={workOrder.id} value={workOrder.id}>
-                  {workOrder.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+              <Select
+                placeholder={selectedBindCompanyId ? (workOrderList.length === 0 ? "该企业暂无工单" : "请选择关联工单") : "请先选择关联企业"}
+                disabled={!selectedBindCompanyId}
+                loading={!!(selectedBindCompanyId && workOrderList.length === 0)}
+              >
+                {workOrderList.map(workOrder => (
+                  <Option key={workOrder.id} value={workOrder.id}>
+                    {workOrder.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-          <Form.Item>
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit">
+                  保存
+                </Button>
+                <Button onClick={() => setBindDrawerVisible(false)}>
+                  取消
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Drawer>
+
+
+        {/* 创建客户 Drawer */}
+        <Drawer
+          title={t('add')}
+          placement="right"
+          width={720}
+          onClose={() => setCreateDrawerVisible(false)}
+          open={createDrawerVisible}
+          extra={
             <Space>
-              <Button type="primary" htmlType="submit">
-                保存
-              </Button>
-              <Button onClick={() => setBindDrawerVisible(false)}>
-                取消
+              <Button onClick={() => setCreateDrawerVisible(false)}>{tCommon('cancel')}</Button>
+              <Button type="primary" onClick={() => createForm.submit()}>
+                {tCommon('submit')}
               </Button>
             </Space>
-          </Form.Item>
-        </Form>
-      </Drawer>
-
-
-      {/* 创建客户 Drawer */}
-      <Drawer
-        title={t('add')}
-        placement="right"
-        width={720}
-        onClose={() => setCreateDrawerVisible(false)}
-        open={createDrawerVisible}
-        extra={
-          <Space>
-            <Button onClick={() => setCreateDrawerVisible(false)}>{tCommon('cancel')}</Button>
-            <Button type="primary" onClick={() => createForm.submit()}>
-              {tCommon('submit')}
-            </Button>
-          </Space>
-        }
-      >
-        <Form
-          form={createForm}
-          layout="vertical"
-          onFinish={handleCreateSubmit}
+          }
         >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="real_name"
-                label={t('form.realName')}
-                rules={[{ required: true, message: t('form.realNamePlaceholder') }]}
-              >
-                <Input placeholder={t('form.realNamePlaceholder')} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="phone"
-                label={t('columns.phone')}
-                rules={[{ required: true, message: t('form.contactPlaceholder') }]}
-              >
-                <Input placeholder={t('form.contactPlaceholder')} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="gender"
-                label={t('form.gender')}
-                rules={[{ required: true, message: t('form.genderPlaceholder') }]}
-              >
-                <Select placeholder={t('form.genderPlaceholder')}>
-                  <Option value="male">{tCommon('gender.male')}</Option>
-                  <Option value="female">{tCommon('gender.female')}</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="birth_date"
-                label={t('form.birthDate')}
-                rules={[{ required: true, message: t('form.birthDatePlaceholder') }]}
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="household_location"
-                label={t('form.householdLocation')}
-              >
-                <Input placeholder={t('form.householdLocationPlaceholder')} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="current_residence"
-                label={t('form.currentResidence')}
-              >
-                <Input placeholder={t('form.currentResidencePlaceholder')} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="contact"
-                label={t('form.contact')}
-              >
-                <Input placeholder={t('form.contactPlaceholder')} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="wechat"
-                label={t('form.wechat')}
-              >
-                <Input placeholder={t('form.wechatPlaceholder')} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="emergency_contact"
-                label={t('form.emergencyContact')}
-              >
-                <Input placeholder={t('form.emergencyContactPlaceholder')} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="emergency_phone"
-                label={t('form.emergencyPhone')}
-              >
-                <Input placeholder={t('form.emergencyPhonePlaceholder')} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="work_experience"
-                label={t('columns.workExperience')}
-              >
-                <Input.TextArea rows={4} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="notes"
-                label={t('columns.notes')}
-              >
-                <Input.TextArea rows={4} />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Drawer>
-    </div>
+          <Form
+            form={createForm}
+            layout="vertical"
+            onFinish={handleCreateSubmit}
+          >
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="real_name"
+                  label={t('form.realName')}
+                  rules={[{ required: true, message: t('form.realNamePlaceholder') }]}
+                >
+                  <Input placeholder={t('form.realNamePlaceholder')} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="phone"
+                  label={t('columns.phone')}
+                  rules={[{ required: true, message: t('form.contactPlaceholder') }]}
+                >
+                  <Input placeholder={t('form.contactPlaceholder')} />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="gender"
+                  label={t('form.gender')}
+                  rules={[{ required: true, message: t('form.genderPlaceholder') }]}
+                >
+                  <Select placeholder={t('form.genderPlaceholder')}>
+                    <Option value="male">{tCommon('gender.male')}</Option>
+                    <Option value="female">{tCommon('gender.female')}</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="birth_date"
+                  label={t('form.birthDate')}
+                  rules={[{ required: true, message: t('form.birthDatePlaceholder') }]}
+                >
+                  <DatePicker style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="household_location"
+                  label={t('form.householdLocation')}
+                >
+                  <Input placeholder={t('form.householdLocationPlaceholder')} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="current_residence"
+                  label={t('form.currentResidence')}
+                >
+                  <Input placeholder={t('form.currentResidencePlaceholder')} />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="contact"
+                  label={t('form.contact')}
+                >
+                  <Input placeholder={t('form.contactPlaceholder')} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="wechat"
+                  label={t('form.wechat')}
+                >
+                  <Input placeholder={t('form.wechatPlaceholder')} />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="emergency_contact"
+                  label={t('form.emergencyContact')}
+                >
+                  <Input placeholder={t('form.emergencyContactPlaceholder')} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="emergency_phone"
+                  label={t('form.emergencyPhone')}
+                >
+                  <Input placeholder={t('form.emergencyPhonePlaceholder')} />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  name="work_experience"
+                  label={t('columns.workExperience')}
+                >
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  name="notes"
+                  label={t('columns.notes')}
+                >
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </Drawer>
+      </div>
+    </ConfigProvider>
   )
 }
 

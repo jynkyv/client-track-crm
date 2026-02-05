@@ -89,9 +89,9 @@ export default function CustomerDetailPage() {
     if (editParam === 'true') {
       setIsEditing(true)
       // 移除URL参数
-      router.replace(`/customers/contract/${customerId}`)
+      router.replace(`/${locale}/customers/contract/${customerId}`)
     }
-  }, [searchParams, customerId, router])
+  }, [searchParams, customerId, router, locale])
 
   // 获取客户详情
   useEffect(() => {
