@@ -23,7 +23,8 @@ import {
     Tabs,
     Tag,
     Checkbox,
-    Collapse
+    Collapse,
+    Dropdown
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined, PictureOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
@@ -292,7 +293,16 @@ export default function WorkOrderDetailPage() {
         setEditingApplicant(applicant)
         applicantForm.setFieldsValue({
             ...applicant,
-            birth_date: applicant.birth_date ? dayjs(applicant.birth_date) : null
+            name: applicant.real_name || applicant.nickname,
+            status: applicant.stage2_status,
+            gender: applicant.gender,
+            birth_date: applicant.birth_date ? dayjs(applicant.birth_date) : null,
+            household_location: applicant.household_location,
+            current_residence: applicant.current_residence,
+            contact: applicant.contact || applicant.phone,
+            wechat: applicant.wechat,
+            emergency_contact: applicant.emergency_contact,
+            emergency_phone: applicant.emergency_phone
         })
         setApplicantDrawerVisible(true)
     }
@@ -538,13 +548,11 @@ export default function WorkOrderDetailPage() {
     }
 
     // 切换签证状态
-    const handleToggleVisaStatus = async (applicant: Customer) => {
+    const handleToggleVisaStatus = async (applicant: Customer, newStatus: 'pending' | 'processing' | 'completed') => {
         if (applicant.stage2_status !== '培训中') {
             message.warning(t('messages.visaStatusDisabled'))
             return
         }
-
-        const newStatus = applicant.visa_status === 'completed' ? 'pending' : 'completed'
 
         try {
             const { error } = await supabase
@@ -565,21 +573,34 @@ export default function WorkOrderDetailPage() {
     const getVisaStatusTag = (applicant: Customer) => {
         const isTraining = applicant.stage2_status === '培训中'
         const status = applicant.visa_status || 'pending'
-        const isPending = status === 'pending'
+
+        const statusConfig: Record<string, { color: string, text: string }> = {
+            'pending': { color: 'orange', text: t('visa.pending') },
+            'processing': { color: 'blue', text: t('visa.processing') },
+            'completed': { color: 'green', text: t('visa.completed') }
+        }
+
+        const config = statusConfig[status] || statusConfig['pending']
 
         return (
             <Space>
-                <Tag color={isTraining ? (isPending ? 'orange' : 'green') : 'default'} style={{ opacity: isTraining ? 1 : 0.5 }}>
-                    {isPending ? t('visa.pending') : t('visa.completed')}
+                <Tag color={isTraining ? config.color : 'default'} style={{ opacity: isTraining ? 1 : 0.5 }}>
+                    {config.text}
                 </Tag>
                 {isTraining && isJapaneseEmployee && (
-                    <Button
-                        type="link"
-                        size="small"
-                        onClick={() => handleToggleVisaStatus(applicant)}
+                    <Dropdown
+                        menu={{
+                            items: [
+                                { key: 'pending', label: t('visa.pending'), onClick: () => handleToggleVisaStatus(applicant, 'pending') },
+                                { key: 'processing', label: t('visa.processing'), onClick: () => handleToggleVisaStatus(applicant, 'processing') },
+                                { key: 'completed', label: t('visa.completed'), onClick: () => handleToggleVisaStatus(applicant, 'completed') }
+                            ]
+                        }}
                     >
-                        {isPending ? t('visa.markCompleted') : t('visa.markPending')}
-                    </Button>
+                        <Button type="link" size="small">
+                            {t('actions.edit')}
+                        </Button>
+                    </Dropdown>
                 )}
             </Space>
         )
@@ -990,11 +1011,32 @@ export default function WorkOrderDetailPage() {
                             type="card"
                             items={applicants.map((applicant, index) => ({
                                 key: applicant.id,
-                                label: applicant.real_name || applicant.nickname || `应聘者${index + 1}`,
+                                label: (
+                                    <Space>
+                                        {applicant.real_name || applicant.nickname || `应聘者${index + 1}`}
+                                        {applicant.stage2_status === '培训中' && getVisaStatusTag(applicant)}
+                                    </Space>
+                                ),
                                 children: (
                                     <div style={{ padding: '16px 0' }}>
                                         {isAdmin && (
                                             <Space style={{ marginBottom: 16, float: 'right' }}>
+                                                {/* 签证状态切换 - 仅在培训中显示 */}
+                                                {applicant.stage2_status === '培训中' && (
+                                                    <Dropdown
+                                                        menu={{
+                                                            items: [
+                                                                { key: 'pending', label: t('visa.pending'), onClick: () => handleToggleVisaStatus(applicant, 'pending') },
+                                                                { key: 'processing', label: t('visa.processing'), onClick: () => handleToggleVisaStatus(applicant, 'processing') },
+                                                                { key: 'completed', label: t('visa.completed'), onClick: () => handleToggleVisaStatus(applicant, 'completed') }
+                                                            ]
+                                                        }}
+                                                    >
+                                                        <Button>
+                                                            {t('visa.status')} <EditOutlined />
+                                                        </Button>
+                                                    </Dropdown>
+                                                )}
                                                 <Button
                                                     icon={<EditOutlined />}
                                                     onClick={() => handleEditApplicant(applicant)}

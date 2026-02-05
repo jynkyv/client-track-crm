@@ -369,33 +369,38 @@ export default function ContractCustomersPage() {
 
       // 自动生成入会申请书逻辑
       // 自动更新企业首次培训时间, 并触发(记录)入会申请书生成需求
-      if (values.stage2_status === '培训中' && selectedCustomer.stage2_status !== '培训中' && selectedCustomer.company_id) {
-        try {
-          // 1. Fetch current company info
-          const { data: company, error: companyError } = await supabase
-            .from('companies')
-            .select('id, first_training_at')
-            .eq('id', selectedCustomer.company_id)
-            .single()
+      if (values.stage2_status === '培训中' && selectedCustomer.stage2_status !== '培训中') {
+        // 自动将签证状态设为待办
+        updateData.visa_status = 'pending'
 
-          if (!companyError && company) {
-            // 2. Add first_training_at if not present
-            if (!company.first_training_at) {
-              const now = new Date().toISOString()
-              const { error: updateError } = await supabase
-                .from('companies')
-                .update({ first_training_at: now })
-                .eq('id', company.id)
+        if (selectedCustomer.company_id) {
+          try {
+            // 1. Fetch current company info
+            const { data: company, error: companyError } = await supabase
+              .from('companies')
+              .select('id, first_training_at')
+              .eq('id', selectedCustomer.company_id)
+              .single()
 
-              if (updateError) {
-                console.error('Failed to update first_training_at:', updateError)
-              } else {
-                message.success(tCommon('success'))
+            if (!companyError && company) {
+              // 2. Add first_training_at if not present
+              if (!company.first_training_at) {
+                const now = new Date().toISOString()
+                const { error: updateError } = await supabase
+                  .from('companies')
+                  .update({ first_training_at: now })
+                  .eq('id', company.id)
+
+                if (updateError) {
+                  console.error('Failed to update first_training_at:', updateError)
+                } else {
+                  message.success(tCommon('success'))
+                }
               }
             }
+          } catch (err) {
+            console.error('Error updating company training time:', err)
           }
-        } catch (err) {
-          console.error('Error updating company training time:', err)
         }
       }
 

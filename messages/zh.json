@@ -353,8 +353,10 @@
         "visa": {
             "status": "签证状态",
             "pending": "待办签证",
+            "processing": "办理中",
             "completed": "已完成",
             "pendingUnit": "人待办",
+            "processingUnit": "人办理中",
             "completedUnit": "人完成",
             "markCompleted": "标记完成",
             "markPending": "标记待办"

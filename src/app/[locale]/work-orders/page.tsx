@@ -59,7 +59,7 @@ export default function WorkOrdersPage() {
     const [searchTicketName, setSearchTicketName] = useState('')
     const [searchOwnerName, setSearchOwnerName] = useState('')
     // 签证状态统计
-    const [visaStats, setVisaStats] = useState<Record<string, { pending: number, completed: number }>>({})
+    const [visaStats, setVisaStats] = useState<Record<string, { pending: number, processing: number, completed: number }>>({})
     // 待回复问题数量
     const [pendingQuestionCounts, setPendingQuestionCounts] = useState<Record<string, number>>({})
 
@@ -129,19 +129,20 @@ export default function WorkOrdersPage() {
                     .in('work_order_id', workOrderIds)
 
                 const counts: Record<string, number> = {}
-                const stats: Record<string, { pending: number, completed: number }> = {}
+                const stats: Record<string, { pending: number, processing: number, completed: number }> = {}
 
                 if (!countError && customers) {
                     customers.forEach((c: { work_order_id: string, stage2_status?: string, visa_status?: string }) => {
                         counts[c.work_order_id] = (counts[c.work_order_id] || 0) + 1
 
-                        // 只统计培训中状态的客户签证状态
                         if (c.stage2_status === '培训中') {
                             if (!stats[c.work_order_id]) {
-                                stats[c.work_order_id] = { pending: 0, completed: 0 }
+                                stats[c.work_order_id] = { pending: 0, processing: 0, completed: 0 }
                             }
                             if (c.visa_status === 'completed') {
                                 stats[c.work_order_id].completed++
+                            } else if (c.visa_status === 'processing') {
+                                stats[c.work_order_id].processing++
                             } else {
                                 stats[c.work_order_id].pending++
                             }
@@ -322,17 +323,18 @@ export default function WorkOrdersPage() {
             title: t('columns.visaStatus'),
             dataIndex: 'id',
             key: 'visa_status',
-            width: 150,
+            width: 200,
             align: 'center' as const,
             render: (id: string) => {
                 const stat = visaStats[id]
-                if (!stat || (stat.pending === 0 && stat.completed === 0)) {
+                if (!stat || (stat.pending === 0 && stat.processing === 0 && stat.completed === 0)) {
                     return <span style={{ color: '#999' }}>-</span>
                 }
                 return (
-                    <Space>
-                        {stat.pending > 0 && <Tag color="orange">{stat.pending}{t('visa.pendingUnit')}</Tag>}
-                        {stat.completed > 0 && <Tag color="green">{stat.completed}{t('visa.completedUnit')}</Tag>}
+                    <Space size={4} wrap>
+                        {stat.pending > 0 && <Tag color="orange" style={{ marginRight: 0 }}>{stat.pending}{t('visa.pendingUnit')}</Tag>}
+                        {stat.processing > 0 && <Tag color="blue" style={{ marginRight: 0 }}>{stat.processing}{t('visa.processingUnit')}</Tag>}
+                        {stat.completed > 0 && <Tag color="green" style={{ marginRight: 0 }}>{stat.completed}{t('visa.completedUnit')}</Tag>}
                     </Space>
                 )
             }
