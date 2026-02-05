@@ -70,6 +70,8 @@ export default function WorkOrderDetailPage() {
     // 判断当前用户是否为工单负责人
     const isTicketOwner = ticket?.owner_id === user?.id
     const canEditTicket = isAdmin || isTicketOwner
+    // 允许管理员或负责该工单的日方员工修改签证办理状态
+    const canEditVisaStatus = isAdmin || (isJapaneseEmployee && isTicketOwner)
 
     // 查看文件 Modal 状态
     const [viewModalVisible, setViewModalVisible] = useState(false)
@@ -1183,7 +1185,7 @@ export default function WorkOrderDetailPage() {
                                     ),
                                     children: (
                                         <div style={{ padding: '16px 0' }}>
-                                            {isAdmin && (
+                                            {canEditVisaStatus && (
                                                 <Space style={{ marginBottom: 16, float: 'right' }}>
                                                     {/* 签证状态切换 - 仅在培训中显示 */}
                                                     {applicant.stage2_status === '培训中' && (
