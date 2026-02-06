@@ -650,7 +650,9 @@ export default function CompanyDetailPage() {
                 disabled={!!(company as any)?.application_sent_at}
                 loading={sendingApp}
               >
-                {tWorkOrder('email.sendApplicationEmail')}
+                {!!(company as any)?.application_sent_at
+                  ? `${tWorkOrder('email.sentAt', { date: new Date((company as any).application_sent_at).toLocaleString() })}`
+                  : tWorkOrder('email.sendApplicationEmail')}
               </Button>
               <Button
                 type="primary"
