@@ -413,6 +413,8 @@
             "currentResidencePlaceholder": "请输入现居住地",
             "contact": "联系方式",
             "contactPlaceholder": "请输入联系方式",
+            "email": "邮箱",
+            "emailPlaceholder": "请输入邮箱",
             "wechat": "实名微信号",
             "wechatPlaceholder": "请输入实名微信号",
             "emergencyContact": "紧急联系人",

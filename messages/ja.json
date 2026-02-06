@@ -401,6 +401,8 @@
             "currentResidencePlaceholder": "現住所を入力",
             "contact": "連絡先",
             "contactPlaceholder": "連絡先を入力",
+            "email": "メールアドレス",
+            "emailPlaceholder": "メールアドレスを入力",
             "wechat": "WeChat ID",
             "wechatPlaceholder": "WeChat IDを入力",
             "emergencyContact": "緊急連絡先",
