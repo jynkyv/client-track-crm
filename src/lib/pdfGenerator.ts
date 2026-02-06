@@ -40,14 +40,14 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
     // Using some standard positions for now, can be tweaked.
 
     // 1. Date (Year Month Day) - Top Right
-    // 1. Creation Date (Date/Month/Day) - Move Down 5, Right 25
-    if (company.created_at) {
-        const date = dayjs(company.created_at)
+    // Swapped per user request: Use first_training_at here
+    if (company.first_training_at) {
+        const date = dayjs(company.first_training_at)
         // Previous refined: x: 400, y: 760
-        // New: x: 425 (+25), y: 755 (-5)
-        firstPage.drawText(`${date.year()}`, { x: 422, y: 756, size: fontSize, font: customFont, color })
-        firstPage.drawText(`${date.month() + 1}`, { x: 472, y: 756, size: fontSize, font: customFont, color })
-        firstPage.drawText(`${date.date()}`, { x: 505, y: 756, size: fontSize, font: customFont, color })
+        // New: x: 425 (+25), y: 755 (-5) -> User changed to 656
+        firstPage.drawText(`${date.year()}`, { x: 422, y: 656, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.month() + 1}`, { x: 472, y: 656, size: fontSize, font: customFont, color })
+        firstPage.drawText(`${date.date()}`, { x: 505, y: 656, size: fontSize, font: customFont, color })
     }
 
     // 2. Company Name - Move Down More
@@ -58,10 +58,11 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
     // Previous refined: y: 380
     firstPage.drawText(company.representative || '', { x: 200, y: 375, size: fontSize, font: customFont, color })
 
-    // 4. First Training Date - No Change from previous step
+    // 4. Creation Date (was First Training Date) - No Change from previous step
+    // Swapped per user request: Use created_at here
     // Previous refined: y: 330
-    if (company.first_training_at) {
-        const trainDate = dayjs(company.first_training_at)
+    if (company.created_at) {
+        const trainDate = dayjs(company.created_at)
         const dateStr = `${trainDate.year()}年 ${trainDate.month() + 1}月 ${trainDate.date()}日`
         firstPage.drawText(dateStr, { x: 200, y: 330, size: fontSize, font: customFont, color })
     }
