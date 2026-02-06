@@ -170,9 +170,10 @@ export default function WorkOrdersPage() {
                                 }
                             }
 
+                            type VisaStatsInfo = typeof stats[string];
                             const status = c.visa_status || 'pending'
-                            if (stats[c.work_order_id][status as keyof typeof stats[c.work_order_id]] !== undefined) {
-                                stats[c.work_order_id][status as keyof typeof stats[c.work_order_id]]++
+                            if (stats[c.work_order_id] && (status as string) in stats[c.work_order_id]) {
+                                stats[c.work_order_id][status as keyof VisaStatsInfo]++
                             } else {
                                 // Fallback for old 'processing' or unknown -> count as otit_preparing or just ignore?
                                 // If migration runs, 'processing' is gone. If not, map 'processing' to 'otit_preparing'?
@@ -389,10 +390,10 @@ export default function WorkOrdersPage() {
                 return (
                     <Space size={4} wrap>
                         {stat.pending > 0 && <Tag color="orange" style={{ marginRight: 0 }}>{stat.pending}{t('visa.pendingUnit')}</Tag>}
-                        {stat.otit_preparing > 0 && <Tag color="geekblue" style={{ marginRight: 0 }}>{stat.otit_preparing}OTIT准</Tag>}
-                        {stat.otit_submitted > 0 && <Tag color="blue" style={{ marginRight: 0 }}>{stat.otit_submitted}OTIT申</Tag>}
-                        {stat.visa_preparing > 0 && <Tag color="cyan" style={{ marginRight: 0 }}>{stat.visa_preparing}入管准</Tag>}
-                        {stat.visa_submitted > 0 && <Tag color="purple" style={{ marginRight: 0 }}>{stat.visa_submitted}入管申</Tag>}
+                        {stat.otit_preparing > 0 && <Tag color="geekblue" style={{ marginRight: 0 }}>{stat.otit_preparing}{t('visa.otitPreparingUnit')}</Tag>}
+                        {stat.otit_submitted > 0 && <Tag color="blue" style={{ marginRight: 0 }}>{stat.otit_submitted}{t('visa.otitSubmittedUnit')}</Tag>}
+                        {stat.visa_preparing > 0 && <Tag color="cyan" style={{ marginRight: 0 }}>{stat.visa_preparing}{t('visa.visaPreparingUnit')}</Tag>}
+                        {stat.visa_submitted > 0 && <Tag color="purple" style={{ marginRight: 0 }}>{stat.visa_submitted}{t('visa.visaSubmittedUnit')}</Tag>}
                         {stat.completed > 0 && <Tag color="green" style={{ marginRight: 0 }}>{stat.completed}{t('visa.completedUnit')}</Tag>}
                     </Space>
                 )

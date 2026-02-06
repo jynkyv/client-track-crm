@@ -604,10 +604,7 @@ export default function WorkOrderDetailPage() {
 
         return (
             <Space>
-                <Tag color={isTraining ? config.color : 'default'} style={{ opacity: isTraining ? 1 : 0.5 }}>
-                    {config.text}
-                </Tag>
-                {isTraining && isJapaneseEmployee && (
+                {isTraining && isJapaneseEmployee ? (
                     <Dropdown
                         menu={{
                             items: [
@@ -620,10 +617,14 @@ export default function WorkOrderDetailPage() {
                             ]
                         }}
                     >
-                        <Button type="link" size="small">
-                            {t('actions.edit')}
-                        </Button>
+                        <Tag color={config.color} style={{ cursor: 'pointer', opacity: 1 }}>
+                            {config.text} <EditOutlined />
+                        </Tag>
                     </Dropdown>
+                ) : (
+                    <Tag color={isTraining ? config.color : 'default'} style={{ opacity: isTraining ? 1 : 0.5 }}>
+                        {config.text}
+                    </Tag>
                 )}
             </Space>
         )
