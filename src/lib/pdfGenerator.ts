@@ -71,11 +71,17 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
 }
 
 export async function generateTechnicalInternTrainingProgramAgreement(company: Company): Promise<Uint8Array> {
-    // TODO: Update template path when user uploads the new template
-    const templateBytes = await fetch('/pdf/technical_intern_agreement_template.pdf').then(res => {
+    // Select template based on company name length
+    // <= 10 characters: technical_intern_agreement_template.pdf
+    // > 10 characters: technical_intern_agreement_template2.pdf
+    const templateName = (company.name && company.name.length > 10)
+        ? 'technical_intern_agreement_template2.pdf'
+        : 'technical_intern_agreement_template.pdf'
+
+    const templateBytes = await fetch(`/pdf/${templateName}`).then(res => {
         if (!res.ok) {
             // Fallback to union join template if new one is missing, to prevent crash during dev
-            console.warn('Agreement template not found, using fallback')
+            console.warn(`Agreement template ${templateName} not found, using fallback`)
             return fetch('/pdf/union_join_template.pdf').then(r => r.arrayBuffer())
         }
         return res.arrayBuffer()
