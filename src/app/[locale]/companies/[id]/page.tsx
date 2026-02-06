@@ -540,14 +540,14 @@ export default function CompanyDetailPage() {
     const hasAppForm = company?.association_application_form && company?.association_application_form.length > 0
     if (hasAppForm) {
       attachments.push({
-        filename: 'Combined_Application_Form.pdf',
+        filename: `${company.name}_Combined_Application_Form.pdf`,
         url: getFileUrl(company!.association_application_form![0].url)
       })
     } else if (company?.first_training_at) {
       const pdfBytes = await generateUnionJoinApplication(company as any)
       const base64Pdf = Buffer.from(pdfBytes).toString('base64')
       attachments.push({
-        filename: `組合加入同意書.pdf`,
+        filename: `${company.name}_組合加入同意書.pdf`,
         content: base64Pdf,
         encoding: 'base64'
       })
@@ -559,14 +559,14 @@ export default function CompanyDetailPage() {
 
     if (hasAgreement) {
       attachments.push({
-        filename: 'Technical_Intern_Agreement.pdf',
+        filename: `${company.name}_Technical_Intern_Agreement.pdf`,
         url: getFileUrl((company as any)[termCheckKey][0].url)
       })
     } else if (company?.first_training_at) {
       const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
       const base64Pdf = Buffer.from(pdfBytes).toString('base64')
       attachments.push({
-        filename: `技能実習に関する事業に係る規約.pdf`,
+        filename: `${company.name}_技能実習に関する事業に係る規約.pdf`,
         content: base64Pdf,
         encoding: 'base64'
       })
@@ -740,7 +740,7 @@ export default function CompanyDetailPage() {
                                 // Cast because CompanyDetail might miss fields, checking type safety
                                 const pdfBytes = await generateUnionJoinApplication(company as any)
                                 const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                                saveAs(blob, `組合加入同意書.pdf`)
+                                saveAs(blob, `${company.name}_組合加入同意書.pdf`)
                                 message.success('下载成功')
                               } catch (e) {
                                 console.error(e)
@@ -763,7 +763,7 @@ export default function CompanyDetailPage() {
                                 message.loading('正在生成文件...')
                                 const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
                                 const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                                saveAs(blob, `技能実習に関する事業に係る規約.pdf`)
+                                saveAs(blob, `${company.name}_技能実習に関する事業に係る規約.pdf`)
                                 message.success('下载成功')
                               } catch (e) {
                                 console.error(e)
