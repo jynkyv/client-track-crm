@@ -16,10 +16,7 @@
         "total": "合計",
         "items": "件",
         "submit": "送信",
-        "exporting": "エクスポート中...",
-        "exportSuccess": "エクスポート成功",
-        "exportError": "エクスポート失敗",
-        "noData": "データがありません",
+        "ageUnit": "歳",
         "gender": {
             "male": "男性",
             "female": "女性",
@@ -444,8 +441,7 @@
             "view": "閲覧",
             "viewDetail": "詳細を見る",
             "edit": "編集",
-            "delete": "削除",
-            "exportAssociationMembers": "組合員名簿出力"
+            "delete": "削除"
         },
         "upload": {
             "title": "アップロード",
