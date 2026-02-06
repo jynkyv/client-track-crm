@@ -564,7 +564,8 @@ export default function WorkOrderDetailPage() {
     }
 
     // 切换签证状态
-    const handleToggleVisaStatus = async (applicant: Customer, newStatus: 'pending' | 'processing' | 'completed') => {
+    // 切换签证状态
+    const handleToggleVisaStatus = async (applicant: Customer, newStatus: 'pending' | 'otit_preparing' | 'otit_submitted' | 'visa_preparing' | 'visa_submitted' | 'completed') => {
         if (applicant.stage2_status !== '培训中') {
             message.warning(t('messages.visaStatusDisabled'))
             return
@@ -592,7 +593,10 @@ export default function WorkOrderDetailPage() {
 
         const statusConfig: Record<string, { color: string, text: string }> = {
             'pending': { color: 'orange', text: t('visa.pending') },
-            'processing': { color: 'blue', text: t('visa.processing') },
+            'otit_preparing': { color: 'geekblue', text: t('visa.otit_preparing') },
+            'otit_submitted': { color: 'blue', text: t('visa.otit_submitted') },
+            'visa_preparing': { color: 'cyan', text: t('visa.visa_preparing') },
+            'visa_submitted': { color: 'purple', text: t('visa.visa_submitted') },
             'completed': { color: 'green', text: t('visa.completed') }
         }
 
@@ -608,7 +612,10 @@ export default function WorkOrderDetailPage() {
                         menu={{
                             items: [
                                 { key: 'pending', label: t('visa.pending'), onClick: () => handleToggleVisaStatus(applicant, 'pending') },
-                                { key: 'processing', label: t('visa.processing'), onClick: () => handleToggleVisaStatus(applicant, 'processing') },
+                                { key: 'otit_preparing', label: t('visa.otit_preparing'), onClick: () => handleToggleVisaStatus(applicant, 'otit_preparing') },
+                                { key: 'otit_submitted', label: t('visa.otit_submitted'), onClick: () => handleToggleVisaStatus(applicant, 'otit_submitted') },
+                                { key: 'visa_preparing', label: t('visa.visa_preparing'), onClick: () => handleToggleVisaStatus(applicant, 'visa_preparing') },
+                                { key: 'visa_submitted', label: t('visa.visa_submitted'), onClick: () => handleToggleVisaStatus(applicant, 'visa_submitted') },
                                 { key: 'completed', label: t('visa.completed'), onClick: () => handleToggleVisaStatus(applicant, 'completed') }
                             ]
                         }}
@@ -1193,7 +1200,10 @@ export default function WorkOrderDetailPage() {
                                                             menu={{
                                                                 items: [
                                                                     { key: 'pending', label: t('visa.pending'), onClick: () => handleToggleVisaStatus(applicant, 'pending') },
-                                                                    { key: 'processing', label: t('visa.processing'), onClick: () => handleToggleVisaStatus(applicant, 'processing') },
+                                                                    { key: 'otit_preparing', label: t('visa.otit_preparing'), onClick: () => handleToggleVisaStatus(applicant, 'otit_preparing') },
+                                                                    { key: 'otit_submitted', label: t('visa.otit_submitted'), onClick: () => handleToggleVisaStatus(applicant, 'otit_submitted') },
+                                                                    { key: 'visa_preparing', label: t('visa.visa_preparing'), onClick: () => handleToggleVisaStatus(applicant, 'visa_preparing') },
+                                                                    { key: 'visa_submitted', label: t('visa.visa_submitted'), onClick: () => handleToggleVisaStatus(applicant, 'visa_submitted') },
                                                                     { key: 'completed', label: t('visa.completed'), onClick: () => handleToggleVisaStatus(applicant, 'completed') }
                                                                 ]
                                                             }}

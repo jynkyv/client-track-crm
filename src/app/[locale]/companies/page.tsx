@@ -153,7 +153,7 @@ export default function CompaniesPage() {
             .from('customers')
             .select('work_order_id')
             .in('work_order_id', workOrderIds)
-            .eq('visa_status', 'pending')
+            .in('visa_status', ['pending', 'otit_preparing', 'otit_submitted', 'visa_preparing', 'visa_submitted'])
             .neq('stage2_status', '面试失败') // Explicitly exclude Failed
             .neq('stage2_status', '已拒绝')   // Explicitly exclude Rejected
 

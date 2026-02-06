@@ -37,7 +37,7 @@ export interface Customer {
   company_id?: string
   work_order_id?: string
   stage2_status?: '待面试' | '已通知面试' | '面试通过' | '面试失败' | '培训中' | '已完成'
-  visa_status?: 'pending' | 'processing' | 'completed' // 签证状态：待办/办理中/已完成
+  visa_status?: 'pending' | 'otit_preparing' | 'otit_submitted' | 'visa_preparing' | 'visa_submitted' | 'completed' // 签证状态
   interview_notice_time?: string
   last_payment_time?: string
   email?: string // 邮箱

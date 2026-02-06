@@ -359,7 +359,10 @@
         "visa": {
             "status": "签证状态",
             "pending": "待办签证",
-            "processing": "办理中",
+            "otit_preparing": "OTIT认定办理中",
+            "otit_submitted": "OTIT认定已提交",
+            "visa_preparing": "入管签证申请中",
+            "visa_submitted": "入管签证已提交",
             "completed": "已完成",
             "pendingUnit": "人待办",
             "processingUnit": "人办理中",

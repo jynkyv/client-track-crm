@@ -347,7 +347,10 @@
         "visa": {
             "status": "ビザ状況",
             "pending": "ビザ申請中",
-            "processing": "手続き中",
+            "otit_preparing": "OTIT認定申請準備中",
+            "otit_submitted": "OTIT認定申請中",
+            "visa_preparing": "入管申請準備中",
+            "visa_submitted": "入管申請中",
             "completed": "完了",
             "pendingUnit": "人申請中",
             "processingUnit": "人手続き中",

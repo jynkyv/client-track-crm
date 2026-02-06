@@ -61,7 +61,14 @@ export default function WorkOrdersPage() {
     const [searchTicketName, setSearchTicketName] = useState('')
     const [searchOwnerName, setSearchOwnerName] = useState('')
     // 签证状态统计
-    const [visaStats, setVisaStats] = useState<Record<string, { pending: number, processing: number, completed: number }>>({})
+    const [visaStats, setVisaStats] = useState<Record<string, {
+        pending: number,
+        otit_preparing: number,
+        otit_submitted: number,
+        visa_preparing: number,
+        visa_submitted: number,
+        completed: number
+    }>>({})
     // 待回复问题数量
     const [pendingQuestionCounts, setPendingQuestionCounts] = useState<Record<string, number>>({})
 
@@ -132,7 +139,14 @@ export default function WorkOrdersPage() {
 
                 const counts: Record<string, number> = {}
                 const names: Record<string, string[]> = {}
-                const stats: Record<string, { pending: number, processing: number, completed: number }> = {}
+                const stats: Record<string, {
+                    pending: number,
+                    otit_preparing: number,
+                    otit_submitted: number,
+                    visa_preparing: number,
+                    visa_submitted: number,
+                    completed: number
+                }> = {}
 
                 if (!countError && customers) {
                     customers.forEach((c: any) => {
@@ -146,14 +160,28 @@ export default function WorkOrdersPage() {
 
                         if (c.stage2_status === '培训中') {
                             if (!stats[c.work_order_id]) {
-                                stats[c.work_order_id] = { pending: 0, processing: 0, completed: 0 }
+                                stats[c.work_order_id] = {
+                                    pending: 0,
+                                    otit_preparing: 0,
+                                    otit_submitted: 0,
+                                    visa_preparing: 0,
+                                    visa_submitted: 0,
+                                    completed: 0
+                                }
                             }
-                            if (c.visa_status === 'completed') {
-                                stats[c.work_order_id].completed++
-                            } else if (c.visa_status === 'processing') {
-                                stats[c.work_order_id].processing++
+
+                            const status = c.visa_status || 'pending'
+                            if (stats[c.work_order_id][status as keyof typeof stats[c.work_order_id]] !== undefined) {
+                                stats[c.work_order_id][status as keyof typeof stats[c.work_order_id]]++
                             } else {
-                                stats[c.work_order_id].pending++
+                                // Fallback for old 'processing' or unknown -> count as otit_preparing or just ignore?
+                                // If migration runs, 'processing' is gone. If not, map 'processing' to 'otit_preparing'?
+                                // Let's map 'processing' to 'otit_preparing' for safety if migration hasn't run yet
+                                if (status === 'processing') {
+                                    stats[c.work_order_id].otit_preparing++
+                                } else {
+                                    stats[c.work_order_id].pending++
+                                }
                             }
                         }
                     })
@@ -355,13 +383,16 @@ export default function WorkOrdersPage() {
             align: 'center' as const,
             render: (id: string) => {
                 const stat = visaStats[id]
-                if (!stat || (stat.pending === 0 && stat.processing === 0 && stat.completed === 0)) {
+                if (!stat || Object.values(stat).every(v => v === 0)) {
                     return <span style={{ color: '#999' }}>-</span>
                 }
                 return (
                     <Space size={4} wrap>
                         {stat.pending > 0 && <Tag color="orange" style={{ marginRight: 0 }}>{stat.pending}{t('visa.pendingUnit')}</Tag>}
-                        {stat.processing > 0 && <Tag color="blue" style={{ marginRight: 0 }}>{stat.processing}{t('visa.processingUnit')}</Tag>}
+                        {stat.otit_preparing > 0 && <Tag color="geekblue" style={{ marginRight: 0 }}>{stat.otit_preparing}OTIT准</Tag>}
+                        {stat.otit_submitted > 0 && <Tag color="blue" style={{ marginRight: 0 }}>{stat.otit_submitted}OTIT申</Tag>}
+                        {stat.visa_preparing > 0 && <Tag color="cyan" style={{ marginRight: 0 }}>{stat.visa_preparing}入管准</Tag>}
+                        {stat.visa_submitted > 0 && <Tag color="purple" style={{ marginRight: 0 }}>{stat.visa_submitted}入管申</Tag>}
                         {stat.completed > 0 && <Tag color="green" style={{ marginRight: 0 }}>{stat.completed}{t('visa.completedUnit')}</Tag>}
                     </Space>
                 )
