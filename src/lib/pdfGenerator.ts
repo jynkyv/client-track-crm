@@ -73,11 +73,17 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
 
 export async function generateTechnicalInternTrainingProgramAgreement(company: Company): Promise<Uint8Array> {
     // Select template based on company name length
-    // <= 10 characters: technical_intern_agreement_template.pdf
-    // > 10 characters: technical_intern_agreement_template2.pdf
-    const templateName = (company.name && company.name.length > 10)
-        ? 'technical_intern_agreement_template2.pdf'
-        : 'technical_intern_agreement_template.pdf'
+    // <= 7 characters: technical_intern_agreement_template_7.pdf
+    // > 7 and <= 15: technical_intern_agreement_template_15.pdf
+    // > 15 characters: technical_intern_agreement_template_more.pdf
+    let templateName = 'technical_intern_agreement_template_7.pdf'
+    if (company.name) {
+        if (company.name.length > 7 && company.name.length <= 15) {
+            templateName = 'technical_intern_agreement_template_15.pdf'
+        } else if (company.name.length > 15) {
+            templateName = 'technical_intern_agreement_template_more.pdf'
+        }
+    }
 
     const templateBytes = await fetch(`/pdf/${templateName}`).then(res => {
         if (!res.ok) {

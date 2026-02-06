@@ -918,20 +918,6 @@ export default function WorkOrderDetailPage() {
                 style={{ marginBottom: 16 }}
                 extra={
                     <Space>
-                        {isAdmin && (
-                            <Button
-                                type="primary"
-                                icon={<MailOutlined />}
-                                onClick={handleOpenSendAppModal}
-                            >
-                                {t('email.sendAssociationApp')}
-                            </Button>
-                        )}
-                        {canEditTicket && (
-                            <Button type="primary" icon={<EditOutlined />} onClick={handleEditTicket}>
-                                {tCommon('edit')}
-                            </Button>
-                        )}
                     </Space>
                 }
             >

@@ -38,9 +38,11 @@ import {
   ArrowLeftOutlined,
   UploadOutlined,
   FilePdfOutlined,
-  EyeOutlined,
+  FileWordOutlined,
+  MailOutlined,
   DeleteOutlined,
-  MailOutlined
+  ExclamationCircleOutlined,
+  EyeOutlined,
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -465,6 +467,19 @@ export default function CompanyDetailPage() {
     setFileList(prev => prev.filter(f => f.uid !== file.uid))
   }
 
+  // 下载 Word 文档
+  const handleDownloadWord = (type: 'union_join' | 'agreement') => {
+    if (!company) return
+    const url = `/api/companies/${company.id}/download-contract?type=${type}`
+    // Trigger download via creating a temporary link
+    const link = document.createElement('a')
+    link.href = url
+    link.download = '' // content-disposition header will handle filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   // 确认上传
   const handleUploadConfirm = async () => {
     setUploading(true)
@@ -736,19 +751,16 @@ export default function CompanyDetailPage() {
                             onClick={async () => {
                               if (!company || !company.first_training_at) return
                               try {
-                                message.loading('正在生成文件...')
-                                // Cast because CompanyDetail might miss fields, checking type safety
                                 const pdfBytes = await generateUnionJoinApplication(company as any)
                                 const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                                saveAs(blob, `${company.name}_組合加入同意書.pdf`)
-                                message.success('下载成功')
-                              } catch (e) {
-                                console.error(e)
-                                message.error('生成失败: ' + (e as Error).message)
+                                const url = URL.createObjectURL(blob)
+                                window.open(url, '_blank')
+                              } catch (e: any) {
+                                message.error(t('messages.generatePdfError') + (e.message || ''))
                               }
                             }}
                           >
-                            下载申请书
+                            生成的PDF
                           </Button>
                         </Space>
                       ) : field.key === 'technical_intern_training_program_agreement' ? (
@@ -942,7 +954,7 @@ export default function CompanyDetailPage() {
       </Modal >
 
       {/* 发送组合加入申请书 Modal */}
-      <Modal
+      < Modal
         title={tWorkOrder('email.sendAssociationApp')}
         open={sendAppModalVisible}
         onOk={handleSendAppForm}
@@ -963,7 +975,7 @@ export default function CompanyDetailPage() {
             />
           </Form.Item>
         </Form>
-      </Modal>
+      </Modal >
     </div >
   )
 }
