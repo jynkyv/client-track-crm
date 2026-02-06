@@ -425,6 +425,7 @@
         "columns": {
             "name": "企業名",
             "industry": "業種",
+            "isAssociationMember": "組合加入",
             "teihon": "謄本",
             "financialReport": "決算報告書",
             "industryLicense": "業許可証",
@@ -434,6 +435,7 @@
             "instructorLicense": "技能実習指導員講習修了証",
             "visaApplication": "入管申請資料",
             "employmentContract": "雇用契約書",
+            "associationApplicationForm": "組合加入申込書",
             "actions": "操作"
         },
         "actions": {
