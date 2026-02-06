@@ -820,9 +820,8 @@ export default function CompaniesPage() {
         title={`${t('upload.title')}${currentUploadField === 'teihon' ? t('columns.teihon') :
           currentUploadField === 'financial_report' ? t('columns.financialReport') :
             currentUploadField === 'industry_license' ? t('columns.industryLicense') :
-              currentUploadField === 'gmo_contract' ? t('columns.gmoContract') :
-                currentUploadField === 'otit_materials' ? t('columns.otitMaterials') :
-                  currentUploadField === 'central_materials' ? t('columns.centralMaterials') : '文件'}`}
+              currentUploadField === 'otit_materials' ? t('columns.otitMaterials') :
+                currentUploadField === 'central_materials' ? t('columns.centralMaterials') : '文件'}`}
         open={uploadModalVisible}
         onCancel={() => {
           setUploadModalVisible(false)
@@ -877,9 +876,8 @@ export default function CompaniesPage() {
         title={`查看${currentViewField === 'teihon' ? '藤本' :
           currentViewField === 'financial_report' ? '决算报告书' :
             currentViewField === 'industry_license' ? '行业许可证' :
-              currentViewField === 'gmo_contract' ? 'GMO合同' :
-                currentViewField === 'otit_materials' ? 'OTIT资料' :
-                  currentViewField === 'central_materials' ? '中央会资料' : '文件'}`
+              currentViewField === 'otit_materials' ? 'OTIT资料' :
+                currentViewField === 'central_materials' ? '中央会资料' : '文件'}`
         }
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}

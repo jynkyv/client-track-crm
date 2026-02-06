@@ -59,7 +59,6 @@ export default function CreateCompanyPage() {
     { key: 'teihon', label: t('columns.teihon') },
     { key: 'financial_report', label: t('columns.financialReport') },
     { key: 'industry_license', label: t('columns.industryLicense') },
-    { key: 'gmo_contract', label: t('columns.gmoContract') },
     { key: 'otit_materials', label: t('columns.otitMaterials') },
     { key: 'central_materials', label: t('columns.centralMaterials') },
   ]
