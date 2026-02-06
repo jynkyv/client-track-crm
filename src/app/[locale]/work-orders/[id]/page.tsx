@@ -632,11 +632,15 @@ export default function WorkOrderDetailPage() {
 
     // 打开邮件发送弹窗
     const handleOpenEmailModal = (applicant: Customer) => {
-        // 尝试从 contact 中提取邮箱，如果是简单的邮箱格式
-        const contact = applicant.contact || ''
-        const emailMatch = contact.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}/)
+        // 优先使用 email 字段，其次尝试从 contact 中提取
+        let emailTo = applicant.email || ''
+        if (!emailTo) {
+            const contact = applicant.contact || ''
+            const emailMatch = contact.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}/)
+            emailTo = emailMatch ? emailMatch[0] : ''
+        }
 
-        setEmailTo(emailMatch ? emailMatch[0] : '')
+        setEmailTo(emailTo)
         setEmailSubject(`关于工单：${ticket?.position || ''}`)
         setEmailContent('')
         setEmailModalVisible(true)
@@ -1274,6 +1278,9 @@ export default function WorkOrderDetailPage() {
                                                     <div><strong>{tApplicant('form.contact')}：</strong>{applicant.phone || applicant.contact}</div>
                                                 </Col>
                                                 <Col xs={24} sm={12} md={8}>
+                                                    <div><strong>{tApplicant('form.email')}：</strong>{applicant.email || '-'}</div>
+                                                </Col>
+                                                <Col xs={24} sm={12} md={8}>
                                                     <div><strong>{tApplicant('form.wechat')}：</strong>{applicant.wechat}</div>
                                                 </Col>
                                                 <Col xs={24} sm={12} md={8}>
@@ -1398,6 +1405,14 @@ export default function WorkOrderDetailPage() {
                         rules={[{ required: true, message: tApplicant('form.namePlaceholder') }]}
                     >
                         <Input placeholder={tApplicant('form.namePlaceholder')} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="email"
+                        label={tApplicant('form.email')}
+                        rules={[{ type: 'email', message: 'Please enter a valid email' }]}
+                    >
+                        <Input placeholder={tApplicant('form.emailPlaceholder')} />
                     </Form.Item>
 
                     <Form.Item
