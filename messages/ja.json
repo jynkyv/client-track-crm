@@ -350,8 +350,10 @@
         "visa": {
             "status": "ビザ状況",
             "pending": "ビザ申請中",
+            "processing": "手続き中",
             "completed": "完了",
             "pendingUnit": "人申請中",
+            "processingUnit": "人手続き中",
             "completedUnit": "人完了",
             "markCompleted": "完了にする",
             "markPending": "申請中に戻す"
