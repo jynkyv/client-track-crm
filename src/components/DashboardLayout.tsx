@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Layout, Menu, Button, Dropdown, Space, Badge } from 'antd'
-import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined, CheckSquareOutlined, AlertOutlined, BellOutlined } from '@ant-design/icons'
+import { UserOutlined, LogoutOutlined, TeamOutlined, UserAddOutlined, HomeOutlined, FileTextOutlined, CheckCircleOutlined, BankOutlined, CheckSquareOutlined, AlertOutlined, BellOutlined, MailOutlined } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, usePathname, useRouter } from '@/navigation'
 import ChatWidget from './ChatWidget'
@@ -211,6 +211,25 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       key: 'feedback-center',
       icon: <Badge count={pendingFeedbackCount} size="small" offset={[-5, 5]}><AlertOutlined /></Badge>,
       label: <Link href="/feedback-center">{t('menu.feedbackCenter')}</Link>,
+    }] : []),
+    ...((isAdmin || (user?.country === '日本' && user?.role === 'employee')) ? [{
+      key: 'email-systems',
+      icon: <MailOutlined />,
+      label: '邮件系统',
+      children: [
+        {
+          key: 'email-new-client',
+          label: <a href="https://email-test-black.vercel.app" target="_blank" rel="noopener noreferrer">监理团体新客户邮件</a>,
+        },
+        {
+          key: 'email-old-client',
+          label: <a href="https://family-email-new.vercel.app" target="_blank" rel="noopener noreferrer">监理团体老客户邮件</a>,
+        },
+        {
+          key: 'email-agency',
+          label: <a href="https://email-aggroup.vercel.app" target="_blank" rel="noopener noreferrer">送出机关客户邮件</a>,
+        },
+      ]
     }] : []),
     ...(isAdmin ? [{
       key: 'users',
