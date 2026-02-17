@@ -76,6 +76,8 @@ export default function WorkOrderDetailPage() {
     // 查看文件 Modal 状态
     const [viewModalVisible, setViewModalVisible] = useState(false)
     const [currentViewFiles, setCurrentViewFiles] = useState<DocumentFile[]>([])
+    const [currentViewApplicantId, setCurrentViewApplicantId] = useState<string | null>(null)
+    const [currentViewField, setCurrentViewField] = useState<string | null>(null)
 
     const [feedbackModalVisible, setFeedbackModalVisible] = useState(false)
     const [feedbackApplicant, setFeedbackApplicant] = useState<Customer | null>(null)
@@ -402,14 +404,96 @@ export default function WorkOrderDetailPage() {
     }
 
     // 查看文件
-    const handleViewFiles = (files: DocumentFile[]) => {
+    const handleViewFiles = (files: DocumentFile[], applicantId?: string, field?: string) => {
         console.log('Viewing files:', files)
         if (!files || files.length === 0) {
             message.warning(t('messages.noFileWarning'))
             return
         }
         setCurrentViewFiles(files)
+        if (applicantId && field) {
+            setCurrentViewApplicantId(applicantId)
+            setCurrentViewField(field)
+        } else {
+            setCurrentViewApplicantId(null)
+            setCurrentViewField(null)
+        }
         setViewModalVisible(true)
+    }
+
+    // 删除文件
+    const handleDeleteFile = async (fileToDelete: DocumentFile) => {
+        if (!currentViewApplicantId || !currentViewField) return
+
+        Modal.confirm({
+            title: tCommon('confirmDelete'),
+            content: t('messages.confirmDeleteFile'),
+            okText: tCommon('confirm'),
+            cancelText: tCommon('cancel'),
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                try {
+                    const applicant = applicants.find(a => a.id === currentViewApplicantId)
+                    if (!applicant) return
+
+                    // 1. 调用API删除OSS文件
+                    try {
+                        const deleteResponse = await fetch(`/api/upload?filepath=${encodeURIComponent(fileToDelete.url)}`, {
+                            method: 'DELETE'
+                        })
+                        if (!deleteResponse.ok) {
+                            console.error('物理文件删除失败，但继续清理数据库记录')
+                        }
+                    } catch (e) {
+                        console.error('调用删除API失败', e)
+                    }
+
+                    // 2. 更新数据库
+                    const currentFiles = (applicant[currentViewField as keyof Customer] as any[]) || []
+
+                    const updatedFiles = currentFiles.filter(f => {
+                        let fUrl = ''
+                        if (typeof f === 'string') {
+                            // 尝试解析JSON字符串
+                            try {
+                                const parsed = JSON.parse(f)
+                                if (parsed && typeof parsed === 'object' && parsed.url) {
+                                    fUrl = parsed.url
+                                } else {
+                                    fUrl = f
+                                }
+                            } catch {
+                                // 普通字符串URL
+                                fUrl = f
+                            }
+                        } else if (f && typeof f === 'object') {
+                            fUrl = f.url
+                        }
+                        return fUrl !== fileToDelete.url
+                    })
+
+                    const { error } = await supabase
+                        .from('customers')
+                        .update({ [currentViewField]: updatedFiles })
+                        .eq('id', currentViewApplicantId)
+
+                    if (error) throw error
+
+                    message.success(tCommon('deleteSuccess'))
+                    fetchApplicants() // 刷新列表
+
+                    // 更新当前查看的文件列表
+                    if (updatedFiles.length === 0) {
+                        setViewModalVisible(false)
+                    } else {
+                        setCurrentViewFiles(updatedFiles)
+                    }
+                } catch (error) {
+                    console.error('删除文件失败:', error)
+                    message.error(tCommon('deleteError'))
+                }
+            }
+        })
     }
 
     // 打开反馈弹窗
@@ -1328,14 +1412,14 @@ export default function WorkOrderDetailPage() {
                                                                             icon={<FileTextOutlined />}
                                                                             onClick={() => {
                                                                                 if (hasFile && fieldValue) {
-                                                                                    handleViewFiles(fieldValue)
+                                                                                    handleViewFiles(fieldValue, applicant.id, field)
                                                                                 }
                                                                             }}
                                                                             disabled={!hasFile}
                                                                         >
                                                                             {t('actions.view')}{hasFile ? `(${fieldValue!.length})` : ''}
                                                                         </Button>
-                                                                        {isAdmin && (
+                                                                        {(isAdmin || (isJapaneseEmployee && field === 'employment_contract')) && (
                                                                             <Upload
                                                                                 showUploadList={false}
                                                                                 customRequest={({ file }) => handleUploadFile(file as File, field, applicant.id)}
@@ -1553,6 +1637,15 @@ export default function WorkOrderDetailPage() {
                                 >
                                     {tCommon('view')}
                                 </Button>
+                                {(isAdmin || (isJapaneseEmployee && currentViewField === 'employment_contract')) && (
+                                    <Button
+                                        type="link"
+                                        danger
+                                        onClick={() => handleDeleteFile({ url: fileUrl, uploadedAt: uploadTime || '' })}
+                                    >
+                                        {tCommon('delete')}
+                                    </Button>
+                                )}
                             </div >
                         )
                     })}
