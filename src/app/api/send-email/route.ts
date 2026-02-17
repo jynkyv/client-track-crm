@@ -48,8 +48,6 @@ export async function POST(request: Request) {
             transporter.options.agent = agent
         }
 
-        // ... 
-
         console.log('Preparing to send email to:', to)
         console.log('Subject:', subject)
         console.log('Attachments count:', attachments?.length || 0)
