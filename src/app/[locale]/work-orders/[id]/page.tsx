@@ -855,17 +855,20 @@ export default function WorkOrderDetailPage() {
             }
 
             console.log('Sending email with HTML buttons (no attachments)...')
+            const emailPayload = JSON.stringify({
+                to: company.email,
+                subject: t('email.sendAssociationApp'),
+                content: appEmailContent,
+                html: htmlContent
+            })
+            console.log('Email payload size:', emailPayload.length, 'bytes')
+            console.log('Email payload preview:', emailPayload.substring(0, 500))
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    to: company.email,
-                    subject: t('email.sendAssociationApp'),
-                    content: appEmailContent,
-                    html: htmlContent
-                }),
+                body: emailPayload,
             })
 
             const data = await response.json()
