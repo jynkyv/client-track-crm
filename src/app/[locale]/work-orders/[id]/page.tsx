@@ -769,14 +769,52 @@ export default function WorkOrderDetailPage() {
                 // Generate file dynamically
                 message.loading(tCommon('loading'))
                 const pdfBytes = await generateUnionJoinApplication(company as any)
-                // Convert to base64 to send to API
-                const base64Pdf = Buffer.from(pdfBytes).toString('base64')
+
+                // 上传到 OSS 以避免 Base64 过大导致 Payload Error
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+                const file = new File([blob], `${company.name}_Combined_Application_Form.pdf`, { type: 'application/pdf' })
+
+                const formData = new FormData()
+                formData.append('file', file)
+
+                console.log('Uploading generated PDF to OSS...')
+                const uploadResponse = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+
+                if (!uploadResponse.ok) {
+                    throw new Error(t('messages.uploadError'))
+                }
+
+                const { url } = await uploadResponse.json()
+                console.log('PDF uploaded to:', url)
+
                 attachments = [{
                     filename: `${company.name}_Combined_Application_Form.pdf`,
-                    content: base64Pdf,
-                    encoding: 'base64'
+                    url: getFileUrl(url)
                 }]
             }
+
+            // Construct HTML content with buttons
+            const buttonsHtml = attachments.map(att => {
+                const url = att.url // Ensure URL is absolute/valid
+                if (!url) return ''
+                return `
+                    <a href="${url}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px; margin-top: 10px; font-weight: bold;">
+                        📄 查看 ${att.filename}
+                    </a>
+                `
+            }).join('')
+
+            const htmlContent = `
+                <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+                    ${appEmailContent.replace(/\n/g, '<br>')}
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        ${buttonsHtml}
+                    </div>
+                </div>
+            `
 
             const response = await fetch('/api/send-email', {
                 method: 'POST',
@@ -787,6 +825,7 @@ export default function WorkOrderDetailPage() {
                     to: company.email,
                     subject: t('email.sendAssociationApp'),
                     content: appEmailContent,
+                    html: htmlContent,
                     attachments: attachments
                 }),
             })

@@ -31,30 +31,58 @@ export async function POST(request: Request) {
             },
         })
 
-        await transporter.sendMail({
+        // 检查HTTPS_PROXY环境变量并配置代理
+        const proxy = process.env.HTTPS_PROXY || process.env.https_proxy
+        if (proxy) {
+            console.log('Using proxy for email sending:', proxy)
+            const { HttpsProxyAgent } = require('https-proxy-agent')
+            const agent = new HttpsProxyAgent(proxy)
+            transporter.set('oauth2_provision_cb', (user: any, renew: any, callback: any) => {
+                let accessToken = user.accessToken
+                if (!accessToken) {
+                    return renew(callback)
+                }
+                callback(null, accessToken)
+            })
+            // @ts-ignore
+            transporter.options.agent = agent
+        }
+
+        // ... existing code ...
+        console.log('Preparing to send email to:', to)
+        console.log('Subject:', subject)
+        console.log('Attachments count:', attachments?.length || 0)
+
+        const mailOptions = {
             from: user,
             to,
             subject,
-            text: content, // Plain text version
-            html: content.replace(/\n/g, '<br>'), // Simple HTML conversion
+            text: content,
+            html: content.replace(/\n/g, '<br>'),
             attachments: attachments?.map((att: any) => {
                 if (att.url) {
+                    console.log('Processing URL attachment:', att.filename, att.url)
                     return {
                         filename: att.filename,
-                        path: att.url, // Support URL-based attachments
+                        path: att.url,
                     }
                 } else if (att.content) {
+                    console.log('Processing content attachment:', att.filename)
                     return {
                         filename: att.filename,
                         content: att.content,
-                        encoding: att.encoding, // Support base64 content
+                        encoding: att.encoding,
                     }
                 }
                 return { filename: att.filename }
             }),
-        })
+        }
 
-        return NextResponse.json({ success: true })
+        console.log('Sending mail...')
+        const info = await transporter.sendMail(mailOptions)
+        console.log('Mail sent successfully:', info.messageId)
+
+        return NextResponse.json({ success: true, messageId: info.messageId })
     } catch (error: any) {
         console.error('Error sending email:', error)
         return NextResponse.json(
