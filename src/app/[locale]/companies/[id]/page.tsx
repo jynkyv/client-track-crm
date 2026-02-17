@@ -554,13 +554,20 @@ export default function CompanyDetailPage() {
     const formData = new FormData()
     formData.append('file', file)
 
+    console.log('Uploading to OSS:', fileName, 'size:', pdfBytes.length, 'bytes')
+
     const response = await fetch('/api/upload', {
       method: 'POST',
       body: formData
     })
 
-    if (!response.ok) throw new Error('文件上传失败: ' + fileName)
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Upload failed:', response.status, errorText)
+      throw new Error(`文件上传失败 (${response.status}): ${errorText}`)
+    }
     const { url } = await response.json()
+    console.log('Upload success:', url)
     return url
   }
 
