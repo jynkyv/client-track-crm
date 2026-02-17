@@ -547,28 +547,40 @@ export default function CompanyDetailPage() {
     setSendAppModalVisible(true)
   }
 
-  // Helper to upload file to OSS
+  // Helper to upload file to OSS via presigned URL (bypasses Vercel 4.5MB limit)
   const uploadFileToOSS = async (pdfBytes: Uint8Array, fileName: string) => {
-    const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-    const file = new File([blob], fileName, { type: 'application/pdf' })
-    const formData = new FormData()
-    formData.append('file', file)
+    console.log('Requesting presigned URL for:', fileName, 'size:', pdfBytes.length, 'bytes')
 
-    console.log('Uploading to OSS:', fileName, 'size:', pdfBytes.length, 'bytes')
-
-    const response = await fetch('/api/upload', {
+    // Step 1: Get presigned URL from our API (tiny request)
+    const presignRes = await fetch('/api/oss-presign', {
       method: 'POST',
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName })
     })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Upload failed:', response.status, errorText)
-      throw new Error(`文件上传失败 (${response.status}): ${errorText}`)
+    if (!presignRes.ok) {
+      const err = await presignRes.text()
+      throw new Error(`获取上传URL失败: ${err}`)
     }
-    const { url } = await response.json()
-    console.log('Upload success:', url)
-    return url
+
+    const { presignedUrl, objectName } = await presignRes.json()
+
+    // Step 2: Upload directly to OSS (bypasses Vercel)
+    console.log('Uploading directly to OSS...')
+    const uploadRes = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/pdf' },
+      body: new Blob([pdfBytes as any], { type: 'application/pdf' })
+    })
+
+    if (!uploadRes.ok) {
+      const err = await uploadRes.text()
+      console.error('Direct OSS upload failed:', uploadRes.status, err)
+      throw new Error(`OSS上传失败 (${uploadRes.status})`)
+    }
+
+    console.log('Upload success:', objectName)
+    return objectName
   }
 
   // Send Application Form (Refactored - OSS upload + HTML buttons, no attachments)

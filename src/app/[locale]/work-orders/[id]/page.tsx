@@ -761,21 +761,37 @@ export default function WorkOrderDetailPage() {
             setSendingApp(true)
             message.loading('正在检查文件...')
 
-            // Helper to upload file to OSS
+            // Helper to upload file to OSS via presigned URL (bypasses Vercel 4.5MB limit)
             const uploadFileToOSS = async (pdfBytes: Uint8Array, fileName: string) => {
-                const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                const file = new File([blob], fileName, { type: 'application/pdf' })
-                const formData = new FormData()
-                formData.append('file', file)
+                console.log('Requesting presigned URL for:', fileName, 'size:', pdfBytes.length, 'bytes')
 
-                const response = await fetch('/api/upload', {
+                const presignRes = await fetch('/api/oss-presign', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName })
                 })
 
-                if (!response.ok) throw new Error('文件上传失败: ' + fileName)
-                const { url } = await response.json()
-                return url
+                if (!presignRes.ok) {
+                    const err = await presignRes.text()
+                    throw new Error(`获取上传URL失败: ${err}`)
+                }
+
+                const { presignedUrl, objectName } = await presignRes.json()
+
+                const uploadRes = await fetch(presignedUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/pdf' },
+                    body: new Blob([pdfBytes as any], { type: 'application/pdf' })
+                })
+
+                if (!uploadRes.ok) {
+                    const err = await uploadRes.text()
+                    console.error('Direct OSS upload failed:', uploadRes.status, err)
+                    throw new Error(`OSS上传失败 (${uploadRes.status})`)
+                }
+
+                console.log('Upload success:', objectName)
+                return objectName
             }
 
             // 1. 组合加入申请书 (Union Join Application)
