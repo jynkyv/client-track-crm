@@ -547,61 +547,112 @@ export default function CompanyDetailPage() {
     setSendAppModalVisible(true)
   }
 
-  // Generate attachments helper
-  const getDataForEmail = async () => {
-    let attachments: { filename: string; url?: string; content?: string; encoding?: string }[] = []
+  // Helper to upload file to OSS
+  const uploadFileToOSS = async (pdfBytes: Uint8Array, fileName: string) => {
+    const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
+    const file = new File([blob], fileName, { type: 'application/pdf' })
+    const formData = new FormData()
+    formData.append('file', file)
 
-    // 1. Association Application Form
-    const hasAppForm = company?.association_application_form && company?.association_application_form.length > 0
-    if (hasAppForm) {
-      attachments.push({
-        filename: `${company.name}_Combined_Application_Form.pdf`,
-        url: getFileUrl(company!.association_application_form![0].url)
-      })
-    } else if (company?.first_training_at) {
-      const pdfBytes = await generateUnionJoinApplication(company as any)
-      const base64Pdf = Buffer.from(pdfBytes).toString('base64')
-      attachments.push({
-        filename: `${company.name}_組合加入同意書.pdf`,
-        content: base64Pdf,
-        encoding: 'base64'
-      })
-    }
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    })
 
-    // 2. Technical Intern Training Program Agreement
-    const termCheckKey = 'technical_intern_training_program_agreement' as keyof CompanyDetail
-    const hasAgreement = company?.[termCheckKey] && (company?.[termCheckKey] as DocumentFile[]).length > 0
-
-    if (hasAgreement) {
-      attachments.push({
-        filename: `${company.name}_Technical_Intern_Agreement.pdf`,
-        url: getFileUrl((company as any)[termCheckKey][0].url)
-      })
-    } else if (company?.first_training_at) {
-      const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
-      const base64Pdf = Buffer.from(pdfBytes).toString('base64')
-      attachments.push({
-        filename: `${company.name}_技能実習に関する事業に係る規約.pdf`,
-        content: base64Pdf,
-        encoding: 'base64'
-      })
-    }
-
-    return attachments
+    if (!response.ok) throw new Error('文件上传失败: ' + fileName)
+    const { url } = await response.json()
+    return url
   }
 
-  // Send Application Form (Refactored)
+  // Send Application Form (Refactored - OSS upload + HTML buttons, no attachments)
   const handleSendAppForm = async () => {
     if (!company?.email) return
+    if (!company?.first_training_at) {
+      message.error('企业未设置首次培训时间，无法生成文件')
+      return
+    }
 
     try {
       setSendingApp(true)
+      message.loading('正在检查文件...')
 
-      const attachments = await getDataForEmail()
+      // 1. 组合加入申请书 (Union Join Application)
+      let unionJoinUrl = ''
 
-      if (attachments.length === 0) {
-        message.error('No documents available to send')
-        return
+      if (company.association_application_form && company.association_application_form.length > 0) {
+        unionJoinUrl = company.association_application_form[0].url
+      } else {
+        message.loading('正在生成组合加入申请书...')
+        const pdfBytes = await generateUnionJoinApplication(company as any)
+        const ossPath = await uploadFileToOSS(pdfBytes, `${company.name}_Combined_Application_Form.pdf`)
+        unionJoinUrl = ossPath
+
+        // Update DB
+        await supabase.from('companies').update({
+          association_application_form: [{
+            url: ossPath,
+            uploadedAt: new Date().toISOString()
+          }]
+        }).eq('id', companyId)
+      }
+
+      // 2. 技能实训规约 (Technical Intern Training Program Agreement)
+      let termsUrl = ''
+
+      const termCheckKey = 'technical_intern_training_program_agreement' as keyof CompanyDetail
+      const hasAgreement = company?.[termCheckKey] && (company?.[termCheckKey] as DocumentFile[]).length > 0
+
+      if (hasAgreement) {
+        termsUrl = (company as any)[termCheckKey][0].url
+      } else {
+        message.loading('正在生成技能实习规约...')
+        const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
+        const ossPath = await uploadFileToOSS(pdfBytes, `${company.name}_Technical_Intern_Agreement.pdf`)
+        termsUrl = ossPath
+
+        // Update DB
+        await supabase.from('companies').update({
+          technical_intern_training_program_agreement: [{
+            url: ossPath,
+            uploadedAt: new Date().toISOString()
+          }]
+        }).eq('id', companyId)
+      }
+
+      // Construct HTML with TWO buttons (links only, no file attachments)
+      const buttonsHtml = `
+        <div style="margin: 20px 0;">
+          <a href="${getFileUrl(unionJoinUrl)}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; margin-right: 15px; font-weight: bold;">
+            📄 組合加入申込書
+          </a>
+          <a href="${getFileUrl(termsUrl)}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            📄 技能実習規約
+          </a>
+        </div>
+      `
+
+      // Insert buttons into content
+      let htmlContent = ''
+      const footerSeparator = '**************************************'
+      if (appEmailContent.includes(footerSeparator)) {
+        const [body, footer] = appEmailContent.split(footerSeparator)
+        htmlContent = `
+          <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+            ${body.replace(/\n/g, '<br>')}
+            ${buttonsHtml}
+            <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 20px;">
+              ${footerSeparator}<br>
+              ${footer.replace(/\n/g, '<br>')}
+            </div>
+          </div>
+        `
+      } else {
+        htmlContent = `
+          <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+            ${appEmailContent.replace(/\n/g, '<br>')}
+            ${buttonsHtml}
+          </div>
+        `
       }
 
       const response = await fetch('/api/send-email', {
@@ -613,7 +664,7 @@ export default function CompanyDetailPage() {
           to: company.email,
           subject: tWorkOrder('email.sendAssociationAppSubject'),
           content: appEmailContent,
-          attachments: attachments
+          html: htmlContent
         }),
       })
 
