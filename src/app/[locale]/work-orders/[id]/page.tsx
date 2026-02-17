@@ -771,7 +771,7 @@ export default function WorkOrderDetailPage() {
                 const pdfBytes = await generateUnionJoinApplication(company as any)
 
                 // 上传到 OSS 以避免 Base64 过大导致 Payload Error
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+                const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
                 const file = new File([blob], `${company.name}_Combined_Application_Form.pdf`, { type: 'application/pdf' })
 
                 const formData = new FormData()
