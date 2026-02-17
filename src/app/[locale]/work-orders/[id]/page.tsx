@@ -28,7 +28,7 @@ import {
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, UploadOutlined, FileTextOutlined, ArrowLeftOutlined, MessageOutlined, AlertOutlined, PictureOutlined, MailOutlined } from '@ant-design/icons'
 import { getFileUrl } from '@/lib/utils'
-import { generateUnionJoinApplication } from '@/lib/pdfGenerator'
+import { generateUnionJoinApplication, generateTechnicalInternTrainingProgramAgreement } from '@/lib/pdfGenerator'
 import dayjs from 'dayjs'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -752,81 +752,123 @@ export default function WorkOrderDetailPage() {
     // 发送组合加入申请书
     const handleSendAppForm = async () => {
         if (!company?.email) return
+        if (!company?.first_training_at) {
+            message.error('企业未设置首次培训时间，无法生成文件')
+            return
+        }
 
         try {
             setSendingApp(true)
+            message.loading('正在检查文件...')
 
-            let attachments: { filename: string; url?: string; content?: string; encoding?: string }[] = []
-            const hasFile = company.association_application_form && company.association_application_form.length > 0
-
-            if (hasFile) {
-                // Use existing file
-                attachments = (company.association_application_form || []).map((file: DocumentFile, index: number) => {
-                    // Try to extract filename from URL if name is not available
-                    let name = (file as any).name || `Attachment_${index + 1}.pdf`
-                    if (!(file as any).name && file.url) {
-                        try {
-                            const urlObj = new URL(file.url)
-                            const pathname = urlObj.pathname
-                            name = pathname.split('/').pop() || name
-                        } catch { }
-                    }
-                    return {
-                        filename: name,
-                        url: getFileUrl(file.url)
-                    }
-                })
-            } else if (company.first_training_at) {
-                // Generate file dynamically
-                message.loading(tCommon('loading'))
-                const pdfBytes = await generateUnionJoinApplication(company as any)
-
-                // 上传到 OSS 以避免 Base64 过大导致 Payload Error
+            // Helper to upload file to OSS
+            const uploadFileToOSS = async (pdfBytes: Uint8Array, fileName: string) => {
                 const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                const file = new File([blob], `${company.name}_Combined_Application_Form.pdf`, { type: 'application/pdf' })
-
+                const file = new File([blob], fileName, { type: 'application/pdf' })
                 const formData = new FormData()
                 formData.append('file', file)
 
-                console.log('Uploading generated PDF to OSS...')
-                const uploadResponse = await fetch('/api/upload', {
+                const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 })
 
-                if (!uploadResponse.ok) {
-                    throw new Error(t('messages.uploadError'))
-                }
-
-                const { url } = await uploadResponse.json()
-                console.log('PDF uploaded to:', url)
-
-                attachments = [{
-                    filename: `${company.name}_Combined_Application_Form.pdf`,
-                    url: getFileUrl(url)
-                }]
+                if (!response.ok) throw new Error('文件上传失败: ' + fileName)
+                const { url } = await response.json()
+                return url
             }
 
-            // Construct HTML content with buttons
-            const buttonsHtml = attachments.map(att => {
-                const url = att.url // Ensure URL is absolute/valid
-                if (!url) return ''
-                return `
-                    <a href="${url}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px; margin-top: 10px; font-weight: bold;">
-                        📄 查看 ${att.filename}
-                    </a>
-                `
-            }).join('')
+            // 1. 组合加入申请书 (Union Join Application)
+            let unionJoinUrl = ''
+            let unionJoinName = '組合加入申込書.pdf'
 
-            const htmlContent = `
-                <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-                    ${appEmailContent.replace(/\n/g, '<br>')}
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                        ${buttonsHtml}
-                    </div>
+            if (company.association_application_form && company.association_application_form.length > 0) {
+                unionJoinUrl = company.association_application_form[0].url
+            } else {
+                message.loading('正在生成组合加入申请书...')
+                const pdfBytes = await generateUnionJoinApplication(company as any)
+                const ossPath = await uploadFileToOSS(pdfBytes, `${company.name}_Combined_Application_Form.pdf`)
+                unionJoinUrl = ossPath
+
+                // Update DB
+                await supabase.from('companies').update({
+                    association_application_form: [{
+                        url: ossPath,
+                        uploadedAt: new Date().toISOString()
+                    }]
+                }).eq('id', company.id)
+            }
+
+            // 2. 技能实训规约 (Technical Intern Training Program Agreement)
+            let termsUrl = ''
+            let termsName = '技能実習規約.pdf'
+
+            if (company.technical_intern_training_program_agreement && company.technical_intern_training_program_agreement.length > 0) {
+                termsUrl = company.technical_intern_training_program_agreement[0].url
+            } else {
+                message.loading('正在生成技能实习规约...')
+                const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
+                const ossPath = await uploadFileToOSS(pdfBytes, `${company.name}_Technical_Intern_Agreement.pdf`)
+                termsUrl = ossPath
+
+                // Update DB
+                await supabase.from('companies').update({
+                    technical_intern_training_program_agreement: [{
+                        url: ossPath,
+                        uploadedAt: new Date().toISOString()
+                    }]
+                }).eq('id', company.id)
+            }
+
+            // Prepare attachments for email
+            const attachments = [
+                {
+                    filename: unionJoinName,
+                    url: getFileUrl(unionJoinUrl)
+                },
+                {
+                    filename: termsName,
+                    url: getFileUrl(termsUrl)
+                }
+            ]
+
+            // Construct HTML with TWO buttons
+            const buttonsHtml = `
+                <div style="margin: 20px 0;">
+                    <a href="${getFileUrl(unionJoinUrl)}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; margin-right: 15px; font-weight: bold;">
+                        📄 組合加入申込書
+                    </a>
+                    <a href="${getFileUrl(termsUrl)}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                        📄 技能実習規約
+                    </a>
                 </div>
             `
 
+            // Insert buttons into content
+            let htmlContent = ''
+            const footerSeparator = '**************************************'
+            if (appEmailContent.includes(footerSeparator)) {
+                const [body, footer] = appEmailContent.split(footerSeparator)
+                htmlContent = `
+                    <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+                        ${body.replace(/\n/g, '<br>')}
+                        ${buttonsHtml}
+                        <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 20px;">
+                            ${footerSeparator}<br>
+                            ${footer.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `
+            } else {
+                htmlContent = `
+                    <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+                        ${appEmailContent.replace(/\n/g, '<br>')}
+                        ${buttonsHtml}
+                    </div>
+                `
+            }
+
+            console.log('Sending email with 2 attachments...')
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: {
@@ -849,6 +891,12 @@ export default function WorkOrderDetailPage() {
 
             message.success(t('email.appFormSentSuccess'))
             setSendAppModalVisible(false)
+
+            // Refresh logic - using simple reload for data consistency
+            if (company.id) {
+                window.location.reload()
+            }
+
         } catch (error: any) {
             console.error('Error sending email:', error)
             message.error(error.message || tCommon('email.error'))
