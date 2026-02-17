@@ -61,3 +61,65 @@ export async function POST(request: NextRequest) {
         )
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url)
+        const filepath = searchParams.get('filepath')
+
+        if (!filepath) {
+            return NextResponse.json(
+                { error: '未提供文件路径' },
+                { status: 400 }
+            )
+        }
+
+        // 检查环境变量
+        const region = process.env.OSS_REGION
+        const accessKeyId = process.env.OSS_ACCESS_KEY_ID
+        const accessKeySecret = process.env.OSS_ACCESS_KEY_SECRET
+        const bucket = process.env.OSS_BUCKET
+
+        if (!region || !accessKeyId || !accessKeySecret || !bucket) {
+            console.error('OSS配置缺失')
+            return NextResponse.json(
+                { error: '服务器OSS配置错误' },
+                { status: 500 }
+            )
+        }
+
+        // 初始化OSS客户端
+        const client = new OSS({
+            region,
+            accessKeyId,
+            accessKeySecret,
+            bucket,
+            secure: true
+        })
+
+        // 删除文件
+        // 移除可能存在的完整URL前缀，只保留OSS中的对象名
+        // 假设 URL 格式类似 https://bucket.region.aliyuncs.com/object-name
+        // 或者直接是 object-name
+        let objectName = filepath
+        if (filepath.startsWith('http')) {
+            try {
+                const urlObj = new URL(filepath)
+                objectName = urlObj.pathname.substring(1) // 去掉开头的 /
+            } catch (e) {
+                console.error('解析文件URL失败', e)
+                // 如果解析失败，尝试直接使用filepath
+            }
+        }
+
+        await client.delete(objectName)
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error('删除文件失败:', error)
+        return NextResponse.json(
+            { error: '删除文件失败' },
+            { status: 500 }
+        )
+    }
+}
