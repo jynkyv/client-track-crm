@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer'
 
 export async function POST(request: Request) {
     try {
-        const { to, subject, content, attachments } = await request.json()
+        const { to, subject, content, html, attachments } = await request.json()
 
         if (!to || !subject || !content) {
             return NextResponse.json(
@@ -48,17 +48,23 @@ export async function POST(request: Request) {
             transporter.options.agent = agent
         }
 
-        // ... existing code ...
+        // ... 
+
         console.log('Preparing to send email to:', to)
         console.log('Subject:', subject)
         console.log('Attachments count:', attachments?.length || 0)
+
+        // Log HTML content if present
+        if (html) {
+            console.log('HTML content length:', html.length)
+        }
 
         const mailOptions = {
             from: user,
             to,
             subject,
             text: content,
-            html: content.replace(/\n/g, '<br>'),
+            html: html || content.replace(/\n/g, '<br>'),
             attachments: attachments?.map((att: any) => {
                 if (att.url) {
                     console.log('Processing URL attachment:', att.filename, att.url)
