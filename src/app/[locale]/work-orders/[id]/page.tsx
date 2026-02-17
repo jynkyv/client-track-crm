@@ -761,10 +761,21 @@ export default function WorkOrderDetailPage() {
 
             if (hasFile) {
                 // Use existing file
-                attachments = (company.association_application_form || []).map((file: DocumentFile) => ({
-                    filename: 'Combined_Application_Form.pdf',
-                    url: getFileUrl(file.url)
-                }))
+                attachments = (company.association_application_form || []).map((file: DocumentFile, index: number) => {
+                    // Try to extract filename from URL if name is not available
+                    let name = (file as any).name || `Attachment_${index + 1}.pdf`
+                    if (!(file as any).name && file.url) {
+                        try {
+                            const urlObj = new URL(file.url)
+                            const pathname = urlObj.pathname
+                            name = pathname.split('/').pop() || name
+                        } catch { }
+                    }
+                    return {
+                        filename: name,
+                        url: getFileUrl(file.url)
+                    }
+                })
             } else if (company.first_training_at) {
                 // Generate file dynamically
                 message.loading(tCommon('loading'))
