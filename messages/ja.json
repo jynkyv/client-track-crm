@@ -483,7 +483,9 @@
             "title": "アップロード",
             "selectFiles": "ファイル選択（複数可）",
             "hint": "複数のPDFファイルを一度にアップロードできます",
-            "fileSizeLimit": "ファイルサイズは4.5MB以下にしてください"
+            "fileSizeLimit": "ファイルサイズは4.5MB以下にしてください",
+            "confirm": "アップロード",
+            "cancel": "キャンセル"
         },
         "form": {
             "name": "企業名",

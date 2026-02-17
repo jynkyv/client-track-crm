@@ -780,7 +780,6 @@ export default function WorkOrderDetailPage() {
 
             // 1. 组合加入申请书 (Union Join Application)
             let unionJoinUrl = ''
-            let unionJoinName = '組合加入申込書.pdf'
 
             if (company.association_application_form && company.association_application_form.length > 0) {
                 unionJoinUrl = company.association_application_form[0].url
@@ -801,7 +800,6 @@ export default function WorkOrderDetailPage() {
 
             // 2. 技能实训规约 (Technical Intern Training Program Agreement)
             let termsUrl = ''
-            let termsName = '技能実習規約.pdf'
 
             if (company.technical_intern_training_program_agreement && company.technical_intern_training_program_agreement.length > 0) {
                 termsUrl = company.technical_intern_training_program_agreement[0].url
@@ -820,19 +818,7 @@ export default function WorkOrderDetailPage() {
                 }).eq('id', company.id)
             }
 
-            // Prepare attachments for email
-            const attachments = [
-                {
-                    filename: unionJoinName,
-                    url: getFileUrl(unionJoinUrl)
-                },
-                {
-                    filename: termsName,
-                    url: getFileUrl(termsUrl)
-                }
-            ]
-
-            // Construct HTML with TWO buttons
+            // Construct HTML with TWO buttons (links only, no file attachments)
             const buttonsHtml = `
                 <div style="margin: 20px 0;">
                     <a href="${getFileUrl(unionJoinUrl)}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; margin-right: 15px; font-weight: bold;">
@@ -868,7 +854,7 @@ export default function WorkOrderDetailPage() {
                 `
             }
 
-            console.log('Sending email with 2 attachments...')
+            console.log('Sending email with HTML buttons (no attachments)...')
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: {
@@ -878,8 +864,7 @@ export default function WorkOrderDetailPage() {
                     to: company.email,
                     subject: t('email.sendAssociationApp'),
                     content: appEmailContent,
-                    html: htmlContent,
-                    attachments: attachments
+                    html: htmlContent
                 }),
             })
 
