@@ -638,16 +638,36 @@ export default function CompanyDetailPage() {
         }).eq('id', companyId)
       }
 
-      // Construct HTML with TWO buttons (links only, no file attachments)
+      // Construct HTML with TWO buttons (table-based for mobile compatibility)
       const buttonsHtml = `
-        <div style="margin: 20px 0;">
-          <a href="${getFileUrl(unionJoinUrl)}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; margin-right: 15px; font-weight: bold;">
-            📄 組合加入申込書
-          </a>
-          <a href="${getFileUrl(termsUrl)}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #1890ff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
-            📄 技能実習規約
-          </a>
-        </div>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0;">
+          <tr>
+            <td align="center" style="padding-bottom: 12px;">
+              <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 360px;">
+                <tr>
+                  <td align="center" bgcolor="#1890ff" style="border-radius: 6px;">
+                    <a href="${getFileUrl(unionJoinUrl)}" target="_blank" style="display: block; padding: 14px 24px; font-family: sans-serif; font-size: 16px; color: #ffffff; text-decoration: none; font-weight: bold; text-align: center;">
+                      📄 組合加入申込書
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center">
+              <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 360px;">
+                <tr>
+                  <td align="center" bgcolor="#1890ff" style="border-radius: 6px;">
+                    <a href="${getFileUrl(termsUrl)}" target="_blank" style="display: block; padding: 14px 24px; font-family: sans-serif; font-size: 16px; color: #ffffff; text-decoration: none; font-weight: bold; text-align: center;">
+                      📄 技能実習規約
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       `
 
       // Insert buttons into content
