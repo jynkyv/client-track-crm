@@ -834,61 +834,131 @@ export default function WorkOrderDetailPage() {
                 }).eq('id', company.id)
             }
 
-            // Construct HTML with TWO buttons (table-based for mobile compatibility)
-            const buttonsHtml = `
-                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0;">
-                  <tr>
-                    <td align="center" style="padding-bottom: 12px;">
-                      <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 360px;">
-                        <tr>
-                          <td align="center" bgcolor="#1890ff" style="border-radius: 6px;">
-                            <a href="${getFileUrl(unionJoinUrl)}" target="_blank" style="display: block; padding: 14px 24px; font-family: sans-serif; font-size: 16px; color: #ffffff; text-decoration: none; font-weight: bold; text-align: center;">
-                              📄 組合加入申込書
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td align="center">
-                      <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 360px;">
-                        <tr>
-                          <td align="center" bgcolor="#1890ff" style="border-radius: 6px;">
-                            <a href="${getFileUrl(termsUrl)}" target="_blank" style="display: block; padding: 14px 24px; font-family: sans-serif; font-size: 16px; color: #ffffff; text-decoration: none; font-weight: bold; text-align: center;">
-                              📄 技能実習規約
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-            `
-
-            // Insert buttons into content
+            // Build complete professional HTML email
             let htmlContent = ''
             const footerSeparator = '**************************************'
+            let bodyText = appEmailContent
+            let footerText = ''
+
             if (appEmailContent.includes(footerSeparator)) {
-                const [body, footer] = appEmailContent.split(footerSeparator)
-                htmlContent = `
-                    <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-                        ${body.replace(/\n/g, '<br>')}
-                        ${buttonsHtml}
-                        <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 20px;">
-                            ${footerSeparator}<br>
-                            ${footer.replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
-                `
-            } else {
-                htmlContent = `
-                    <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-                        ${appEmailContent.replace(/\n/g, '<br>')}
-                        ${buttonsHtml}
-                    </div>
-                `
+                const parts = appEmailContent.split(footerSeparator)
+                bodyText = parts[0]
+                footerText = parts[1]
             }
+
+            const bodyHtml = bodyText.trim().replace(/\n/g, '<br>')
+            const footerHtml = footerText.trim().replace(/\n/g, '<br>')
+
+            htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-text-size-adjust: 100%;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f6f9;">
+                    <tr>
+                      <td align="center" style="padding: 24px 16px;">
+                        <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px;">
+
+                          <!-- Header -->
+                          <tr>
+                            <td align="center" bgcolor="#1890ff" style="padding: 20px 32px; border-radius: 8px 8px 0 0;">
+                              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                  <td style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: bold; color: #ffffff; text-align: center;">
+                                    Family協同組合
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Body -->
+                          <tr>
+                            <td bgcolor="#ffffff" style="padding: 32px; border-left: 1px solid #e8e8e8; border-right: 1px solid #e8e8e8;">
+                              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                  <td style="font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic Pro', 'Yu Gothic', sans-serif; font-size: 15px; line-height: 1.8; color: #333333;">
+                                    ${bodyHtml}
+                                  </td>
+                                </tr>
+
+                                <!-- Divider -->
+                                <tr>
+                                  <td style="padding: 24px 0 8px 0;">
+                                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                      <tr><td style="border-top: 1px solid #e8e8e8;"></td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+
+                                <!-- Button Label -->
+                                <tr>
+                                  <td style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; padding-bottom: 16px; text-align: center;">
+                                    下記のボタンより書類をダウンロードしてください
+                                  </td>
+                                </tr>
+
+                                <!-- Button 1 -->
+                                <tr>
+                                  <td align="center" style="padding-bottom: 12px;">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 320px;">
+                                      <tr>
+                                        <td align="center" bgcolor="#1890ff" style="border-radius: 6px;">
+                                          <a href="${getFileUrl(unionJoinUrl)}" target="_blank" style="display: block; padding: 14px 24px; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #ffffff; text-decoration: none; font-weight: bold; text-align: center;">
+                                            📄 組合加入申込書
+                                          </a>
+                                        </td>
+                                      </tr>
+                                    </table>
+                                  </td>
+                                </tr>
+
+                                <!-- Button 2 -->
+                                <tr>
+                                  <td align="center" style="padding-bottom: 8px;">
+                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 320px;">
+                                      <tr>
+                                        <td align="center" bgcolor="#1890ff" style="border-radius: 6px;">
+                                          <a href="${getFileUrl(termsUrl)}" target="_blank" style="display: block; padding: 14px 24px; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #ffffff; text-decoration: none; font-weight: bold; text-align: center;">
+                                            📄 技能実習規約
+                                          </a>
+                                        </td>
+                                      </tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                          <!-- Footer -->
+                          <tr>
+                            <td bgcolor="#fafafa" style="padding: 24px 32px; border: 1px solid #e8e8e8; border-top: none; border-radius: 0 0 8px 8px;">
+                              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                  <td style="font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic Pro', sans-serif; font-size: 13px; line-height: 1.8; color: #888888; text-align: center;">
+                                    ${footerHtml || `
+                                      Family協同組合<br>
+                                      〒300－0043 茨城県土浦市中央1-1-26 AGビル<br>
+                                      TEL：029－886－8181 ／ FAX：029－886－8185<br>
+                                      EMAIL：family.organization.jp@gmail.com
+                                    `}
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+            `
 
             console.log('Sending email with HTML buttons (no attachments)...')
             const emailPayload = JSON.stringify({
