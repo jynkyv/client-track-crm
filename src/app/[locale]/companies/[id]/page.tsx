@@ -18,7 +18,8 @@ import {
   Input,
   InputNumber,
   Switch,
-  Select
+  Select,
+  Tooltip
 } from 'antd'
 
 const { Option } = Select
@@ -809,27 +810,55 @@ export default function CompanyDetailPage() {
       <Card
         title={t('detail.title')}
         extra={
-          !isReadOnly && (
-            <Space>
-              <Button
-                icon={<MailOutlined />}
-                onClick={handleOpenSendAppModal}
-                disabled={!!(company as any)?.application_sent_at}
-                loading={sendingApp}
-              >
-                {!!(company as any)?.application_sent_at
-                  ? `${tWorkOrder('email.sentAt', { date: new Date((company as any).application_sent_at).toLocaleString() })}`
-                  : tWorkOrder('email.sendApplicationEmail')}
-              </Button>
-              <Button
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => setEditModalVisible(true)}
-              >
-                {t('actions.edit')}
-              </Button>
-            </Space>
-          )
+          !isReadOnly && (() => {
+            const hasAppForm = company?.association_application_form && company.association_application_form.length > 0;
+            const canGenerate = !!company?.first_training_at;
+            const isSent = !!(company as any)?.application_sent_at;
+            const canSendApp = hasAppForm || canGenerate;
+
+            let tooltipText = '';
+            if (isSent) {
+              tooltipText = tWorkOrder('email.sentAt', { date: new Date((company as any).application_sent_at).toLocaleString() });
+            } else if (!canSendApp) {
+              tooltipText = tCommon('email.noAppForm');
+            }
+
+            return (
+              <Space>
+                {tooltipText ? (
+                  <Tooltip title={tooltipText}>
+                    <span>
+                      <Button
+                        icon={<MailOutlined />}
+                        onClick={handleOpenSendAppModal}
+                        disabled={true}
+                        loading={sendingApp}
+                      >
+                        {isSent
+                          ? tooltipText
+                          : tWorkOrder('email.sendApplicationEmail')}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    icon={<MailOutlined />}
+                    onClick={handleOpenSendAppModal}
+                    loading={sendingApp}
+                  >
+                    {tWorkOrder('email.sendApplicationEmail')}
+                  </Button>
+                )}
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => setEditModalVisible(true)}
+                >
+                  {t('actions.edit')}
+                </Button>
+              </Space>
+            );
+          })()
         }
       >
         {company && (
