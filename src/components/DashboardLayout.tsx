@@ -219,15 +219,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       children: [
         {
           key: 'email-new-client',
-          label: <a href="https://family-email-new.vercel.app" target="_blank" rel="noopener noreferrer">监理团体新客户邮件</a>,
+          label: <Link href="/email-systems/new-client">监理团体新客户邮件</Link>,
         },
         {
           key: 'email-old-client',
-          label: <a href="https://email-test-black.vercel.app" target="_blank" rel="noopener noreferrer">监理团体老客户邮件</a>,
+          label: <Link href="/email-systems/old-client">监理团体老客户邮件</Link>,
         },
         {
           key: 'email-agency',
-          label: <a href="https://email-aggroup.vercel.app" target="_blank" rel="noopener noreferrer">送出机关客户邮件</a>,
+          label: <Link href="/email-systems/agency">送出机关客户邮件</Link>,
         },
       ]
     }] : []),
@@ -255,12 +255,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     if (pathname?.startsWith('/companies')) return ['companies']
     if (pathname?.startsWith('/work-orders')) return ['work-orders']
     if (pathname === '/users') return ['users']
+    if (pathname === '/email-systems/new-client') return ['email-new-client']
+    if (pathname === '/email-systems/old-client') return ['email-old-client']
+    if (pathname === '/email-systems/agency') return ['email-agency']
     return ['dashboard']
   }
 
   // 获取默认展开的菜单
   const getDefaultOpenKeys = () => {
     if (pathname?.startsWith('/customers')) return ['customers']
+    if (pathname?.startsWith('/email-systems')) return ['email-systems']
     return []
   }
 
