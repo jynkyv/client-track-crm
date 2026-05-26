@@ -133,10 +133,10 @@ export async function generateTechnicalInternTrainingProgramAgreement(company: C
     }
 
     // Page 8 (index 7): Date at Bottom
-    // User said: "Date when client became training status" (first_training_at)
-    if (pages.length > 7 && company.first_training_at) {
+    // Use created_at (system join date) so this matches the 加入日 shown on the 組合加入申請書
+    if (pages.length > 7 && company.created_at) {
         const page8 = pages[7]
-        const trainDate = dayjs(company.first_training_at)
+        const trainDate = dayjs(company.created_at)
         // Split into Year, Month, Day (Template has labels)
         // Using similar spacing to the top date: Year +50 -> Month +33 -> Day
         // Base X estimate: 400.
