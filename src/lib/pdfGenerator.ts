@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { Company } from './supabase'
 
 export async function generateUnionJoinApplication(company: Company): Promise<Uint8Array> {
-    const templateBytes = await fetch('/pdf/union_join_template.pdf').then(res => res.arrayBuffer())
+    const templateBytes = await fetch('/pdf/union_join_template_new.pdf').then(res => res.arrayBuffer())
     const pdfDoc = await PDFDocument.load(templateBytes)
 
     // Register fontkit
@@ -97,7 +97,7 @@ export async function generateTechnicalInternTrainingProgramAgreement(company: C
         if (!res.ok) {
             // Fallback to union join template if new one is missing, to prevent crash during dev
             console.warn(`Agreement template ${templateName} not found, using fallback`)
-            return fetch('/pdf/union_join_template.pdf').then(r => r.arrayBuffer())
+            return fetch('/pdf/union_join_template_new.pdf').then(r => r.arrayBuffer())
         }
         return res.arrayBuffer()
     })
