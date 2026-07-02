@@ -1,53 +1,7 @@
-import { PDFDocument, rgb, type PDFFont, type PDFPage, type RGB } from 'pdf-lib'
+import { PDFDocument, rgb } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import dayjs from 'dayjs'
 import { Company } from './supabase'
-
-const REPRESENTATIVE_NAME = '秋元憲一'
-
-const drawReplacementText = (
-    page: PDFPage,
-    text: string,
-    options: {
-        x: number
-        y: number
-        width: number
-        height: number
-        size: number
-        font: PDFFont
-        color: RGB
-        textX?: number
-        textY?: number
-        bold?: boolean
-    }
-) => {
-    page.drawRectangle({
-        x: options.x,
-        y: options.y,
-        width: options.width,
-        height: options.height,
-        color: rgb(1, 1, 1)
-    })
-    const textX = options.textX ?? options.x + 2
-    const textY = options.textY ?? options.y + 3
-    const offsets = options.bold
-        ? [
-            [0, 0],
-            [0.25, 0],
-            [0, 0.18],
-        ]
-        : [[0, 0]]
-
-    offsets.forEach(([dx, dy]) => {
-        page.drawText(text, {
-            x: textX + dx,
-            y: textY + dy,
-            size: options.size,
-            font: options.font,
-            color: options.color
-        })
-    })
-}
 
 export async function generateUnionJoinApplication(company: Company): Promise<Uint8Array> {
     const templateBytes = await fetch('/pdf/union_join_template.pdf').then(res => res.arrayBuffer())
@@ -77,17 +31,6 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
 
     const fontSize = 12
     const color = rgb(0, 0, 0)
-
-    drawReplacementText(firstPage, REPRESENTATIVE_NAME, {
-        x: 440,
-        y: 614,
-        width: 55,
-        height: 18,
-        size: 12,
-        font: customFont,
-        color,
-        bold: true
-    })
 
     // Coordinate mapping (Approximate based on user description/template)
     // 1. Creation Date (Top Right?) - User said "1号填写企业在系统中创建的日期"
