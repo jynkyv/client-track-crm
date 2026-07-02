@@ -18,6 +18,7 @@ const drawReplacementText = (
         color: RGB
         textX?: number
         textY?: number
+        bold?: boolean
     }
 ) => {
     page.drawRectangle({
@@ -27,12 +28,24 @@ const drawReplacementText = (
         height: options.height,
         color: rgb(1, 1, 1)
     })
-    page.drawText(text, {
-        x: options.textX ?? options.x + 2,
-        y: options.textY ?? options.y + 3,
-        size: options.size,
-        font: options.font,
-        color: options.color
+    const textX = options.textX ?? options.x + 2
+    const textY = options.textY ?? options.y + 3
+    const offsets = options.bold
+        ? [
+            [0, 0],
+            [0.25, 0],
+            [0, 0.18],
+        ]
+        : [[0, 0]]
+
+    offsets.forEach(([dx, dy]) => {
+        page.drawText(text, {
+            x: textX + dx,
+            y: textY + dy,
+            size: options.size,
+            font: options.font,
+            color: options.color
+        })
     })
 }
 
@@ -72,7 +85,8 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
         height: 18,
         size: 12,
         font: customFont,
-        color
+        color,
+        bold: true
     })
 
     // Coordinate mapping (Approximate based on user description/template)
@@ -165,14 +179,15 @@ export async function generateTechnicalInternTrainingProgramAgreement(company: C
 
     if (pages.length > 0) {
         drawReplacementText(pages[0], REPRESENTATIVE_NAME, {
-            x: 295,
+            x: 305,
             y: 116,
-            width: 48,
+            width: 40,
             height: 17,
             size: 10,
             font: customFont,
             color,
-            textX: 303
+            textX: 307,
+            bold: true
         })
     }
 
