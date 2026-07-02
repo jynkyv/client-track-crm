@@ -726,19 +726,10 @@ export default function CompanyDetailPage() {
     )
   }
 
-  const handlePreviewGeneratedPdf = async (type: 'association_application_form' | 'technical_intern_training_program_agreement') => {
-    if (!company || !company.first_training_at) return
-
-    try {
-      message.loading(t('messages.generatingFile'))
-      const pdfBytes = await generateCompanyPdf(type)
-      const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-      const url = URL.createObjectURL(blob)
-      window.open(url, '_blank')
-    } catch (e) {
-      console.error(e)
-      message.error(t('messages.generateError', { error: (e as Error).message }))
-    }
+  const handlePreviewStoredPdf = (type: 'association_application_form' | 'technical_intern_training_program_agreement') => {
+    if (!company) return
+    const files = (company as any)[type] as DocumentFile[] | undefined
+    handleViewPdfs(files, type)
   }
 
   const handleRegenerateGeneratedPdf = async (type: 'association_application_form' | 'technical_intern_training_program_agreement') => {
@@ -752,6 +743,7 @@ export default function CompanyDetailPage() {
       const uploadedAt = new Date().toISOString()
       const nextFiles = [{ url: ossPath, uploadedAt }]
       const previousFiles = (company as any)[type] as DocumentFile[] | undefined
+      const hasPreviousFiles = !!previousFiles?.length
 
       const { error } = await supabase
         .from('companies')
@@ -762,7 +754,7 @@ export default function CompanyDetailPage() {
 
       setCompany(prev => prev ? { ...prev, [type]: nextFiles } as CompanyDetail : prev)
       await deleteStoredFilesQuietly(previousFiles, ossPath)
-      message.success(t('messages.regenerateSuccess'))
+      message.success(t(hasPreviousFiles ? 'messages.regenerateSuccess' : 'messages.generateSuccess'))
     } catch (e) {
       console.error(e)
       message.error(t('messages.generateError', { error: (e as Error).message }))
@@ -997,43 +989,69 @@ export default function CompanyDetailPage() {
 
                       {field.key === 'association_application_form' ? (
                         <Space>
-                          <Button
-                            size="small"
-                            icon={<FilePdfOutlined />}
-                            disabled={!company?.first_training_at}
-                            onClick={() => handlePreviewGeneratedPdf('association_application_form')}
-                          >
-                            {t('actions.previewGeneratedPdf')}
-                          </Button>
-                          <Button
-                            size="small"
-                            icon={<ReloadOutlined />}
-                            disabled={!company?.first_training_at}
-                            loading={regeneratingField === 'association_application_form'}
-                            onClick={() => handleRegenerateGeneratedPdf('association_application_form')}
-                          >
-                            {t('actions.regenerate')}
-                          </Button>
+                          {fileCount > 0 ? (
+                            <>
+                              <Button
+                                size="small"
+                                icon={<EyeOutlined />}
+                                onClick={() => handlePreviewStoredPdf('association_application_form')}
+                              >
+                                {t('actions.previewGeneratedPdf')}
+                              </Button>
+                              <Button
+                                size="small"
+                                icon={<ReloadOutlined />}
+                                disabled={!company?.first_training_at}
+                                loading={regeneratingField === 'association_application_form'}
+                                onClick={() => handleRegenerateGeneratedPdf('association_application_form')}
+                              >
+                                {t('actions.regenerate')}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="small"
+                              icon={<FilePdfOutlined />}
+                              disabled={!company?.first_training_at}
+                              loading={regeneratingField === 'association_application_form'}
+                              onClick={() => handleRegenerateGeneratedPdf('association_application_form')}
+                            >
+                              {t('actions.generate')}
+                            </Button>
+                          )}
                         </Space>
                       ) : field.key === 'technical_intern_training_program_agreement' ? (
                         <Space>
-                          <Button
-                            size="small"
-                            icon={<FilePdfOutlined />}
-                            disabled={!company?.first_training_at}
-                            onClick={() => handlePreviewGeneratedPdf('technical_intern_training_program_agreement')}
-                          >
-                            {t('actions.previewGeneratedPdf')}
-                          </Button>
-                          <Button
-                            size="small"
-                            icon={<ReloadOutlined />}
-                            disabled={!company?.first_training_at}
-                            loading={regeneratingField === 'technical_intern_training_program_agreement'}
-                            onClick={() => handleRegenerateGeneratedPdf('technical_intern_training_program_agreement')}
-                          >
-                            {t('actions.regenerate')}
-                          </Button>
+                          {fileCount > 0 ? (
+                            <>
+                              <Button
+                                size="small"
+                                icon={<EyeOutlined />}
+                                onClick={() => handlePreviewStoredPdf('technical_intern_training_program_agreement')}
+                              >
+                                {t('actions.previewGeneratedPdf')}
+                              </Button>
+                              <Button
+                                size="small"
+                                icon={<ReloadOutlined />}
+                                disabled={!company?.first_training_at}
+                                loading={regeneratingField === 'technical_intern_training_program_agreement'}
+                                onClick={() => handleRegenerateGeneratedPdf('technical_intern_training_program_agreement')}
+                              >
+                                {t('actions.regenerate')}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="small"
+                              icon={<FilePdfOutlined />}
+                              disabled={!company?.first_training_at}
+                              loading={regeneratingField === 'technical_intern_training_program_agreement'}
+                              onClick={() => handleRegenerateGeneratedPdf('technical_intern_training_program_agreement')}
+                            >
+                              {t('actions.generate')}
+                            </Button>
+                          )}
                         </Space>
                       ) : (
                         <Space>

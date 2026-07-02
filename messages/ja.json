@@ -490,6 +490,7 @@
             "previewGeneratedPdf": "プレビュー",
             "downloadAgreement": "規約をダウンロード",
             "downloadApplicationForm": "申込書をダウンロード",
+            "generate": "生成",
             "regenerate": "再生成"
         },
         "boolean": {
@@ -562,6 +563,7 @@
             "generatingAgreement": "技能実習規約を生成しています...",
             "downloadSuccess": "ダウンロードしました",
             "generateError": "生成に失敗しました: {error}",
+            "generateSuccess": "生成して保存しました",
             "regenerateSuccess": "再生成して保存済みファイルを置き換えました"
         },
         "uploadTime": "アップロード日時",

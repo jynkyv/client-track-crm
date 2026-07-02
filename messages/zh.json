@@ -498,6 +498,7 @@
             "previewGeneratedPdf": "预览",
             "downloadAgreement": "下载规约",
             "downloadApplicationForm": "下载申请书",
+            "generate": "生成",
             "regenerate": "重新生成"
         },
         "boolean": {
@@ -573,6 +574,7 @@
             "generatingAgreement": "正在生成技能实习规约...",
             "downloadSuccess": "下载成功",
             "generateError": "生成失败: {error}",
+            "generateSuccess": "生成并保存成功",
             "regenerateSuccess": "重新生成并替换成功"
         },
         "uploadTime": "アップロード日時",
