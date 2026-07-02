@@ -177,20 +177,6 @@ export async function generateTechnicalInternTrainingProgramAgreement(company: C
     const pages = pdfDoc.getPages()
     const color = rgb(0, 0, 0)
 
-    if (pages.length > 0) {
-        drawReplacementText(pages[0], REPRESENTATIVE_NAME, {
-            x: 305,
-            y: 116,
-            width: 40,
-            height: 17,
-            size: 10,
-            font: customFont,
-            color,
-            textX: 307,
-            bold: true
-        })
-    }
-
     // Page 2 (index 1): Company Name at Top
     if (pages.length > 1) {
         const page2 = pages[1]
