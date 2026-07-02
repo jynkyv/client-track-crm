@@ -44,10 +44,10 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import { saveAs } from 'file-saver'
 import { generateUnionJoinApplication, generateTechnicalInternTrainingProgramAgreement } from '@/lib/pdfGenerator'
 import { getFileUrl } from '@/lib/utils'
 import { useTranslations, useLocale } from 'next-intl'
@@ -287,6 +287,7 @@ export default function CompanyDetailPage() {
   const [fileList, setFileList] = useState<UploadFile[]>([])
   const [uploading, setUploading] = useState(false)
   const [activeUploads, setActiveUploads] = useState(0)
+  const [regeneratingField, setRegeneratingField] = useState<string | null>(null)
 
   // 查看文件 Modal 状态
   const [viewModalVisible, setViewModalVisible] = useState(false)
@@ -699,6 +700,77 @@ export default function CompanyDetailPage() {
     return objectName
   }
 
+  const generateCompanyPdf = async (type: 'association_application_form' | 'technical_intern_training_program_agreement') => {
+    if (!company) throw new Error(t('messages.fetchDetailError'))
+
+    return type === 'association_application_form'
+      ? generateUnionJoinApplication(company as any)
+      : generateTechnicalInternTrainingProgramAgreement(company as any)
+  }
+
+  const getGeneratedPdfFileName = (type: 'association_application_form' | 'technical_intern_training_program_agreement') => {
+    if (!company) return 'document.pdf'
+
+    return type === 'association_application_form'
+      ? `${company.name}_Combined_Application_Form.pdf`
+      : `${company.name}_Technical_Intern_Agreement.pdf`
+  }
+
+  const deleteStoredFilesQuietly = async (files: DocumentFile[] | undefined, nextUrl: string) => {
+    if (!files?.length) return
+
+    await Promise.allSettled(
+      files
+        .filter(file => file.url && file.url !== nextUrl)
+        .map(file => fetch(`/api/upload?filepath=${encodeURIComponent(file.url)}`, { method: 'DELETE' }))
+    )
+  }
+
+  const handlePreviewGeneratedPdf = async (type: 'association_application_form' | 'technical_intern_training_program_agreement') => {
+    if (!company || !company.first_training_at) return
+
+    try {
+      message.loading(t('messages.generatingFile'))
+      const pdfBytes = await generateCompanyPdf(type)
+      const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+    } catch (e) {
+      console.error(e)
+      message.error(t('messages.generateError', { error: (e as Error).message }))
+    }
+  }
+
+  const handleRegenerateGeneratedPdf = async (type: 'association_application_form' | 'technical_intern_training_program_agreement') => {
+    if (!company || !company.first_training_at) return
+
+    try {
+      setRegeneratingField(type)
+      message.loading(t('messages.generatingFile'))
+      const pdfBytes = await generateCompanyPdf(type)
+      const ossPath = await uploadFileToOSS(pdfBytes, getGeneratedPdfFileName(type))
+      const uploadedAt = new Date().toISOString()
+      const nextFiles = [{ url: ossPath, uploadedAt }]
+      const previousFiles = (company as any)[type] as DocumentFile[] | undefined
+
+      const { error } = await supabase
+        .from('companies')
+        .update({ [type]: nextFiles })
+        .eq('id', companyId)
+
+      if (error) throw error
+
+      setCompany(prev => prev ? { ...prev, [type]: nextFiles } as CompanyDetail : prev)
+      await deleteStoredFilesQuietly(previousFiles, ossPath)
+      message.success(t('messages.regenerateSuccess'))
+    } catch (e) {
+      console.error(e)
+      message.error(t('messages.generateError', { error: (e as Error).message }))
+    } finally {
+      setRegeneratingField(null)
+    }
+  }
+
   // Send Application Form (Refactored - OSS upload + HTML buttons, no attachments)
   const handleSendAppForm = async () => {
     if (!company?.email) return
@@ -929,19 +1001,18 @@ export default function CompanyDetailPage() {
                             size="small"
                             icon={<FilePdfOutlined />}
                             disabled={!company?.first_training_at}
-                            onClick={async () => {
-                              if (!company || !company.first_training_at) return
-                              try {
-                                const pdfBytes = await generateUnionJoinApplication(company as any)
-                                const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                                const url = URL.createObjectURL(blob)
-                                window.open(url, '_blank')
-                              } catch (e: any) {
-                                message.error(t('messages.generateError', { error: e.message || '' }))
-                              }
-                            }}
+                            onClick={() => handlePreviewGeneratedPdf('association_application_form')}
                           >
                             {t('actions.previewGeneratedPdf')}
+                          </Button>
+                          <Button
+                            size="small"
+                            icon={<ReloadOutlined />}
+                            disabled={!company?.first_training_at}
+                            loading={regeneratingField === 'association_application_form'}
+                            onClick={() => handleRegenerateGeneratedPdf('association_application_form')}
+                          >
+                            {t('actions.regenerate')}
                           </Button>
                         </Space>
                       ) : field.key === 'technical_intern_training_program_agreement' ? (
@@ -950,21 +1021,18 @@ export default function CompanyDetailPage() {
                             size="small"
                             icon={<FilePdfOutlined />}
                             disabled={!company?.first_training_at}
-                            onClick={async () => {
-                              if (!company || !company.first_training_at) return
-                              try {
-                                message.loading(t('messages.generatingFile'))
-                                const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
-                                const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                                saveAs(blob, `${company.name}_${t('files.technicalInternTrainingProgramAgreement')}.pdf`)
-                                message.success(t('messages.downloadSuccess'))
-                              } catch (e) {
-                                console.error(e)
-                                message.error(t('messages.generateError', { error: (e as Error).message }))
-                              }
-                            }}
+                            onClick={() => handlePreviewGeneratedPdf('technical_intern_training_program_agreement')}
                           >
-                            {t('actions.downloadAgreement')}
+                            {t('actions.previewGeneratedPdf')}
+                          </Button>
+                          <Button
+                            size="small"
+                            icon={<ReloadOutlined />}
+                            disabled={!company?.first_training_at}
+                            loading={regeneratingField === 'technical_intern_training_program_agreement'}
+                            onClick={() => handleRegenerateGeneratedPdf('technical_intern_training_program_agreement')}
+                          >
+                            {t('actions.regenerate')}
                           </Button>
                         </Space>
                       ) : (

@@ -495,9 +495,10 @@
             "edit": "编辑",
             "delete": "删除",
             "exportAssociationMembers": "导出组合成员",
-            "previewGeneratedPdf": "生成的PDF",
+            "previewGeneratedPdf": "预览",
             "downloadAgreement": "下载规约",
-            "downloadApplicationForm": "下载申请书"
+            "downloadApplicationForm": "下载申请书",
+            "regenerate": "重新生成"
         },
         "boolean": {
             "yes": "是",
@@ -571,7 +572,8 @@
             "generatingAssociationApplication": "正在生成组合加入申请书...",
             "generatingAgreement": "正在生成技能实习规约...",
             "downloadSuccess": "下载成功",
-            "generateError": "生成失败: {error}"
+            "generateError": "生成失败: {error}",
+            "regenerateSuccess": "重新生成并替换成功"
         },
         "uploadTime": "アップロード日時",
         "detail": {

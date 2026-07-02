@@ -487,9 +487,10 @@
             "edit": "編集",
             "delete": "削除",
             "exportAssociationMembers": "組合員名簿出力",
-            "previewGeneratedPdf": "生成済みPDF",
+            "previewGeneratedPdf": "プレビュー",
             "downloadAgreement": "規約をダウンロード",
-            "downloadApplicationForm": "申込書をダウンロード"
+            "downloadApplicationForm": "申込書をダウンロード",
+            "regenerate": "再生成"
         },
         "boolean": {
             "yes": "はい",
@@ -560,7 +561,8 @@
             "generatingAssociationApplication": "組合加入申込書を生成しています...",
             "generatingAgreement": "技能実習規約を生成しています...",
             "downloadSuccess": "ダウンロードしました",
-            "generateError": "生成に失敗しました: {error}"
+            "generateError": "生成に失敗しました: {error}",
+            "regenerateSuccess": "再生成して保存済みファイルを置き換えました"
         },
         "uploadTime": "アップロード日時",
         "detail": {
