@@ -659,8 +659,14 @@ export default function CompanyDetailPage() {
     }
 
     const presetContent = tWorkOrder('email.appFormPresetContent', { companyName: company.name })
+    const unionJoinUrl = company.association_application_form?.[0]?.url
+      ? getFileUrl(company.association_application_form[0].url)
+      : '#'
+    const termsUrl = company.technical_intern_training_program_agreement?.[0]?.url
+      ? getFileUrl(company.technical_intern_training_program_agreement[0].url)
+      : '#'
     setAppEmailContent(presetContent)
-    setAppPreviewHtml(buildEmailHtml(presetContent, '#', '#'))
+    setAppPreviewHtml(buildEmailHtml(presetContent, unionJoinUrl, termsUrl))
     setSendAppModalVisible(true)
   }
 
@@ -1238,6 +1244,7 @@ export default function CompanyDetailPage() {
         <div style={{ border: '1px solid #d9d9d9', borderRadius: 8, overflow: 'hidden', background: '#f4f6f9' }}>
           <iframe
             srcDoc={appPreviewHtml}
+            sandbox="allow-popups allow-popups-to-escape-sandbox"
             style={{ width: '100%', height: 520, border: 'none' }}
             title="Email Preview"
           />
