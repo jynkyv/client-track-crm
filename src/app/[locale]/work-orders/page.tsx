@@ -26,7 +26,7 @@ import {
 import { useRouter, Link } from '@/navigation'
 import { supabase, Ticket, Company } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -43,7 +43,7 @@ const INDUSTRIES = [
 
 export default function WorkOrdersPage() {
     const router = useRouter()
-    const { canAccessTickets, isChineseEmployee, isJapaneseEmployee, user } = useAuth()
+    const { canAccessTickets, isChineseEmployee, user } = useAuth()
     const [form] = Form.useForm()
     const [createForm] = Form.useForm()
     const [loading, setLoading] = useState(false)
@@ -55,6 +55,7 @@ export default function WorkOrdersPage() {
     const t = useTranslations('WorkOrder')
     const tCommon = useTranslations('Common')
     const tQA = useTranslations('WorkOrderQA')
+    const locale = useLocale()
 
     // 搜索状态
     const [searchCompanyName, setSearchCompanyName] = useState('')
@@ -102,11 +103,6 @@ export default function WorkOrdersPage() {
           )
         `)
                 .order('created_at', { ascending: false })
-
-            // 日方员工只能看到自己创建的工单
-            if (isJapaneseEmployee && user?.id) {
-                query = query.eq('owner_id', user.id)
-            }
 
             if (searchTicketName) {
                 query = query.eq('industry', searchTicketName)
@@ -297,7 +293,7 @@ export default function WorkOrdersPage() {
             key: 'created_at',
             width: 180,
             align: 'center' as const,
-            render: (text: string) => new Date(text).toLocaleString('zh-CN')
+            render: (text: string) => new Date(text).toLocaleString(locale)
         },
         {
             title: t('columns.companyName'),
@@ -447,8 +443,8 @@ export default function WorkOrdersPage() {
         return (
             <Card>
                 <div style={{ textAlign: 'center', padding: '50px' }}>
-                    <h2>权限不足</h2>
-                    <p>您没有权限访问此页面</p>
+                    <h2>{tCommon('noPermission')}</h2>
+                    <p>{tCommon('noPermissionMessage')}</p>
                 </div>
             </Card>
         )
@@ -529,7 +525,7 @@ export default function WorkOrdersPage() {
                     pagination={{
                         showSizeChanger: true,
                         showQuickJumper: true,
-                        showTotal: (total) => `共 ${total} 项数据`,
+                        showTotal: (total) => `${tCommon('total')} ${total} ${tCommon('items')}`,
                         pageSizeOptions: ['10', '20', '50', '100'],
                         defaultPageSize: 20,
                     }}

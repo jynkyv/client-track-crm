@@ -47,7 +47,7 @@ import { saveAs } from 'file-saver'
 
 export default function CompaniesPage() {
   const router = useRouter()
-  const { canAccessCompanies, isJapaneseEmployee, user } = useAuth()
+  const { canAccessCompanies } = useAuth()
   const [searchForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [companies, setCompanies] = useState<Company[]>([])
@@ -75,6 +75,17 @@ export default function CompaniesPage() {
   // 行业列表状态
   const [industriesList, setIndustriesList] = useState<{ id: number, name: string }[]>([])
 
+  const getDocumentFieldLabel = (field: string | null) => {
+    const labels: Record<string, string> = {
+      teihon: t('columns.teihon'),
+      financial_report: t('columns.financialReport'),
+      industry_license: t('columns.industryLicense'),
+      otit_materials: t('columns.otitMaterials'),
+      central_materials: t('columns.centralMaterials'),
+    }
+    return field ? labels[field] || t('file') : t('file')
+  }
+
   // 获取行业列表
   const fetchIndustries = async () => {
     const { data } = await supabase.from('industries').select('id, name').order('id')
@@ -85,11 +96,8 @@ export default function CompaniesPage() {
   const fetchCompanies = async () => {
     setLoading(true)
     try {
-      // 1. Build Base Query Conditions (Owner & Name)
+      // 1. Build Base Query Conditions (Name)
       const buildBaseQuery = (q: any) => {
-        if (isJapaneseEmployee && user?.id) {
-          q = q.eq('owner_id', user.id)
-        }
         if (searchName) {
           q = q.ilike('name', `%${searchName}%`)
         }
@@ -111,7 +119,7 @@ export default function CompaniesPage() {
         }
       }
 
-      // 3. Query for Stats (Excludes Industry Filter, only Name/Owner)
+      // 3. Query for Stats (Excludes Industry Filter, only Name)
       let statsQuery = supabase
         .from('companies')
         .select('industry_id, is_association_member, industries(name)')
@@ -600,7 +608,7 @@ export default function CompaniesPage() {
       align: 'center' as const,
     },
     {
-      title: '创建时间', // Creation Time
+      title: t('columns.createdAt'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 150,
@@ -613,7 +621,7 @@ export default function CompaniesPage() {
       key: 'is_association_member',
       width: 120,
       align: 'center' as const,
-      render: (val: boolean) => val ? '是' : '否'
+      render: (val: boolean) => val ? t('boolean.yes') : t('boolean.no')
     },
     {
       title: t('columns.teihon'),
@@ -646,18 +654,18 @@ export default function CompaniesPage() {
             icon={<FilePdfOutlined />}
             onClick={async () => {
               try {
-                message.loading('正在生成文件...')
+                message.loading(t('messages.generatingFile'))
                 const pdfBytes = await generateUnionJoinApplication(record)
                 const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                saveAs(blob, `${record.name}_入会申请书.pdf`)
-                message.success('下载成功')
+                saveAs(blob, `${record.name}_${t('files.associationApplicationForm')}.pdf`)
+                message.success(t('messages.downloadSuccess'))
               } catch (e) {
                 console.error(e)
-                message.error('生成失败: ' + (e as Error).message)
+                message.error(t('messages.generateError', { error: (e as Error).message }))
               }
             }}
           >
-            下载申请书
+            {t('actions.downloadApplicationForm')}
           </Button>
         )
       }
@@ -699,8 +707,8 @@ export default function CompaniesPage() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '50px' }}>
-          <h2>权限不足</h2>
-          <p>您没有权限访问此页面</p>
+          <h2>{tCommon('noPermission')}</h2>
+          <p>{tCommon('noPermissionMessage')}</p>
         </div>
       </Card>
     )
@@ -789,7 +797,7 @@ export default function CompaniesPage() {
           pagination={{
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条记录`,
+            showTotal: (total) => `${tCommon('total')} ${total} ${tCommon('items')}`,
           }}
           scroll={{ x: 'max-content' }}
           rowClassName={(record: any) => {
@@ -817,11 +825,7 @@ export default function CompaniesPage() {
 
       {/* 上传PDF Modal */}
       <Modal
-        title={`${t('upload.title')}${currentUploadField === 'teihon' ? t('columns.teihon') :
-          currentUploadField === 'financial_report' ? t('columns.financialReport') :
-            currentUploadField === 'industry_license' ? t('columns.industryLicense') :
-              currentUploadField === 'otit_materials' ? t('columns.otitMaterials') :
-                currentUploadField === 'central_materials' ? t('columns.centralMaterials') : '文件'}`}
+        title={`${t('upload.title')}${getDocumentFieldLabel(currentUploadField)}`}
         open={uploadModalVisible}
         onCancel={() => {
           setUploadModalVisible(false)
@@ -873,17 +877,12 @@ export default function CompaniesPage() {
 
       {/* 查看文件 Modal */}
       <Modal
-        title={`查看${currentViewField === 'teihon' ? '藤本' :
-          currentViewField === 'financial_report' ? '决算报告书' :
-            currentViewField === 'industry_license' ? '行业许可证' :
-              currentViewField === 'otit_materials' ? 'OTIT资料' :
-                currentViewField === 'central_materials' ? '中央会资料' : '文件'}`
-        }
+        title={`${t('actions.view')}${getDocumentFieldLabel(currentViewField)}`}
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setViewModalVisible(false)}>
-            关闭
+            {tCommon('close')}
           </Button>
         ]}
         width={600}
@@ -922,7 +921,7 @@ export default function CompaniesPage() {
                     icon={<EyeOutlined />}
                     onClick={() => window.open(getFileUrl(fileUrl), '_blank')}
                   >
-                    查看
+                    {t('actions.view')}
                   </Button>,
                   currentCompany && (
                     <Button
@@ -932,7 +931,7 @@ export default function CompaniesPage() {
                       icon={<DeleteOutlined />}
                       onClick={() => handleDeleteFile(fileUrl, currentViewField, currentCompany)}
                     >
-                      删除
+                      {t('actions.delete')}
                     </Button>
                   )
                 ].filter(Boolean)}
@@ -956,4 +955,3 @@ export default function CompaniesPage() {
     </div >
   )
 }
-

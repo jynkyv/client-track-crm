@@ -67,11 +67,10 @@ export default function WorkOrderDetailPage() {
     const [editTicketDrawerVisible, setEditTicketDrawerVisible] = useState(false)
     const [editTicketForm] = Form.useForm()
 
-    // 判断当前用户是否为工单负责人
-    const isTicketOwner = ticket?.owner_id === user?.id
-    const canEditTicket = isAdmin || isTicketOwner
-    // 允许管理员或负责该工单的日方员工修改签证办理状态
-    const canEditVisaStatus = isAdmin || (isJapaneseEmployee && isTicketOwner)
+    const canManageJapaneseSide = isAdmin || isJapaneseEmployee
+    const canEditTicket = canManageJapaneseSide
+    // 允许管理员或日方员工修改签证办理状态
+    const canEditVisaStatus = canManageJapaneseSide
 
     // 查看文件 Modal 状态
     const [viewModalVisible, setViewModalVisible] = useState(false)
@@ -753,13 +752,13 @@ export default function WorkOrderDetailPage() {
     const handleSendAppForm = async () => {
         if (!company?.email) return
         if (!company?.first_training_at) {
-            message.error('企业未设置首次培训时间，无法生成文件')
+            message.error(t('email.firstTrainingMissing'))
             return
         }
 
         try {
             setSendingApp(true)
-            message.loading('正在检查文件...')
+            message.loading(t('messages.checkingFiles'))
 
             // Helper to upload file to OSS via presigned URL (bypasses Vercel 4.5MB limit)
             const uploadFileToOSS = async (pdfBytes: Uint8Array, fileName: string) => {
@@ -800,7 +799,7 @@ export default function WorkOrderDetailPage() {
             if (company.association_application_form && company.association_application_form.length > 0) {
                 unionJoinUrl = company.association_application_form[0].url
             } else {
-                message.loading('正在生成组合加入申请书...')
+                message.loading(t('messages.generatingAssociationApplication'))
                 const pdfBytes = await generateUnionJoinApplication(company as any)
                 const ossPath = await uploadFileToOSS(pdfBytes, `${company.name}_Combined_Application_Form.pdf`)
                 unionJoinUrl = ossPath
@@ -820,7 +819,7 @@ export default function WorkOrderDetailPage() {
             if (company.technical_intern_training_program_agreement && company.technical_intern_training_program_agreement.length > 0) {
                 termsUrl = company.technical_intern_training_program_agreement[0].url
             } else {
-                message.loading('正在生成技能实习规约...')
+                message.loading(t('messages.generatingAgreement'))
                 const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
                 const ossPath = await uploadFileToOSS(pdfBytes, `${company.name}_Technical_Intern_Agreement.pdf`)
                 termsUrl = ossPath
@@ -985,6 +984,18 @@ export default function WorkOrderDetailPage() {
 
             message.success(t('email.appFormSentSuccess'))
             setSendAppModalVisible(false)
+
+            const sentAt = new Date().toISOString()
+            const { error: updateError } = await supabase
+                .from('companies')
+                .update({ application_sent_at: sentAt })
+                .eq('id', company.id)
+
+            if (updateError) {
+                console.error('Error updating application_sent_at', updateError)
+            } else {
+                setCompany(prev => prev ? { ...prev, application_sent_at: sentAt } : prev)
+            }
 
             // Refresh logic - using simple reload for data consistency
             if (company.id) {
@@ -1286,7 +1297,7 @@ export default function WorkOrderDetailPage() {
                                     style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
                                     onClick={() => window.open(getFileUrl(img.url), '_blank')}
                                 />
-                                {isAdmin && (
+                                {canEditTicket && (
                                     <Button
                                         type="primary"
                                         danger
@@ -1299,7 +1310,7 @@ export default function WorkOrderDetailPage() {
                             </div>
                         ))}
                     </div>
-                    {(!ticket?.work_environment_images || ticket.work_environment_images.length === 0) && !isAdmin && (
+                    {(!ticket?.work_environment_images || ticket.work_environment_images.length === 0) && !canEditTicket && (
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#999' }}>
                             {t('messages.noFileWarning')}
                         </div>
@@ -1309,7 +1320,7 @@ export default function WorkOrderDetailPage() {
 
             {/* 问答区域 - 中方员工和工单负责人可见 */}
             {
-                (isChineseEmployee || isTicketOwner || isAdmin) && (
+                (isChineseEmployee || canManageJapaneseSide) && (
                     <Card style={{ marginTop: 16 }}>
                         <Collapse defaultActiveKey={questions.some(q => !q.is_answered) ? ['qa'] : []}>
                             <Collapse.Panel
@@ -1366,7 +1377,7 @@ export default function WorkOrderDetailPage() {
                                                         <Space>
                                                             <Tag color="blue">{tQA('questionBy')}: {question.asker_name}</Tag>
                                                             <span style={{ color: '#999', fontSize: 12 }}>
-                                                                {new Date(question.created_at).toLocaleString('zh-CN')}
+                                                                {new Date(question.created_at).toLocaleString(locale)}
                                                             </span>
                                                         </Space>
                                                         <Tag color={question.is_answered ? 'green' : 'orange'}>
@@ -1385,7 +1396,7 @@ export default function WorkOrderDetailPage() {
                                                                     <Space>
                                                                         <Tag color="green">{tQA('replyBy')}: {answer.responder_name}</Tag>
                                                                         <span style={{ color: '#999', fontSize: 12 }}>
-                                                                            {new Date(answer.created_at).toLocaleString('zh-CN')}
+                                                                            {new Date(answer.created_at).toLocaleString(locale)}
                                                                         </span>
                                                                     </Space>
                                                                 </div>
@@ -1396,7 +1407,7 @@ export default function WorkOrderDetailPage() {
                                                 )}
 
                                                 {/* 日方员工/工单负责人回复表单 */}
-                                                {(isTicketOwner || isAdmin) && !question.is_answered && (
+                                                {canManageJapaneseSide && !question.is_answered && (
                                                     <div style={{ marginTop: 12, marginLeft: 24 }}>
                                                         <Input.TextArea
                                                             value={replyContents[question.id] || ''}
@@ -1435,7 +1446,7 @@ export default function WorkOrderDetailPage() {
                     <Card
                         title={t('detail.applicantList')}
                         extra={
-                            isAdmin && (
+                            canManageJapaneseSide && (
                                 <Button
                                     type="primary"
                                     icon={<PlusOutlined />}

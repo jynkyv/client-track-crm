@@ -173,6 +173,7 @@ export interface Company {
   is_association_member?: boolean // 是否加入组合
   application_sent_at?: string // 申请书发送时间
   owner_id?: string // 负责人ID（创建者）
+  owner_name?: string // 负责人姓名
   created_at: string
   updated_at: string
 }

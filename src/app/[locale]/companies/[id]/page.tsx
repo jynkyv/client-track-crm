@@ -184,7 +184,7 @@ function EditCompanyForm({
             label={t('columns.isAssociationMember')}
             valuePropName="checked"
           >
-            <Switch checkedChildren="是" unCheckedChildren="否" />
+            <Switch checkedChildren={t('boolean.yes')} unCheckedChildren={t('boolean.no')} />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -703,13 +703,13 @@ export default function CompanyDetailPage() {
   const handleSendAppForm = async () => {
     if (!company?.email) return
     if (!company?.first_training_at) {
-      message.error('企业未设置首次培训时间，无法生成文件')
+      message.error(tWorkOrder('email.firstTrainingMissing'))
       return
     }
 
     try {
       setSendingApp(true)
-      message.loading('正在检查文件...')
+      message.loading(t('messages.checkingFiles'))
 
       // 1. 组合加入申请书 (Union Join Application)
       let unionJoinUrl = ''
@@ -717,7 +717,7 @@ export default function CompanyDetailPage() {
       if (company.association_application_form && company.association_application_form.length > 0) {
         unionJoinUrl = company.association_application_form[0].url
       } else {
-        message.loading('正在生成组合加入申请书...')
+        message.loading(t('messages.generatingAssociationApplication'))
         const pdfBytes = await generateUnionJoinApplication(company as any)
         const ossPath = await uploadFileToOSS(pdfBytes, `${company.name}_Combined_Application_Form.pdf`)
         unionJoinUrl = ossPath
@@ -740,7 +740,7 @@ export default function CompanyDetailPage() {
       if (hasAgreement) {
         termsUrl = (company as any)[termCheckKey][0].url
       } else {
-        message.loading('正在生成技能实习规约...')
+        message.loading(t('messages.generatingAgreement'))
         const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
         const ossPath = await uploadFileToOSS(pdfBytes, `${company.name}_Technical_Intern_Agreement.pdf`)
         termsUrl = ossPath
@@ -818,7 +818,7 @@ export default function CompanyDetailPage() {
 
             let tooltipText = '';
             if (isSent) {
-              tooltipText = tWorkOrder('email.sentAt', { date: new Date((company as any).application_sent_at).toLocaleString() });
+              tooltipText = tWorkOrder('email.sentAt', { date: new Date((company as any).application_sent_at).toLocaleString(locale) });
             } else if (!canSendApp) {
               tooltipText = tCommon('email.noAppForm');
             }
@@ -867,7 +867,7 @@ export default function CompanyDetailPage() {
             <Descriptions.Item label={t('form.legalNumber')}>{company.legal_number}</Descriptions.Item>
             <Descriptions.Item label={t('form.representative')}>{company.representative}</Descriptions.Item>
             <Descriptions.Item label={t('form.industry')}>{company.industry}</Descriptions.Item>
-            <Descriptions.Item label={t('columns.isAssociationMember')}>{company.is_association_member ? '是' : '否'}</Descriptions.Item>
+            <Descriptions.Item label={t('columns.isAssociationMember')}>{company.is_association_member ? t('boolean.yes') : t('boolean.no')}</Descriptions.Item>
             <Descriptions.Item label={t('form.employeeCount')}>{company.employee_count}人</Descriptions.Item>
             <Descriptions.Item label={t('form.registeredCapital')}>{company.registered_capital}</Descriptions.Item>
             <Descriptions.Item label={t('form.address')} span={2}>{company.address}</Descriptions.Item>
@@ -937,11 +937,11 @@ export default function CompanyDetailPage() {
                                 const url = URL.createObjectURL(blob)
                                 window.open(url, '_blank')
                               } catch (e: any) {
-                                message.error(t('messages.generatePdfError') + (e.message || ''))
+                                message.error(t('messages.generateError', { error: e.message || '' }))
                               }
                             }}
                           >
-                            生成的PDF
+                            {t('actions.previewGeneratedPdf')}
                           </Button>
                         </Space>
                       ) : field.key === 'technical_intern_training_program_agreement' ? (
@@ -953,18 +953,18 @@ export default function CompanyDetailPage() {
                             onClick={async () => {
                               if (!company || !company.first_training_at) return
                               try {
-                                message.loading('正在生成文件...')
+                                message.loading(t('messages.generatingFile'))
                                 const pdfBytes = await generateTechnicalInternTrainingProgramAgreement(company as any)
                                 const blob = new Blob([pdfBytes as any], { type: 'application/pdf' })
-                                saveAs(blob, `${company.name}_技能実習に関する事業に係る規約.pdf`)
-                                message.success('下载成功')
+                                saveAs(blob, `${company.name}_${t('files.technicalInternTrainingProgramAgreement')}.pdf`)
+                                message.success(t('messages.downloadSuccess'))
                               } catch (e) {
                                 console.error(e)
-                                message.error('生成失败: ' + (e as Error).message)
+                                message.error(t('messages.generateError', { error: (e as Error).message }))
                               }
                             }}
                           >
-                            下载规约
+                            {t('actions.downloadAgreement')}
                           </Button>
                         </Space>
                       ) : (
@@ -1020,7 +1020,7 @@ export default function CompanyDetailPage() {
 
       {/* 上传PDF Modal */}
       < Modal
-        title={`${t('upload.title')}${documentFields.find(f => f.key === currentUploadField)?.label || '文件'}`}
+        title={`${t('upload.title')}${documentFields.find(f => f.key === currentUploadField)?.label || t('file')}`}
         open={uploadModalVisible}
         onCancel={() => {
           setUploadModalVisible(false)
@@ -1080,13 +1080,13 @@ export default function CompanyDetailPage() {
 
       {/* 查看文件 Modal */}
       < Modal
-        title={`查看${documentFields.find(f => f.key === currentViewField)?.label || '文件'}`}
+        title={`${t('actions.view')}${documentFields.find(f => f.key === currentViewField)?.label || t('file')}`}
         open={viewModalVisible}
         onCancel={() => setViewModalVisible(false)}
         footer={
           [
             <Button key="close" onClick={() => setViewModalVisible(false)}>
-              关闭
+              {tCommon('close')}
             </Button>
           ]}
         width={600}
@@ -1102,7 +1102,7 @@ export default function CompanyDetailPage() {
                   icon={<EyeOutlined />}
                   onClick={() => window.open(getFileUrl(file.url), '_blank')}
                 >
-                  查看
+                  {t('actions.view')}
                 </Button>,
                 !isReadOnly && (
                   <Button
@@ -1112,7 +1112,7 @@ export default function CompanyDetailPage() {
                     icon={<DeleteOutlined />}
                     onClick={() => handleDeleteFile(file.url, currentViewField)}
                   >
-                    删除
+                    {t('actions.delete')}
                   </Button>
                 )
               ].filter(Boolean)}
@@ -1160,4 +1160,3 @@ export default function CompanyDetailPage() {
     </div >
   )
 }
-

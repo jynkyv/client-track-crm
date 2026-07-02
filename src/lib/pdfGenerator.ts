@@ -1,7 +1,40 @@
-import { PDFDocument, rgb } from 'pdf-lib'
+import { PDFDocument, rgb, type PDFFont, type PDFPage, type RGB } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import dayjs from 'dayjs'
 import { Company } from './supabase'
+
+const REPRESENTATIVE_NAME = '秋元憲一'
+
+const drawReplacementText = (
+    page: PDFPage,
+    text: string,
+    options: {
+        x: number
+        y: number
+        width: number
+        height: number
+        size: number
+        font: PDFFont
+        color: RGB
+        textX?: number
+        textY?: number
+    }
+) => {
+    page.drawRectangle({
+        x: options.x,
+        y: options.y,
+        width: options.width,
+        height: options.height,
+        color: rgb(1, 1, 1)
+    })
+    page.drawText(text, {
+        x: options.textX ?? options.x + 2,
+        y: options.textY ?? options.y + 3,
+        size: options.size,
+        font: options.font,
+        color: options.color
+    })
+}
 
 export async function generateUnionJoinApplication(company: Company): Promise<Uint8Array> {
     const templateBytes = await fetch('/pdf/union_join_template.pdf').then(res => res.arrayBuffer())
@@ -28,10 +61,19 @@ export async function generateUnionJoinApplication(company: Company): Promise<Ui
 
     const pages = pdfDoc.getPages()
     const firstPage = pages[0]
-    const { width, height } = firstPage.getSize()
 
     const fontSize = 12
     const color = rgb(0, 0, 0)
+
+    drawReplacementText(firstPage, REPRESENTATIVE_NAME, {
+        x: 440,
+        y: 614,
+        width: 55,
+        height: 18,
+        size: 12,
+        font: customFont,
+        color
+    })
 
     // Coordinate mapping (Approximate based on user description/template)
     // 1. Creation Date (Top Right?) - User said "1号填写企业在系统中创建的日期"
@@ -120,6 +162,19 @@ export async function generateTechnicalInternTrainingProgramAgreement(company: C
 
     const pages = pdfDoc.getPages()
     const color = rgb(0, 0, 0)
+
+    if (pages.length > 0) {
+        drawReplacementText(pages[0], REPRESENTATIVE_NAME, {
+            x: 295,
+            y: 116,
+            width: 48,
+            height: 17,
+            size: 10,
+            font: customFont,
+            color,
+            textX: 303
+        })
+    }
 
     // Page 2 (index 1): Company Name at Top
     if (pages.length > 1) {
